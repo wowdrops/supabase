@@ -1,0 +1,187 @@
+<div id="tab-tran-order" class="hidden space-y-4 fade-in pb-20 relative"> 
+  
+  <!-- MAIN STICKY HEADER AREA WITH LIVE TIMER & COLLAPSE TOGGLE -->
+  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-indigo-200 pt-2 pb-4 shadow-sm">
+    <div class="flex justify-between items-center px-2">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+        Manage <span class="hidden md:inline">Orders</span>
+        
+        <!-- UNIVERSAL DYNAMIC TIMER BADGE -->
+        <span id="ord2-live-timer" class="hidden"></span>
+        
+        <button onclick="window.toggleOrd2Header()" class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none ml-auto">
+          <svg id="ord2-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+        </button>
+      </h2>
+    </div>
+
+    <!-- COLLAPSIBLE ACTION PANEL -->
+    <div id="ord2-header-collapsible" class="transition-all duration-300 origin-top">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2 mt-4">
+        
+        <!-- TOP TOTALS BADGES -->
+        <div class="flex items-center gap-2 md:gap-4 flex-wrap">
+            <span class="text-[10px] md:text-xs font-black bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-widest" title="Total Gross Demand">ORD D: <b id="ord2-top-totOrdD" class="text-slate-900">0</b></span>
+            <span class="text-[10px] md:text-xs font-black bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-widest">ORD E: <b id="ord2-top-totOrdE" class="text-slate-900">0</b></span>
+            <span class="text-[10px] md:text-xs font-black bg-emerald-100 text-emerald-700 px-2.5 py-1.5 rounded-lg uppercase tracking-widest">Est Amt: <b id="ord2-top-totEst" class="text-emerald-900">₹0</b></span>
+        </div>
+        
+        <!-- BATCH & REFRESH BUTTONS -->
+        <div class="flex gap-2 w-full lg:w-auto items-center">
+            <button id="ord2-btn-batchTransfer" onclick="window.executeBatchTransferToDel2()" class="flex-1 lg:flex-none bg-emerald-50 text-emerald-700 px-3 py-2.5 rounded-xl text-sm font-black border border-emerald-200 hover:bg-emerald-100 shadow-sm transition flex justify-center items-center gap-1.5">
+              <svg class="w-4 h-4 md:w-5 md:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg> 
+              <span class="hidden sm:inline">Transfer to DEL2</span><span class="sm:hidden">DEL2</span>
+            </button>
+            <button onclick="window.loadTranOrdersData()" class="flex-1 lg:flex-none bg-indigo-50 text-indigo-700 px-3 py-2.5 rounded-xl text-sm font-black border border-indigo-100 hover:bg-indigo-100 shadow-sm transition flex justify-center items-center gap-1.5">
+              <svg class="w-4 h-4 md:w-5 md:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> 
+              Refresh
+            </button>
+        </div>
+      </div>
+
+      <!-- CAPACITY DASHBOARD -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mt-4 mx-2">
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Daily Capacity & Limits</h3>
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-center">
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Allowed</p>
+                  <p class="text-xl font-black text-indigo-600" id="dash-tot-allowed">0</p>
+              </div>
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-100" title="Physical Supply (ORD D - PEND)">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Normal Placed</p>
+                  <p class="text-xl font-black text-slate-700" id="dash-norm-placed">0</p>
+              </div>
+              <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                  <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Pending Placed</p>
+                  <p class="text-xl font-black text-amber-700" id="dash-pend-placed">0</p>
+              </div>
+              <div class="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                  <p class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Rep Placed</p>
+                  <p class="text-xl font-black text-rose-600" id="dash-rep-placed">0</p>
+              </div>
+              <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                  <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Available Cans</p>
+                  <p class="text-xl font-black text-emerald-600" id="dash-avail-cans">0</p>
+              </div>
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col justify-center items-center">
+                  <p class="text-[9px] font-bold text-slate-500">Min Qty: <span id="dash-min-qty" class="text-slate-800 font-black">0</span></p>
+                  <p class="text-[9px] font-bold text-slate-500 mt-1">Restrict: <span id="dash-res-qty" class="text-slate-800 font-black">0</span></p>
+              </div>
+          </div>
+      </div>
+
+      <!-- COMPACT ONE-LINE INPUT FORM -->
+      <div class="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-slate-200 mt-4 mx-2">
+        
+        <div class="flex flex-col lg:flex-row items-center gap-2 w-full">
+            <div class="relative w-full lg:w-40 flex items-center gap-1">
+              <input type="text" id="ord2-inp-cpn" placeholder="Search CPN"  oninput="this.value = this.value.toUpperCase()" onkeyup="handleOrd2CpnTyping()" class="uppercase w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-bold uppercase outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+            </div>
+            
+            <div class="w-full lg:w-16">
+              <input type="number" id="ord2-inp-ordD" placeholder="D" title="ORD D" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+            </div>
+            <div class="w-full lg:w-16">
+              <input type="number" id="ord2-inp-ordE" placeholder="E" title="ORD E" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+            </div>
+            <div class="w-full lg:w-20">
+              <input type="number" id="ord2-inp-pend" placeholder="PEND" title="Pending Quantity" oninput="handlePendAutoFill()" class="w-full bg-amber-50 border border-amber-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-amber-500 transition shadow-inner text-amber-700 text-sm">
+            </div>
+            <div class="w-full lg:w-20">
+              <input type="number" id="ord2-inp-rep" placeholder="REP" title="Replacement Quantity" class="w-full bg-rose-50 border border-rose-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-rose-500 transition shadow-inner text-rose-700 text-sm">
+            </div>
+            <div class="w-full lg:w-32">
+              <input type="text" id="ord2-inp-repReason" placeholder="Rep Reason" title="Replacement Reason" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-medium outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+            </div>
+            <div class="w-full lg:w-20">
+              <input type="number" id="ord2-inp-rate" placeholder="Rate ₹" title="Rate Override" class="w-full bg-indigo-50 border border-indigo-200 p-2.5 rounded-lg font-black text-center text-indigo-700 outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+            </div>
+            <div class="flex-1 w-full min-w-[150px]">
+              <input type="text" id="ord2-inp-comment" placeholder="Comment..." title="Order Comment" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-medium outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+            </div>
+            
+            <!-- COMPACT BUTTONS -->
+            <div class="w-full lg:w-auto flex justify-end gap-1">
+              <button id="ord2-btn-submit" onclick="submitOrd2Order()" title="Submit Order" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black p-2.5 rounded-lg shadow-lg transition active:scale-95 flex justify-center items-center h-full aspect-square disabled:opacity-50">
+                <svg id="ord2-icon-submit" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+              </button>
+              <button id="ord2-btn-cancelEdit" onclick="resetOrd2Form()" title="Cancel Edit" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-600 font-black p-2.5 rounded-lg shadow transition active:scale-95 flex justify-center items-center h-full aspect-square">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+        </div>
+
+        <!-- DYNAMIC CUSTOMER INFO CARD -->
+        <div id="ord2-card-cpnInfo" class="hidden mt-3 bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex-1">
+             <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-0.5" id="ord2-txt-infoAptBlkDoor">-</p>
+             <p class="text-base md:text-xl font-black text-indigo-900 leading-tight truncate max-w-[250px] md:max-w-[400px]" id="ord2-txt-infoName">Searching...</p>
+          </div>
+          <div class="flex items-center gap-4 md:gap-6 border-t md:border-t-0 md:border-l border-indigo-200 pt-3 md:pt-0 md:pl-6 w-full md:w-auto">
+            <div>
+              <p class="text-[9px] md:text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Can Deposit</p>
+              <p class="text-lg font-black text-amber-600" id="ord2-txt-infoDeposit">₹0</p>
+            </div>
+            <div class="border-l border-indigo-200 pl-4 md:pl-6">
+              <p class="text-[9px] md:text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Outstanding</p>
+              <p class="text-lg font-black text-rose-600" id="ord2-txt-infoDue">₹0</p>
+            </div>
+            <div>
+              <p class="text-[9px] md:text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Advance</p>
+              <p class="text-lg font-black text-emerald-600" id="ord2-txt-infoAdv">₹0</p>
+            </div>
+            <div class="border-l border-indigo-200 pl-4 md:pl-6">
+              <p class="text-[9px] md:text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Cans Held</p>
+              <p class="text-lg font-black text-indigo-800" id="ord2-txt-infoCans">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE AREA -->
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative mt-4 mx-2">
+    <table class="w-full text-left border-collapse whitespace-nowrap">
+      
+      <thead class="bg-slate-800 text-white text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-md">
+        <tr>
+          <th class="p-4 text-center"><input type="checkbox" onchange="window.toggleAllOrdChk(this)" class="w-5 h-5 rounded border-slate-600 bg-slate-700 cursor-pointer"></th>
+          <th class="p-4 font-black">Date & Time</th>
+          <th class="p-4 font-black">Location</th>
+          <th class="p-4 font-black text-indigo-300">Customer Details</th>
+          <th class="p-4 font-black text-center">Ord D</th>
+          <th class="p-4 font-black text-center">Ord E</th>
+          <th class="p-4 font-black text-center text-amber-300" title="Pending">Pend</th>
+          <th class="p-4 font-black text-center text-rose-300" title="Replacement">Rep</th>
+          <th class="p-4 font-black text-right text-emerald-300">Est Amt</th>
+          <th class="p-4 font-black text-right text-amber-300">Can Deposit</th>
+          <th class="p-4 font-black text-right bg-slate-900 border-l border-slate-700 cursor-pointer hover:bg-slate-700 transition group" onclick="toggleOrd2OutstandingCols()">
+            Outstanding <span id="ord2-txt-toggleIcon" class="ml-1 bg-slate-600 text-white px-1.5 py-0.5 rounded group-hover:bg-slate-500">+</span>
+          </th>
+          <th class="p-4 font-black text-right hidden ord2-ext-col bg-slate-900" id="ord2-hdr-ab">Very Old</th>
+          <th class="p-4 font-black text-right hidden ord2-ext-col bg-slate-900" id="ord2-hdr-ac">Older</th>
+          <th class="p-4 font-black text-right hidden ord2-ext-col bg-slate-900" id="ord2-hdr-ad">Previous</th>
+          <th class="p-4 font-black text-right hidden ord2-ext-col bg-slate-900" id="ord2-hdr-ae">Current</th>
+          <th class="p-4 font-black text-right hidden ord2-ext-col bg-slate-900 text-amber-300" id="ord2-hdr-af">Cans</th>
+          <th class="p-4 font-black">Comment</th>
+          <th class="p-4 font-black text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ord2-tbl-body" class="text-sm font-bold text-slate-700 divide-y divide-slate-100">
+      </tbody>
+      <tfoot class="bg-slate-50 border-t-2 border-slate-200 sticky bottom-0 z-10">
+        <tr>
+          <td colspan="4" class="p-4 text-right font-black text-slate-500 uppercase tracking-widest text-xs">Grand Totals:</td>
+          <td id="ord2-txt-totOrdD" class="p-4 text-center font-black text-slate-800 text-lg">0</td>
+          <td id="ord2-txt-totOrdE" class="p-4 text-center font-black text-slate-800 text-lg">0</td>
+          <td id="ord2-txt-totPend" class="p-4 text-center font-black text-amber-600 text-lg">0</td>
+          <td id="ord2-txt-totRep" class="p-4 text-center font-black text-rose-600 text-lg">0</td>
+          <td id="ord2-txt-totEst" class="p-4 text-right font-black text-emerald-600 text-lg">₹0</td>
+          <td id="ord2-txt-totDeposit" class="p-4 text-right font-black text-amber-600 text-lg">₹0</td>
+          <td colspan="8"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

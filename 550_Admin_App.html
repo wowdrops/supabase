@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <link rel="icon" type="image/x-icon" href="wowLogo.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.0.10.1/html2pdf.bundle.min.js"></script>-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+
+  <!-- Local CSS Styles -->
+  <link rel="stylesheet" href="550_Admin_App_CSS.css">
+</head>
+
+<!-- 2. HTML Placeholders (Replaces <?!= include() ?>) -->
+<div data-include="551_Admin_Auth.html"></div>
+
+<div id="view-workspace" class="hidden h-screen w-full relative fade-in">
+  <div data-include="553_Admin_Header.html"></div>
+
+  <div class="flex h-full w-full overflow-hidden relative">
+    <div data-include="554_Admin_Sidebar.html"></div>
+
+    <main id="scroll-area" class="flex-1 overflow-y-auto pt-24 pb-8 px-4 md:px-8 w-full relative">
+      <div data-include="555_Admin_Dashboard.html"></div>
+      <div data-include="556_Admin_UpdateCan.html"></div>
+      <div data-include="557_Admin_Tran_Order.html"></div>
+      <div data-include="558_Admin_Tran_DeliveryQC.html"></div>
+
+      <div data-include="559_Admin_Tran_Escalations.html"></div>
+      <div data-include="560_Admin_Dormant_CRM.html"></div>
+      <div data-include="561_Admin_Master_Customer.html"></div>
+      <div data-include="562_Admin_User_Access.html"></div>
+      <div data-include="564_Admin_Tran_Sales.html"></div>
+      <div data-include="565_Admin_Tran_Pays.html"></div>
+      <div data-include="566_Admin_360_Modal.html"></div>
+      <div data-include="567_Admin_Push_Notifications.html"></div>
+      <div data-include="568_Admin_SysConfig.html"></div>
+      <div data-include="569_Admin_Handshake.html"></div>
+      <div data-include="580_1_Admin_DailySalesReports.html"></div>
+      <div data-include="580_2_Admin_Outstanding.html"></div>
+      <div data-include="580_3_Admin_Dormant.html"></div>
+      <div data-include="580_4_Admin_Sales.html"></div>
+      <div data-include="580_5_Admin_Pays.html"></div>
+      <div data-include="580_6_Admin_Orders.html"></div>
+      <div data-include="580_7_Admin_Delivery.html"></div>
+      <div data-include="580_9_Admin_CRM_Reports.html"></div>
+      <div data-include="581_0_Admin_Reports_Customer.html"></div>
+      <div data-include="581_1_Admin_Report_Week.html"></div>
+      <div data-include="590_Admin_Password.html"></div>
+
+    </main>
+  </div>
+</div>
+
+<!-- 3. Master Loader: Loads ALL HTML first, THEN loads JS files in order -->
+<script>
+  // List of your JS files in the exact order from 550_Admin_App.html
+  const jsFiles = [
+    "supabase_config.js",
+    "551_Admin_Auth_JS.js",
+    "553_Admin_Header_JS.js",
+    "555_Admin_Dashboard_JS.js",
+    "556_Admin_UpdateCan_JS.js",
+    "557_Admin_Tran_Order_JS.js",
+    "558_Admin_Tran_DeliveryQC_JS.js",
+    "559_Admin_Tran_Escalations_JS.js",
+    "560_Admin_Dormant_CRM_JS.js",
+    "561_Admin_Master_Customer_JS.js",
+    "562_Admin_User_Access_JS.js",
+    "564_Admin_Tran_Sales_JS.js",
+    "565_Admin_Tran_Pays_JS.js",
+    "566_Admin_360_Modal_JS.js",
+    "567_Admin_Push_Notifications_JS.js",
+    "568_Admin_SysConfig_JS.js",
+    "569_Admin_Handshake_JS.js",
+    "580_1_Admin_DailySalesReports_JS.js",
+    "580_2_Admin_Outstanding_JS.js",
+    "580_3_Admin_Dormant_JS.js",
+    "580_4_Admin_Sales_JS.js",
+    "580_5_Admin_Pays_JS.js",
+    "580_6_Admin_Orders_JS.js",
+    "580_7_Admin_Delivery_JS.js",
+    "580_9_Admin_CRM_Reports_JS.js",
+    "581_0_Admin_Reports_Customer_JS.js",
+    "581_1_Admin_Report_Week_JS.js",
+    "590_Admin_Password_JS.js"
+  ];
+
+  async function bootAdminApp() {
+    // STEP 1: Fetch all HTML views in parallel and inject them into the DOM
+    const elements = document.querySelectorAll('[data-include]');
+    await Promise.all(Array.from(elements).map(async (el) => {
+      const file = el.getAttribute('data-include');
+      const response = await fetch(file);
+      if (response.ok) {
+        let html = await response.text();
+
+        // FIX: Remove VS Code Live Server's injected script so it doesn't break SVGs!
+        //html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
+
+          el.outerHTML = html;
+      } else {
+        console.error("Failed to load view:", file);
+      }
+    }));
+
+    // STEP 2: Now that 100% of the HTML exists on the page, load JS files in exact order
+    for (const src of jsFiles) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = false; // Guarantees execution order
+        script.onload = resolve;
+        script.onerror = () => {
+          console.error("Failed to load script:", src);
+          resolve(); // Continue loading even if one file has an issue
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    // STEP 3: If any of your JS files used window.onload or DOMContentLoaded, 
+    // manually trigger them now so they run as expected!
+    window.dispatchEvent(new Event('DOMContentLoaded'));
+    window.dispatchEvent(new Event('load'));
+    console.log("✅ WowDrops Admin App Fully Loaded!");
+  }
+
+  // Start the boot process
+  bootAdminApp();
+</script>
+</body>
+
+</html>

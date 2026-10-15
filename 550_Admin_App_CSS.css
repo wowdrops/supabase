@@ -1,0 +1,32 @@
+
+
+  
+  .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  /* --- NEW SMOOTH ACCORDION ANIMATION --- */
+  .accordion-content { 
+    display: grid; 
+    grid-template-rows: 0fr; 
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+  }
+  .accordion-content.open { 
+    grid-template-rows: 1fr; 
+  }
+  /* -------------------------------------- */
+
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .card-click { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+  .card-click:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border-color: #6366f1; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #tab-dormant, #tab-dormant * { visibility: visible; }
+    #tab-dormant { position: absolute; left: 0; top: 0; width: 100%; }
+    /* Hide buttons and controls during print */
+    .no-print, button, input { display: none !important; }
+}

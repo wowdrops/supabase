@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <title>WOW DROPS - Customer Portal</title>
+  <link rel="icon" href="wowLogo.jpg" type="image/png">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- Link to external CSS -->
+  <link rel="stylesheet" href="391_portal.css">
+</head>
+
+<body class="font-sans antialiased text-slate-900">
+
+  <div id="app-container"
+    class="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col justify-between relative shadow-2xl">
+
+    <!-- LOGIN VIEW -->
+    <div id="view-login" class="p-8 space-y-8 mt-12 md:my-auto fade-in">
+      <div class="text-center flex flex-col items-center">
+        <a href="https://wowdrops.github.io" target="_blank" rel="noopener noreferrer" class="shrink-0">
+          <img src="wowLogo.jpg" class="h-20 md:h-24 w-auto"
+            alt="Logo">
+        </a>
+        <p class="text-slate-500 mt-2 font-medium">Customer Service Portal</p>
+      </div>
+
+      <p id="login-msg" class="text-center text-sm font-bold text-emerald-600 bg-emerald-50 p-3 rounded-lg hidden"></p>
+
+      <div class="space-y-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Mobile No or CPN Number</label>
+          <input type="text" id="login-id" oninput="this.value = this.value.toUpperCase()" 
+            class="uppercase w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium">
+          
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Password</label>
+          <input type="password" id="login-pass" placeholder="Leave blank if logging in first time"
+            class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium text-sm">
+        </div>
+        <button onclick="handleLogin()" id="btn-login"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition">Secure
+          Sign In</button>
+        <p id="login-err" class="text-sm text-red-500 text-center font-semibold hidden"></p>
+        <div class="text-center pt-2">
+          <a href="javascript:void(0)" onclick="openForgotPassword()"
+            class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">Forgot Password?</a>
+        </div>
+      </div>
+
+      <!-- NEW: Gateway Compliant Pre-Login Policy Links -->
+      <div
+        class="mt-8 pt-4 border-t border-slate-200 text-center flex flex-wrap justify-center gap-x-3 gap-y-2 text-[10px] font-bold text-slate-500">
+        <a href="201_TermsAndConditions.html" target="_blank" class="hover:text-indigo-600 transition">Terms &
+          Conditions</a>
+        <a href="201_PrivacyPolicy.html" target="_blank" class="hover:text-indigo-600 transition">Privacy Policy</a>
+        <a href="201_ReturnAndRefund.html" target="_blank" class="hover:text-indigo-600 transition">Return & Refund</a>
+        <a href="201_ShippingPolicy.html" target="_blank" class="hover:text-indigo-600 transition">Shipping Policy</a>
+        <a href="index.html#main-contact" target="_blank" class="hover:text-indigo-600 transition">Support</a>
+      </div>
+    </div>
+
+    <!-- FIRST TIME SETUP VIEW (NEW PASSWORD) -->
+    <div id="view-new-password" class="p-8 space-y-6 hidden mt-12 md:my-auto fade-in">
+      <div class="text-center">
+        <h3 class="text-2xl font-black text-slate-800">Account Security</h3>
+        <p class="text-sm text-slate-500 mt-1 font-medium">Verify your email to set a permanent password.</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        
+        <!-- Step 1a: Confirm Existing Email -->
+        <div id="setup-step-1a" class="space-y-4">
+          <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-center">
+            <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Registered Email</p>
+            <p id="setup-masked-email" class="text-lg font-black text-indigo-700">Loading...</p>
+          </div>
+          <button onclick="sendSetupOTP(false)" id="btn-setup-otp-1" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition">Send OTP</button>
+          <div class="text-center mt-3">
+            <a href="javascript:void(0)" onclick="showSetupEmailChange()" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition underline decoration-slate-200 underline-offset-4">I don't have access to this email / Change Email</a>
+          </div>
+        </div>
+
+        <!-- Step 1b: Add / Change Email (Security Check) -->
+        <div id="setup-step-1b" class="space-y-4 hidden">
+          <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl text-xs font-bold text-amber-800 mb-4 shadow-sm">
+            To change your email, please verify your registered mobile number.
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Registered Mobile No</label>
+            <input type="text" id="setup-verify-mobile" placeholder="e.g. 9876543210" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">New Email Address</label>
+            <input type="email" id="setup-new-email" placeholder="your@email.com" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium text-sm">
+          </div>
+          <button onclick="sendSetupOTP(true)" id="btn-setup-otp-2" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition mt-2">Verify & Send OTP</button>
+          <div class="text-center mt-3">
+            <a href="javascript:void(0)" id="link-cancel-email-change" onclick="showSetupEmailConfirm()" class="text-xs font-bold text-slate-400 hover:text-slate-600 transition">Cancel</a>
+          </div>
+        </div>
+
+        <!-- Step 2: OTP and Password -->
+        <div id="setup-step-2" class="space-y-4 hidden">
+          <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center mb-4">
+            <p class="text-xs font-bold text-emerald-700">OTP sent to <span id="setup-target-email" class="font-black"></span></p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">6-Digit OTP</label>
+            <input type="number" id="setup-otp" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl tracking-[0.5em] font-black outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mt-2">New Password</label>
+            <input type="password" id="new-pass-1" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mt-2">Confirm Password</label>
+            <input type="password" id="new-pass-2" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm">
+          </div>
+          <button onclick="submitPasswordSetup()" id="btn-setup-save" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition mt-4">Save Password</button>
+        </div>
+
+        <button onclick="cancelPasswordSetup()" class="w-full bg-white border border-slate-300 text-slate-700 font-bold p-4 rounded-xl hover:bg-slate-50 transition mt-4 text-sm">Cancel & Return to Login</button>
+        <p id="pass-setup-err" class="text-sm text-red-500 text-center font-semibold mt-3 hidden"></p>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD VIEW -->
+    <div id="view-forgot-password" class="p-8 space-y-6 hidden mt-12 md:my-auto fade-in">
+      <div class="text-center">
+        <h3 class="text-2xl font-black text-slate-800">Recover Account</h3>
+        <p class="text-sm text-slate-500 mt-1 font-medium">Reset your secure password.</p>
+      </div>
+
+      <div id="fp-step-1" class="space-y-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Registered Mobile or CPN</label>
+          <input type="text" id="fp-id" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium">
+        </div>
+        <button onclick="requestOTP()" id="btn-fp-otp" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition">Send Reset OTP to Email</button>
+        <button onclick="switchView('view-login')" class="w-full bg-white border border-slate-300 text-slate-700 font-bold p-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition mt-2">Back to Login</button>
+        <p id="fp-err-1" class="text-sm text-red-500 text-center font-semibold hidden"></p>
+      </div>
+
+      <div id="fp-step-2" class="space-y-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hidden">
+        <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center mb-2">
+            <p class="text-xs font-bold text-emerald-700">OTP sent to <span id="fp-masked-email" class="font-black"></span></p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Enter 6-Digit OTP</label>
+          <input type="number" id="fp-otp-input" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl tracking-[0.5em] font-black outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mt-2">New Password</label>
+          <input type="password" id="fp-new-pass" class="w-full mt-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+        </div>
+        <button onclick="verifyAndResetPassword()" id="btn-fp-reset" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition mt-4">Verify & Reset Password</button>
+        <button onclick="switchView('view-login')" class="w-full bg-white border border-slate-300 text-slate-700 font-bold p-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition mt-2">Cancel</button>
+        <p id="fp-err-2" class="text-sm text-red-500 text-center font-semibold hidden"></p>
+      </div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div id="view-profile" class="hidden flex flex-col h-screen bg-slate-50 fade-in">
+      <div
+        class="sticky top-0 z-50 glass-header p-4 text-white flex justify-between items-center shadow-lg border-b border-white/10">
+        <div class="flex items-center">
+          <button onclick="switchView('view-dashboard')"
+            class="mr-3 opacity-90 hover:opacity-100 transition focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <div>
+            <h4 class="font-bold text-lg tracking-tight disp-cust-name">Loading...</h4>
+            <div class="text-[11px] text-indigo-200 font-medium mt-0.5 tracking-wide disp-cust-details"></div>
+          </div>
+        </div>
+        <span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">PROFILE</span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 pb-10">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+          <h5 class="text-lg font-black text-slate-800 border-b border-slate-100 pb-2">My Profile</h5>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mobile Number</label>
+              <input type="text" id="prof-phone" disabled
+                class="w-full mt-1 p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-semibold cursor-not-allowed">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wide">CPN Number</label>
+              <input type="text" id="prof-cpn" disabled
+                class="w-full mt-1 p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-semibold cursor-not-allowed">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wide">Default Can Rate
+              (₹)</label>
+            <input type="text" id="prof-rate" disabled
+              class="w-full mt-1 p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-black cursor-not-allowed">
+          </div>
+
+          <div class="pt-3 border-t border-slate-100">
+            <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wide">Email Address</label>
+            <input type="email" id="prof-email"
+              class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium text-sm">
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wide">WhatsApp Number</label>
+            <input type="text" id="prof-wa"
+              class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium text-sm"
+              placeholder="e.g. 9876543210">
+          </div>
+
+          <button onclick="submitProfileUpdate()" id="btn-update-prof"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-4 rounded-xl shadow-md active:scale-[0.98] transition mt-2">Update
+            Profile</button>
+          <p id="prof-msg" class="text-sm font-bold text-center mt-2 hidden"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="hidden flex flex-col h-screen fade-in relative">
+      <div
+        class="sticky top-0 z-50 glass-header py-1 px-4 text-white flex justify-between items-center shadow-lg border-b border-white/10">
+        <div class="flex items-center gap-x-4">
+          <a href="https://wowdrops.github.io" target="_blank" rel="noopener noreferrer" class="shrink-0">
+            <img src="wowLogo.jpg" class="h-12 md:h-16 w-auto"
+              alt="Logo">
+          </a>
+          <div>
+            <h4 class="font-bold text-lg tracking-tight disp-cust-name">Loading...</h4>
+            <div class="text-[11px] text-indigo-200 font-medium mt-0.5 tracking-wide disp-cust-details"></div>
+          </div>
+        </div>
+
+        <div class="relative">
+          <button onclick="toggleMenu()"
+            class="text-white focus:outline-none p-1 opacity-90 hover:opacity-100 transition">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16">
+              </path>
+            </svg>
+          </button>
+
+          <div id="dropdown-menu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl py-2 z-30 border border-slate-100 overflow-hidden">
+            <a href="javascript:void(0)" onclick="event.preventDefault(); triggerNotificationSetup(); toggleMenu();" class="block px-5 py-3 text-sm text-emerald-600 font-black hover:bg-slate-50 border-b border-slate-50 transition flex items-center justify-between">
+              Enable Daily Alerts 🔔
+            </a>
+            <a href="javascript:void(0)" onclick="event.preventDefault(); openProfile(); toggleMenu();"
+              class="block px-5 py-3 text-sm text-slate-700 font-semibold hover:bg-slate-50 border-b border-slate-50 transition">My
+              Profile</a>
+            <a href="javascript:void(0)" onclick="event.preventDefault(); openSalesHistory(); toggleMenu();"
+              class="block px-5 py-3 text-sm text-slate-700 font-semibold hover:bg-slate-50 border-b border-slate-50 transition">Sales
+              History</a>
+            <a href="javascript:void(0)" onclick="event.preventDefault(); openPaymentHistory(); toggleMenu();"
+              class="block px-5 py-3 text-sm text-slate-700 font-semibold hover:bg-slate-50 border-b border-slate-50 transition">Payment
+              History</a>
+            <a href="javascript:void(0)" onclick="event.preventDefault(); openPaymentPopup(); toggleMenu();"
+              class="block px-5 py-3 text-sm text-slate-700 font-semibold hover:bg-slate-50 border-b border-slate-50 transition">Outstanding</a>
+            <a href="javascript:void(0)" onclick="event.preventDefault(); openChangePassword(); toggleMenu();"
+              class="block px-5 py-3 text-sm text-indigo-600 font-bold hover:bg-slate-50 border-b border-slate-50 transition">Change
+              Password</a>
+
+            <!-- NEW: Gateway Compliant Menu Links -->
+            <a href="201_TermsAndConditions.html" target="_blank" rel="noopener noreferrer"
+              class="block px-5 py-3 text-sm text-slate-500 font-bold hover:bg-slate-50 border-b border-slate-50 transition">Terms
+              & Conditions</a>
+            <a href="201_PrivacyPolicy.html" target="_blank" rel="noopener noreferrer"
+              class="block px-5 py-3 text-sm text-slate-500 font-bold hover:bg-slate-50 border-b border-slate-50 transition">Privacy
+              Policy</a>
+            <a href="201_ReturnAndRefund.html" target="_blank" rel="noopener noreferrer"
+              class="block px-5 py-3 text-sm text-slate-500 font-bold hover:bg-slate-50 border-b border-slate-50 transition">Return
+              & Refund Policy</a>
+            <a href="201_ShippingPolicy.html" target="_blank" rel="noopener noreferrer"
+              class="block px-5 py-3 text-sm text-slate-500 font-bold hover:bg-slate-50 border-b border-slate-50 transition">Shipping
+              Policy</a>
+            <a href="index.html#main-contact" target="_blank" rel="noopener noreferrer"
+              class="block px-5 py-3 text-sm text-slate-500 font-bold hover:bg-slate-50 border-b border-slate-50 transition">Support</a>
+
+            <a href="javascript:void(0)" onclick="event.preventDefault(); logoutCustomer();"
+              class="block px-5 py-3 text-sm text-red-600 font-bold hover:bg-red-50 transition">Secure Logout</a>
+          </div>
+        </div>
+      </div>
+      <!-- DASHBOARD SCROLL AREA -->
+      <div class="flex-1 flex flex-col p-5 overflow-y-auto pb-10">
+        <div id="payment-status-banner" class="mb-4 hidden"></div>
+        <!-- DARK BLUE SUMMARY CARD -->
+        <div
+          class="bg-gradient-to-r from-slate-900 to-indigo-950 p-4 rounded-xl shadow-md border border-slate-800 mb-3 flex-shrink-0 text-white relative">
+          <div id="dash-skel"
+            class="absolute inset-0 bg-slate-900 rounded-xl z-10 flex items-center justify-center hidden">
+            <div class="w-8 h-8 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+
+          <div class="grid grid-cols-[35%_31%_34%] divide-x divide-white/20 items-start mb-5">
+            <div class="pr-2">
+              <p class="text-[10px] sm:text-xs text-indigo-200/70 uppercase tracking-widest font-bold mb-0.5">
+                Outstanding</p>
+              <div class="flex items-center space-x-1 cursor-pointer group" onclick="openPaymentPopup('total')">
+                <span
+                  class="text-2xl font-bold text-slate-400 underline decoration-1 underline-offset-4 decoration-indigo-200/70 group-hover:text-indigo-600 transition">
+                  <h3 id="dash-outstanding"
+                    class="text-2xl sm:text-2xl font-black text-white tracking-tight group-hover:text-emerald-300 transition truncate">
+                    ₹--</h3>
+                </span>
+                <svg class="w-5 h-5 text-indigo-300 group-hover:text-emerald-300 animate-pulse shrink-0" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+                  </path>
+                </svg>
+              </div>
+            </div>
+            <div class="px-2">
+              <p class="text-[10px] sm:text-xs text-indigo-200/70 uppercase tracking-widest font-bold mb-0.5">Advance
+              </p>
+              <h3 id="val-advance" class="text-2xl sm:text-2xl font-black text-white tracking-tight truncate">₹--</h3>
+            </div>
+            <div class="pl-3">
+              <p class="text-[10px] sm:text-xs text-indigo-200/70 uppercase tracking-widest font-bold mb-0.5 truncate">
+                Cans with u</p>
+              <h3 id="val-cans" class="text-2xl sm:text-2xl font-black text-white tracking-tight truncate">-</h3>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 border-t border-white/10 pt-3">
+            <div class="bg-white/5 p-2.5 rounded-lg border border-white/10 flex items-center justify-between gap-1">
+              <div class="min-w-0">
+                <p class="text-[9px] text-red-300 uppercase tracking-wider font-bold mb-0.5">Previous</p>
+                <h3 id="dash-previous-dues" class="text-lg font-black text-white tracking-tight truncate">₹--</h3>
+              </div>
+              <button onclick="openPaymentPopup('previous')"
+                class="shrink-0 text-[9px] bg-red-500/20 text-red-200 px-2 py-1.5 rounded font-black hover:bg-red-500/40 border border-red-500/30 transition uppercase tracking-wider active:scale-95">Pay</button>
+            </div>
+
+            <div class="bg-white/5 p-2.5 rounded-lg border border-white/10 flex items-center justify-between gap-1">
+              <div class="min-w-0">
+                <p class="text-[9px] text-emerald-300 uppercase tracking-wider font-bold mb-0.5"><span
+                    id="current-month-name">--</span></p>
+                <h3 id="dash-current-month" class="text-lg font-black text-white tracking-tight truncate">₹--</h3>
+              </div>
+              <button onclick="openPaymentPopup('currentMon')"
+                class="shrink-0 text-[9px] bg-emerald-500/20 text-emerald-200 px-2 py-1.5 rounded font-black hover:bg-emerald-500/40 border border-emerald-500/30 transition uppercase tracking-wider active:scale-95">Pay</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full bg-white border border-slate-200 p-6 rounded-2xl shadow-sm space-y-5 relative">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+                </path>
+              </svg>
+              <h6 class="font-extrabold text-slate-800 text-lg uppercase tracking-wide">ORDER</h6>
+              
+              <!-- MINIMALIST QUICK ADD BOTTLES -->
+              <div class="flex items-center gap-2.5 mr-1">
+                <button type="button" id="btn-quick-1" onclick="quickAddCans(1)"
+                  class="flex items-center justify-center outline-none group disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer" title="1 Can">
+                  <div class="h-5 flex items-center justify-center">
+                    <svg class="h-full w-auto text-indigo-500 group-hover:scale-110 transition-transform drop-shadow-sm" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="9.5" y="2" width="5" height="2" rx="0.5" fill="#6366F1"/>
+                      <path d="M15 4.5c1 1.5 2 2.5 2 4.5v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9c0-2 1-3 2-4.5V4h6v.5z" fill="#E0E7FF"/>
+                      <path d="M17 10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10h8z" fill="#818CF8"/>
+                      <rect x="8" y="13" width="8" height="1.5" rx="0.5" fill="#4F46E5" opacity="0.3"/>
+                      <rect x="8" y="17" width="8" height="1.5" rx="0.5" fill="#4F46E5" opacity="0.3"/>
+                    </svg>
+                  </div>
+                </button>
+
+                <button type="button" id="btn-quick-2" onclick="quickAddCans(2)"
+                  class="flex items-center justify-center outline-none group disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer" title="2 Cans">
+                  <div class="h-5 flex items-center justify-center">
+                    <svg class="h-full w-auto text-indigo-500 group-hover:scale-110 transition-transform drop-shadow-sm" viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g transform="translate(8, 0)"><rect x="9.5" y="2" width="5" height="2" rx="0.5" fill="#6366F1"/><path d="M15 4.5c1 1.5 2 2.5 2 4.5v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9c0-2 1-3 2-4.5V4h6v.5z" fill="#E0E7FF"/><path d="M17 10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10h8z" fill="#818CF8"/></g>
+                      <g transform="translate(-2, 2)"><rect x="9.5" y="2" width="5" height="2" rx="0.5" fill="#4F46E5"/><path d="M15 4.5c1 1.5 2 2.5 2 4.5v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9c0-2 1-3 2-4.5V4h6v.5z" fill="#C7D2FE"/><path d="M17 10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10h8z" fill="#6366F1"/><rect x="8" y="13" width="8" height="1.5" rx="0.5" fill="#4338CA" opacity="0.4"/><rect x="8" y="17" width="8" height="1.5" rx="0.5" fill="#4338CA" opacity="0.4"/></g>
+                    </svg>
+                  </div>
+                </button>
+
+                <button type="button" id="btn-quick-3" onclick="quickAddCans(3)"
+                  class="flex items-center justify-center outline-none group disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed active:scale-90 transition-all cursor-pointer" title="3 Cans">
+                  <div class="h-5 flex items-center justify-center">
+                    <svg class="h-full w-auto text-indigo-500 group-hover:scale-110 transition-transform drop-shadow-sm" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g transform="translate(0, 0)"><rect x="9.5" y="2" width="5" height="2" rx="0.5" fill="#6366F1"/><path d="M15 4.5c1 1.5 2 2.5 2 4.5v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9c0-2 1-3 2-4.5V4h6v.5z" fill="#E0E7FF"/><path d="M17 10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10h8z" fill="#818CF8"/></g>
+                      <g transform="translate(12, 0)"><rect x="9.5" y="2" width="5" height="2" rx="0.5" fill="#6366F1"/><path d="M15 4.5c1 1.5 2 2.5 2 4.5v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9c0-2 1-3 2-4.5V4h6v.5z" fill="#E0E7FF"/><path d="M17 10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10h8z" fill="#818CF8"/></g>
+                      <g transform="translate(6, 4)"><rect x="9.5" y="2" width="5" height="2" rx="0.5" fill="#4F46E5"/><path d="M15 4.5c1 1.5 2 2.5 2 4.5v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9c0-2 1-3 2-4.5V4h6v.5z" fill="#C7D2FE"/><path d="M17 10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10h8z" fill="#6366F1"/><rect x="8" y="13" width="8" height="1.5" rx="0.5" fill="#4338CA" opacity="0.4"/><rect x="8" y="17" width="8" height="1.5" rx="0.5" fill="#4338CA" opacity="0.4"/></g>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="order-edit-mode-msg"
+            class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center shadow-sm">
+            <span class="text-2xl block mb-2">✅</span>
+            <p class="text-sm font-black text-emerald-800 mb-4">Order is entered.</p>
+            <div class="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-3">
+              <button onclick="toggleOrderEditMode(true)"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg shadow transition text-sm w-full sm:w-auto">Edit
+                Order</button>
+              <button onclick="openCancelModal()"
+                class="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-6 rounded-lg shadow-sm transition text-sm w-full sm:w-auto border border-red-200">Cancel
+                Order</button>
+            </div>
+          </div>
+          <!-- PENDING ORDER NOTIFICATION BANNER -->
+            <div id="pending-alert-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl shadow-sm mb-4">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-amber-500 mr-2 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p class="text-xs font-bold text-amber-900 leading-snug">You currently have a pending order. You may modify it below.</p>
+              </div>
+            </div>
+          <div id="order-input-section" class="space-y-5">
+            <div class="grid grid-cols-2 gap-4 relative">
+              <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 ml-1">Empties
+                  Ready</label>
+                <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-1">
+                  <button type="button" onclick="adjustValue('input-ord-e', -1)"
+                    class="w-10 h-10 flex items-center justify-center bg-white rounded-lg text-slate-700 font-extrabold text-xl shadow-sm active:scale-95 transition">-</button>
+                  <input type="number" id="input-ord-e" oninput="syncCans(this.value)" min="0" value="1"
+                    class="w-full bg-transparent text-center font-black text-2xl text-slate-800 outline-none">
+                  <button type="button" onclick="adjustValue('input-ord-e', 1)"
+                    class="w-10 h-10 flex items-center justify-center bg-white rounded-lg text-slate-700 font-extrabold text-xl shadow-sm active:scale-95 transition">+</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 ml-1">Cans
+                  Ordered</label>
+                <div id="can-input-wrapper"
+                  class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-1 opacity-70">
+                  <button type="button" id="btn-can-minus" onclick="adjustValue('input-ord-d', -1)"
+                    class="w-10 h-10 flex items-center justify-center bg-white rounded-lg text-slate-700 font-extrabold text-xl shadow-sm active:scale-95 transition hidden">-</button>
+                  <input type="number" id="input-ord-d" min="0" value="1" disabled
+                    class="w-full bg-transparent text-center font-black text-2xl text-slate-800 outline-none cursor-not-allowed">
+                  <button type="button" id="btn-can-plus" onclick="adjustValue('input-ord-d', 1)"
+                    class="w-10 h-10 flex items-center justify-center bg-white rounded-lg text-slate-700 font-extrabold text-xl shadow-sm active:scale-95 transition hidden">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="can-policy-msg"
+              class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 text-center mt-3 hidden shadow-sm">
+              <p
+                class="text-[12px] font-black text-indigo-900 flex flex-col sm:flex-row items-center justify-center gap-1.5 uppercase leading-tight tracking-wide">
+                <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                FILLED CANS WILL BE SUPPLIED AGAINST EMPTY CANS.
+              </p>
+            </div>
+
+            <div class="flex w-full items-center space-x-3 mt-2">
+              <button id="btn-cancel-edit" onclick="cancelEditMode()"
+                class="hidden w-1/3 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-300 transition text-sm">Cancel</button>
+              <button id="btn-submit-order" onclick="processOrderSubmission()"
+                class="flex-1 w-full bg-indigo-600 text-white font-black py-3 rounded-xl shadow-md hover:bg-indigo-700 transition-all duration-150 active:scale-95 active:shadow-sm text-sm">Submit
+                Request</button>
+            </div>
+            
+            <!-- NEW: REPLACEMENT BADGE & TRIGGER -->
+            <div id="replacement-badge" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 mt-4 justify-between items-center shadow-sm">
+               <span id="replacement-badge-text" class="text-[11px] font-black text-emerald-800 uppercase tracking-wide"></span>
+               <button type="button" onclick="openReplacementModal()" class="text-emerald-600 hover:text-emerald-800 font-bold text-[10px] uppercase tracking-widest bg-emerald-100 px-2 py-1 rounded transition">Edit</button>
+            </div>
+
+            <div class="text-center mt-3 border-t border-slate-100 pt-3">
+               <a href="javascript:void(0)" onclick="openReplacementModal()" class="text-[10px] font-bold text-slate-400 hover:text-rose-500 underline decoration-slate-200 underline-offset-4 transition">Report an issue / Request free replacement</a>
+            </div>
+            <!-- --------------------------------- -->
+
+            <p id="order-msg" class="text-center text-sm font-bold hidden"></p>
+            <div id="supply-limit-banner" class="mt-3 hidden"></div>
+
+          </div>
+        </div>
+
+        <div class="mt-8 mb-2">
+          <button id="btn-toggle-activity" onclick="loadActivityLogLazy()"
+            class="w-full flex items-center justify-between bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 px-4 py-3.5 rounded-xl transition-all duration-200 group active:scale-[0.99]">
+
+            <div class="flex items-center space-x-2">
+              <!-- Subtle history icon -->
+              <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span id="text-toggle-activity"
+                class="text-[11px] font-extrabold uppercase tracking-widest text-slate-700">
+                Recent Activity Log
+              </span>
+            </div>
+
+            <!-- Chevron arrow that will rotate -->
+            <svg id="icon-toggle-activity" class="w-5 h-5 text-slate-400 transform transition-transform duration-300"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+            </svg>
+
+          </button>
+        </div>
+        <div id="recent-activity-container" class="hidden opacity-0 transition-opacity duration-300 ease-in">
+          <div class="pt-3">
+            <div class="space-y-3"> <!-- PENDING ORDER WIDGET -->
+              <div id="widget-pending-order"
+                class="bg-white rounded-2xl p-4 shadow-sm border border-indigo-200 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full bg-indigo-400"></div>
+                <div class="flex justify-between items-center mb-2 border-b border-slate-50 pb-2">
+                  <h5 class="text-xs font-black text-indigo-700 uppercase tracking-widest flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    PENDING ORDER
+                  </h5>
+                  <span id="po-date" class="text-[10px] font-bold text-slate-400 uppercase">--</span>
+                </div>
+                <div id="po-details" class="hidden">
+                  <div class="flex justify-between mt-1 items-end pr-2">
+                    <div class="flex flex-col">
+                      <span class="text-[10px] font-bold text-slate-500 uppercase">Cans Ordered</span>
+                      <span id="po-cans" class="text-2xl font-black text-slate-800">0</span>
+                    </div>
+                    <div class="flex flex-col text-right">
+                      <span class="text-[10px] font-bold text-slate-500 uppercase">Empties Ready</span>
+                      <span id="po-empties" class="text-2xl font-black text-slate-800">0</span>
+                    </div>
+                  </div>
+                  
+                  <!-- NEW: REPLACEMENT INFO IN PENDING WIDGET -->
+                  <div id="po-rep-container"
+                    class="hidden mt-3 mb-1 p-2 bg-amber-50 rounded-lg border border-amber-200 shadow-inner">
+                    <p class="text-[10px] font-black text-amber-800 uppercase tracking-wide">📦 Includes <span
+                        id="po-rep-text"></span></p>
+                  </div>
+                  <!-- --------------------------------------- -->
+    
+                  <div id="po-status-badge"
+                    class="mt-2 text-[10px] font-bold text-indigo-600 bg-indigo-50 p-1.5 rounded-md inline-block">
+                    Awaiting Delivery</div>
+                </div>
+                <div id="po-empty-msg" class="hidden py-2">
+                  <p id="po-empty-msg-p" class="text-xs font-medium text-slate-500">No pending orders currently.</p>
+                </div>
+              </div>
+
+              <div id="widget-latest-delivery"
+                class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 cursor-default relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full bg-sky-400"></div>
+                <div class="flex justify-between items-center mb-2 border-b border-slate-50 pb-2">
+                  <h5 class="text-xs font-black text-sky-600 uppercase tracking-widest flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                    LATEST DELIVERY
+                  </h5>
+                  <span id="ld-date" class="text-[10px] font-bold text-slate-400 uppercase">--</span>
+                </div>
+                <div class="flex gap-4 items-center">
+                  <div id="ld-thumb"
+                    class="shrink-0 w-16 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-50"></div>
+                  <div class="flex-1 flex flex-col">
+                    <div class="flex justify-between text-xs font-bold text-slate-700">
+                      <span>Delivered: <span id="ld-actd" class="text-sky-600">0</span></span>
+                      <span>Empties: <span id="ld-acte" class="text-sky-600">0</span></span>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-end">
+                      <span class="text-[9px] font-bold text-slate-400 uppercase">Billed Amt</span>
+                      <span id="ld-amt" class="text-lg font-black text-slate-800">₹0</span>
+                    </div>
+                  </div>
+                </div>
+                <p
+                  class="text-[10px] font-bold text-slate-500 mt-3 bg-slate-50 p-2 rounded-lg text-center border border-slate-100">
+                  Note: This recent delivery is not yet reflected in your pending dues.</p>
+              </div>
+
+              <div
+                class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 cursor-pointer hover:border-indigo-300 transition group relative"
+                onclick="openSalesHistory()">
+                <div class="flex justify-between items-center mb-1">
+                  <h5 class="text-xs font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                    SALES
+                  </h5>
+                  <svg class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </div>
+                <div id="widget-sales">
+                  <div class="animate-pulse flex space-x-4 mt-2">
+                    <div class="flex-1 space-y-2 py-1">
+                      <div class="h-2 bg-slate-200 rounded w-3/4"></div>
+                      <div class="h-2 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 cursor-pointer hover:border-emerald-300 transition group"
+                onclick="openPaymentHistory()">
+                <div class="flex justify-between items-center mb-1">
+                  <h5 class="text-xs font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    PAYMENT
+                  </h5>
+                  <svg class="w-4 h-4 text-slate-300 group-hover:text-emerald-500 transition" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </div>
+                <div id="widget-pays">
+                  <div class="animate-pulse flex space-x-4 mt-2">
+                    <div class="flex-1 space-y-2 py-1">
+                      <div class="h-2 bg-slate-200 rounded w-3/4"></div>
+                      <div class="h-2 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SALES HISTORY VIEW -->
+    <div id="view-sales-history" class="hidden flex flex-col h-screen bg-slate-50 fade-in">
+      <div
+        class="sticky top-0 z-50 glass-header p-4 text-white flex justify-between items-center shadow-lg border-b border-white/10">
+        <div class="flex items-center">
+          <button onclick="switchView('view-dashboard')"
+            class="mr-3 opacity-90 hover:opacity-100 transition focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <div>
+            <h4 class="font-bold text-lg tracking-tight disp-cust-name">Loading...</h4>
+            <div class="text-[11px] text-indigo-200 font-medium mt-0.5 tracking-wide disp-cust-details"></div>
+          </div>
+        </div>
+        <span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">SALES</span>
+      </div>
+      <div class="p-4 bg-white border-b border-slate-200 flex space-x-2 shadow-sm shrink-0">
+        <div class="w-1/2"><label class="text-[9px] font-bold text-slate-400 uppercase ml-1">From Date</label><input
+            type="date" id="sales-start"
+            class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500">
+        </div>
+        <div class="w-1/2"><label class="text-[9px] font-bold text-slate-400 uppercase ml-1">To Date</label><input
+            type="date" id="sales-end"
+            class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500">
+        </div>
+        <button onclick="loadSalesData()"
+          class="mt-5 bg-indigo-600 text-white px-4 rounded-lg font-bold text-sm shadow hover:bg-indigo-700 active:scale-95 transition">Go</button>
+      </div>
+      <div id="sales-list" class="p-4 space-y-3 overflow-y-auto flex-1 pb-10"></div>
+    </div>
+
+    <!-- PAYMENT HISTORY VIEW -->
+    <div id="view-payment-history" class="hidden flex flex-col h-screen bg-slate-50 fade-in">
+      <div
+        class="sticky top-0 z-50 glass-header p-4 text-white flex justify-between items-center shadow-lg border-b border-white/10">
+        <div class="flex items-center">
+          <button onclick="switchView('view-dashboard')"
+            class="mr-3 opacity-90 hover:opacity-100 transition focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <div>
+            <h4 class="font-bold text-lg tracking-tight disp-cust-name">Loading...</h4>
+            <div class="text-[11px] text-indigo-200 font-medium mt-0.5 tracking-wide disp-cust-details"></div>
+          </div>
+        </div>
+        <span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">PAYMENTS</span>
+      </div>
+      <div class="p-4 bg-white border-b border-slate-200 flex space-x-2 shadow-sm shrink-0">
+        <div class="w-1/2"><label class="text-[9px] font-bold text-slate-400 uppercase ml-1">From Date</label><input
+            type="date" id="pays-start"
+            class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500">
+        </div>
+        <div class="w-1/2"><label class="text-[9px] font-bold text-slate-400 uppercase ml-1">To Date</label><input
+            type="date" id="pays-end"
+            class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500">
+        </div>
+        <button onclick="loadPaymentData()"
+          class="mt-5 bg-indigo-600 text-white px-4 rounded-lg font-bold text-sm shadow hover:bg-indigo-700 active:scale-95 transition">Go</button>
+      </div>
+      <div id="payment-list" class="p-4 space-y-3 overflow-y-auto flex-1 pb-10"></div>
+    </div>
+
+    <!-- EMAIL COLLECTION MODAL -->
+    <div id="email-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-start pt-24 md:items-center md:pt-0 justify-center p-4 fade-in">
+      <div class="bg-white w-full max-w-sm rounded-[24px] shadow-2xl p-6 text-center space-y-4">
+        <div class="mx-auto w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
+          </svg>
+        </div>
+        <h3 class="font-extrabold text-xl text-slate-800">Secure Your Account</h3>
+        <p class="text-xs text-slate-500 font-medium">Please enter your email address. We will use this to help you
+          recover your password if you ever forget it.</p>
+        <input type="email" id="capture-email" placeholder="your.email@example.com"
+          class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm font-medium">
+        <div class="flex gap-2 pt-2">
+          <button onclick="skipEmailCapture()"
+            class="flex-1 bg-white border border-slate-200 text-slate-500 font-bold p-3 rounded-xl hover:bg-slate-50 transition text-sm">Skip
+            for now</button>
+          <button onclick="saveCapturedEmail()" id="btn-save-email"
+            class="flex-1 bg-indigo-600 text-white font-bold p-3 rounded-xl hover:bg-indigo-700 transition text-sm shadow-md">Save
+            Email</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION PROMPT MODAL -->
+    <div id="notification-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
+      <div class="bg-white w-full max-w-sm rounded-[24px] shadow-2xl p-6 text-center space-y-4">
+        <div class="mx-auto w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+          </svg>
+        </div>
+        <h3 class="font-extrabold text-xl text-slate-800">Stay Updated</h3>
+        <p class="text-xs text-slate-500 font-medium">Enable daily alerts to get instant reminders about your pending dues and delivery updates.</p>
+        <div class="flex gap-2 pt-2">
+          <button onclick="skipNotificationCapture()" class="flex-1 bg-white border border-slate-200 text-slate-500 font-bold p-3 rounded-xl hover:bg-slate-50 transition text-sm">Maybe Later</button>
+          <button onclick="acceptNotificationCapture()" class="flex-1 bg-emerald-600 text-white font-bold p-3 rounded-xl hover:bg-emerald-700 transition text-sm shadow-md">Enable Alerts</button>
+        </div>
+      </div>
+    </div>
+    <div id="ios-pwa-warning" class="hidden bg-blue-50 border border-blue-200 p-4 rounded-xl shadow-sm mb-4">
+      <div class="flex gap-3">
+        <div class="text-blue-500 mt-0.5">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        </div>
+        <div>
+          <h4 class="text-sm font-black text-blue-900 uppercase tracking-widest">iPhone Users</h4>
+          <p class="text-xs font-bold text-blue-700 mt-1">To enable Delivery Alerts, you must install this app.</p>
+          <p class="text-xs font-medium text-blue-600 mt-1">Tap the <b>Share</b> icon below, then select <b>"Add to Home Screen"</b>. Open the app from your home screen to subscribe!</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PAYMENT MODAL -->
+    <div id="payment-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-white w-full max-w-sm max-h-[90vh] flex flex-col rounded-[24px] shadow-2xl overflow-hidden transform transition-all my-auto">
+        <div class="bg-emerald-500 p-5 text-white flex justify-between items-center shrink-0">
+          <h3 class="font-extrabold text-lg flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+              </path>
+            </svg>
+            Settle Outstanding
+          </h3>
+          <button onclick="closePaymentPopup()" class="text-emerald-100 hover:text-white transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Scrollable content area inside the modal -->
+        <div class="p-6 space-y-4 overflow-y-auto flex-1">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Select Amount to Pay</p>
+          <div class="space-y-3">
+            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center space-x-3"><input type="radio" name="pay-amt" value="older" onchange="updatePayInput(this)" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"><span class="text-sm font-bold text-slate-700">Older Dues</span></div>
+              <span id="split-older" class="font-black text-slate-800">₹0</span>
+            </label>
+            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center space-x-3"><input type="radio" name="pay-amt" value="lastMon" onchange="updatePayInput(this)" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"><span class="text-sm font-bold text-slate-700">Last Month</span></div>
+              <span id="split-last" class="font-black text-slate-800">₹0</span>
+            </label>
+            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center space-x-3"><input type="radio" name="pay-amt" value="previous" onchange="updatePayInput(this)" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"><span class="text-sm font-bold text-slate-700">Previous Dues (Older + Last Month)</span></div>
+              <span id="split-previous" class="font-black text-slate-800">₹0</span>
+            </label>
+            <label class="flex items-center justify-between p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center space-x-3"><input type="radio" name="pay-amt" value="currentMon" onchange="updatePayInput(this)" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"><span class="text-sm font-bold text-slate-700">Current Month</span></div>
+              <span id="split-curr" class="font-black text-slate-800">₹0</span>
+            </label>
+            <label class="flex items-center justify-between p-3 border-2 border-emerald-100 bg-emerald-50/50 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
+              <div class="flex items-center space-x-3"><input type="radio" name="pay-amt" value="total" checked onchange="updatePayInput(this)" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"><span class="text-sm font-black text-emerald-900">Total Outstanding</span></div>
+              <span id="split-total" class="font-black text-emerald-700">₹0</span>
+            </label>
+          </div>
+
+          <!-- THE NEW DISCLAIMER MESSAGE -->
+          <div class="bg-amber-50 border border-amber-200 text-amber-800 text-[10px] sm:text-xs p-2.5 rounded-lg flex gap-2 items-start mt-2">
+            <svg class="w-4 h-4 shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p><strong>Note:</strong> Any amount paid will automatically be adjusted against your oldest pending dues first.</p>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-slate-100">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 ml-1">Custom Amount / Confirm Amount (₹)</label>
+            <!-- REPLACED onfocus WITH oninput -->
+            <input type="number" id="pay-custom-amt" oninput="handleCustomAmountInput(this)"
+              class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition font-black text-xl text-slate-800">
+          </div>
+          <button onclick="triggerUPIPayment()"
+            class="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition flex justify-center items-center gap-2">
+            Pay via UPI App
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3">
+              </path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="cancel-order-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex-col items-center justify-center fade-in px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl relative">
+      <button onclick="closeCancelModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <div class="text-center mb-5">
+        <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+            </path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-black text-slate-800">Cancel Order?</h3>
+        <p class="text-sm text-slate-500 mt-2">This action cannot be undone. Are you sure you want to cancel your
+          current pending order?</p>
+      </div>
+
+      <div id="cancel-confirm-area" class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-5">
+        <div id="confirm-type-checkbox" class="hidden items-center space-x-3">
+          <input type="checkbox" id="cancel-checkbox" onchange="validateCancelAction()"
+            class="w-5 h-5 text-red-600 rounded border-slate-300 focus:ring-red-500">
+          <label for="cancel-checkbox" class="text-[13px] font-bold text-slate-700 leading-tight">I confirm I want to
+            permanently cancel this order.</label>
+        </div>
+
+        <div id="confirm-type-toggle" class="hidden items-center justify-between">
+          <span class="text-[13px] font-bold text-slate-700 leading-tight pr-4">Slide to confirm cancellation</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="cancel-toggle" onchange="validateCancelAction()" class="sr-only peer">
+            <div
+              class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500">
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <button id="btn-execute-cancel" onclick="executeCancelOrder()" disabled
+        class="w-full bg-slate-300 text-slate-500 font-black py-3 rounded-xl transition text-sm cursor-not-allowed">Confirm
+        & Cancel</button>
+    </div>
+  </div>
+  <!-- REPLACEMENT MODAL (+/- VERSION) -->
+    <div id="replacement-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-start pt-24 md:items-center md:pt-0 justify-center p-4 fade-in">
+      <div class="bg-white w-full max-w-sm rounded-[24px] shadow-2xl overflow-hidden relative">
+        <button onclick="closeReplacementModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 outline-none">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-5">
+             <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center shrink-0">
+               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+             </div>
+             <div>
+               <h3 class="font-black text-lg text-slate-800 leading-tight">Request Replacement</h3>
+               <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Free of charge</p>
+             </div>
+          </div>
+          
+          <div class="space-y-5">
+             <div>
+               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 ml-1">Number of cans to replace</label>
+               <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-1">
+                  <button type="button" onclick="adjustReplacementValue(-1)" class="w-10 h-10 flex items-center justify-center bg-white rounded-lg text-slate-700 font-extrabold text-xl shadow-sm active:scale-95 transition outline-none">-</button>
+                  <input type="number" id="input-replace-qty" min="0" value="0" disabled class="w-full bg-transparent text-center font-black text-2xl text-slate-800 outline-none">
+                  <button type="button" onclick="adjustReplacementValue(1)" class="w-10 h-10 flex items-center justify-center bg-white rounded-lg text-slate-700 font-extrabold text-xl shadow-sm active:scale-95 transition outline-none">+</button>
+                </div>
+             </div>
+             <div>
+               <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5 ml-1">Reason for replacement</label>
+               <select id="input-replace-reason" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none transition font-bold text-sm text-slate-700 appearance-none">
+                 <option value="">-- Select Reason --</option>
+                 <option value="Water problem">Water Quality / Impurities</option>
+                 <option value="Leakage">Can Leakage</option>
+                 <option value="NVJ">Non-Validity Jar (NVJ/Expired)</option>
+               </select>
+             </div>
+          </div>
+          
+          <button onclick="saveReplacementToOrder()" class="w-full mt-6 bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-xl shadow-lg active:scale-[0.98] transition uppercase tracking-widest text-sm">
+            Attach to Order
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- iOS INSTALL PROMPT MODAL -->
+    <div id="ios-install-prompt" class="fixed inset-x-0 bottom-0 z-[9999] bg-white rounded-t-[2rem] shadow-[0_-20px_50px_rgba(0,0,0,0.15)] p-6 hidden transform transition-transform border-t border-slate-200 fade-in">
+      <div class="flex flex-col items-center text-center">
+        <img src="wowLogo.jpg" class="w-16 h-16 rounded-2xl shadow-md border border-slate-100 mb-4">
+        <h4 class="font-black text-slate-800 text-xl">Install WOW DROPS</h4>
+        <p class="text-sm text-slate-500 font-medium mt-2 leading-snug px-4">Get daily booking reminders directly on your iPhone by adding this app to your Home Screen.</p>
+      </div>
+      <div class="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-700 space-y-3">
+        <p class="flex items-center">
+          <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 shrink-0">1</span> 
+          Tap the <svg class="w-6 h-6 text-indigo-600 mx-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> Share button below.
+        </p>
+        <p class="flex items-start">
+          <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 shrink-0">2</span> 
+          <span>Scroll down and select <span class="bg-white border border-slate-200 px-2 py-1 rounded shadow-sm text-xs ml-1 inline-block mt-1">➕ Add to Home Screen</span></span>
+        </p>
+      </div>
+      <button onclick="document.getElementById('ios-install-prompt').classList.add('hidden')" class="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black p-4 rounded-xl transition text-sm uppercase tracking-widest">Dismiss</button>
+    </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  
+  <!-- Link to external JS Modules -->
+  <script src="supabase_config.js?v=4.2" defer></script>
+  <script src="301_portal_core.js?v=4.2" defer></script>
+  <script src="302_portal_auth.js?v=4.2" defer></script>
+  <script src="303_portal_dashboard.js?v=4.2" defer></script>
+  <script src="304_portal_history.js?v=4.2" defer></script>
+  <script src="305_portal_notifications.js?v=4.2" defer></script>
+  <script src="306_portal_PG.js?v=4.2" defer></script>
+
+</body>
+
+</html>

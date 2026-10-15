@@ -1,0 +1,28 @@
+<!-- ESCALATIONS VIEW -->
+<div id="tab-tran-escalations" class="hidden fade-in">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-widest">CRM Escalations</h2>
+    <button onclick="window.loadEscalationsData()" class="bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg hover:bg-slate-300 transition text-sm shadow-sm active:scale-95">
+      Refresh Inbox
+    </button>
+    
+  </div>
+  
+  <div class="bg-white rounded-3xl border-4 border-slate-200 shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-800 text-white">
+            <th class="px-6 py-4 font-black uppercase tracking-widest text-sm">Customer</th>
+            <th class="px-6 py-4 font-black uppercase tracking-widest text-sm">Agent & Time</th>
+            <th class="px-6 py-4 font-black uppercase tracking-widest text-sm">Escalation Note</th>
+            <th class="px-6 py-4 font-black uppercase tracking-widest text-sm text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody id="escalations-tbody">
+          <!-- Escalations will load here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

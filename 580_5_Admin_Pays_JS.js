@@ -1,0 +1,239 @@
+
+// =====================================
+  // ADVANCED PAYS ENGINE
+  // =====================================
+  
+  window.masterPaysData = [];
+  window.filteredPaysData = [];
+  window.paysDisplayCount = 50;
+  window.paysSortCol = 'timestamp';
+  window.paysSortAsc = false;
+
+  // Timer Engine
+  window.activePaysTimerInterval = null;
+  window.paysStartTime = 0;
+
+  window.startPaysTimer = function(actionLabel) {
+    var timerBadge = document.getElementById('pays-live-timer');
+    if (!timerBadge) return;
+    timerBadge.outerHTML = '<span id="pays-live-timer" class="bg-emerald-100 text-emerald-800 font-black px-3 py-1.5 rounded-lg text-sm border-2 border-emerald-200 shadow-inner flex items-center gap-1.5 min-w-max"><svg class="w-4 h-4 animate-spin text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' + actionLabel + ': <span id="pays-timer-sec">0.00</span>s</span>';
+    document.getElementById('pays-live-timer').classList.remove('hidden');
+    window.paysStartTime = performance.now();
+    if(window.activePaysTimerInterval) clearInterval(window.activePaysTimerInterval);
+    window.activePaysTimerInterval = setInterval(function() {
+        var secEl = document.getElementById('pays-timer-sec');
+        if(secEl) secEl.innerText = ((performance.now() - window.paysStartTime) / 1000).toFixed(2);
+    }, 50);
+  };
+
+  window.stopPaysTimer = function(successLabel, isError) {
+    if(window.activePaysTimerInterval) clearInterval(window.activePaysTimerInterval);
+    var finalTime = ((performance.now() - window.paysStartTime) / 1000).toFixed(2);
+    var badge = document.getElementById('pays-live-timer');
+    if(badge) {
+        if (isError) badge.outerHTML = '<span id="pays-live-timer" class="bg-red-100 text-red-800 font-bold px-3 py-1.5 rounded-lg border border-red-200 text-xs uppercase tracking-widest whitespace-nowrap shadow-sm min-w-max">Failed</span>';
+        else badge.outerHTML = '<span id="pays-live-timer" class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 text-xs uppercase tracking-widest whitespace-nowrap shadow-sm min-w-max">' + successLabel + ' in ' + finalTime + 's</span>';
+    }
+  };
+
+  window.togglePaysHeader = function() {
+    var col = document.getElementById('pays-header-collapsible');
+    var icon = document.getElementById('pays-header-icon');
+    if (col.classList.contains('hidden')) { col.classList.remove('hidden'); icon.classList.add('rotate-180'); } 
+    else { col.classList.add('hidden'); icon.classList.remove('rotate-180'); }
+  };
+
+  window.loadPaysData = function () {
+    var startEl = document.getElementById('pays-start');
+    var endEl = document.getElementById('pays-end');
+    var targetCpnEl = document.getElementById('target-pays-cpn');
+    
+    var start = startEl.value;
+    var end = endEl.value;
+    var targetCpn = targetCpnEl ? targetCpnEl.value.trim().toUpperCase() : "";
+
+    if (!start || !end) return alert("Please select both start and end dates.");
+
+    // --- SMART DATE AUTO-CORRECTION ---
+    var dStart = new Date(start);
+    var dEnd = new Date(end);
+    var diffDays = Math.ceil((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24));
+    var limitDays = targetCpn ? 185 : 35; 
+
+    if (diffDays > limitDays) {
+      var correctedStart = new Date(dEnd);
+      correctedStart.setDate(correctedStart.getDate() - limitDays);
+      start = correctedStart.toISOString().split('T')[0];
+      startEl.value = start; // Auto-update UI
+      
+      var msg = targetCpn 
+        ? "CPN specific searches are optimized for 6 months (185 days). Your start date was auto-adjusted." 
+        : "Global searches are optimized for 1 month (35 days). Your start date was auto-adjusted.";
+      alert(msg);
+    }
+    // ----------------------------------
+
+    var tb = document.getElementById('pays-tbody');
+    window.startPaysTimer('Fetching');
+    tb.innerHTML = "<tr><td colspan='7' class='px-6 py-12 text-center text-emerald-500 font-bold text-xl animate-pulse'>Fetching payment history...</td></tr>";
+    window.paysDisplayCount = 50;
+
+    google.script.run.withSuccessHandler(function (res) {
+      window.stopPaysTimer('Fetched', !res.success);
+      if (!res.success || res.data.length === 0) {
+         tb.innerHTML = "<tr><td colspan='7' class='px-6 py-12 text-center font-bold text-slate-400 text-xl'>No payments found for this criteria.</td></tr>";
+         document.getElementById('rep-pays-amt').innerText = "₹0"; 
+         document.getElementById('pays-tot-count').innerText = "0";
+         return;
+      }
+      window.masterPaysData = res.data;
+      window.filterPaysData();
+    }).fetchPaysDetailedReport(start, end, targetCpn);
+  };
+
+  window.filterPaysData = function() {
+    var q = document.getElementById('pays-search').value.toLowerCase().trim();
+    
+    window.filteredPaysData = window.masterPaysData.filter(r => {
+      return !q || 
+             (r.cpn.toLowerCase().indexOf(q) > -1) || 
+             (r.refNo.toLowerCase().indexOf(q) > -1) || 
+             (r.bank.toLowerCase().indexOf(q) > -1) || 
+             (r.comment.toLowerCase().indexOf(q) > -1) ||
+             (r.mode.toLowerCase().indexOf(q) > -1);
+    });
+    
+    window.paysDisplayCount = 50; 
+    window.sortPays(window.paysSortCol, true); // Retain active sort and render
+  };
+
+  window.sortPays = function(key, keepDirection) {
+    if (!keepDirection) {
+        if (window.paysSortCol === key) window.paysSortAsc = !window.paysSortAsc;
+        else { window.paysSortCol = key; window.paysSortAsc = true; }
+    }
+
+    window.filteredPaysData.sort(function(a, b) {
+      var valA = a[key] === undefined ? "" : a[key];
+      var valB = b[key] === undefined ? "" : b[key];
+      
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return window.paysSortAsc ? -1 : 1;
+      if (valA > valB) return window.paysSortAsc ? 1 : -1;
+      return 0;
+    });
+
+    window.renderPaysDOM();
+  };
+
+  window.renderPaysDOM = function () {
+    var tb = document.getElementById('pays-tbody');
+    var h = '', sumAmt = 0;
+    var limit = Math.min(window.paysDisplayCount, window.filteredPaysData.length);
+
+    for (var i = 0; i < window.filteredPaysData.length; i++) {
+       sumAmt += window.filteredPaysData[i].amt;
+    }
+
+    if (window.filteredPaysData.length === 0) {
+      tb.innerHTML = "<tr><td colspan='7' class='px-6 py-12 text-center font-bold text-slate-400 text-xl'>No matching records.</td></tr>";
+    } else {
+      for (var i = 0; i < limit; i++) {
+        var r = window.filteredPaysData[i]; 
+        
+        // Sleek Eye Icon for deep dive
+        var detailBtn = `<button onclick="window.openPaysDetails('${r.uniqueNo}')" class="text-emerald-500 hover:text-emerald-400 hover:bg-slate-800 p-2 rounded-full transition" title="View Details">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+        </button>`;
+
+        var bankDisplay = r.bank ? `<br><span class='text-[10px] text-slate-400 tracking-widest'>${r.bank}</span>` : '';
+        var refDisplay = r.refNo || '-';
+
+        h += "<tr class='hover:bg-slate-50 transition border-b border-slate-100'>" +
+             "<td class='p-4 font-black text-emerald-600 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-lg'><span class='hover:underline cursor-pointer' onclick=\"window.openPays360('"+r.cpn+"')\">" + r.cpn + "</span></td>" +
+             "<td class='p-4 font-bold text-slate-600'>" + r.date + "<br><span class='text-[10px] font-black text-slate-400'>" + r.time + "</span></td>" +
+             "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black text-slate-600 uppercase tracking-widest'>" + r.mode + "</span></td>" +
+             "<td class='p-4 text-right font-black text-emerald-600 text-lg'>₹" + r.amt.toLocaleString('en-IN') + "</td>" +
+             "<td class='p-4 font-bold text-indigo-700 text-sm truncate max-w-[150px]'>" + refDisplay + bankDisplay + "</td>" +
+             "<td class='p-4 text-sm text-slate-500 truncate max-w-[200px]'>" + (r.comment || '-') + "</td>" +
+             "<td class='p-4 text-center'>" + detailBtn + "</td>" +
+             "</tr>";
+      }
+
+      if (window.paysDisplayCount < window.filteredPaysData.length) {
+        h += "<tr><td colspan='7' class='p-4 text-center'><button onclick='window.paysDisplayCount += 50; window.renderPaysDOM()' class='bg-slate-200 text-slate-700 font-bold px-6 py-3 rounded-xl hover:bg-slate-300 transition shadow-inner uppercase tracking-widest text-xs'>Load 50 More</button></td></tr>";
+      }
+      tb.innerHTML = h;
+    }
+
+    document.getElementById('pays-tot-count').innerText = window.filteredPaysData.length;
+    document.getElementById('rep-pays-amt').innerText = "₹" + sumAmt.toLocaleString('en-IN');
+  };
+
+  // --- DETAILS MODAL ---
+  window.openPaysDetails = function(uniqueNo) {
+    var r = window.masterPaysData.find(x => x.uniqueNo === uniqueNo);
+    if(!r) return alert("Record not found.");
+
+    // FIX: Break modal out of the tab container to prevent top navbar overlap
+    var modalEl = document.getElementById('pays-details-modal');
+    if (modalEl) {
+        document.body.appendChild(modalEl);
+    }
+
+    document.getElementById('pays-modal-subtitle').innerText = r.cpn + " - " + r.date;
+
+    var html = `
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <h4 class="text-sm font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-2 mb-4 flex items-center justify-between">Section 1: Transaction Intelligence <span class="text-[9px] text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded">ID: ${r.uniqueNo || '-'}</span></h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amount Paid</p>
+            <p class="text-3xl font-black text-emerald-600">₹${r.amt.toLocaleString('en-IN')}</p>
+          </div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center flex flex-col justify-center">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment Mode</p>
+            <p class="text-xl font-black text-slate-700 uppercase">${r.mode}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-4 text-xs">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="font-black text-slate-400 uppercase tracking-widest block mb-1">Ref No</span><span class="font-bold text-slate-700">${r.refNo || '-'}</span></div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="font-black text-slate-400 uppercase tracking-widest block mb-1">Bank / App</span><span class="font-bold text-slate-700">${r.bank || '-'}</span></div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2"><span class="font-black text-slate-400 uppercase tracking-widest block mb-1">Transaction Comment</span><span class="font-bold text-slate-700">${r.comment || '-'}</span></div>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mt-6">
+        <h4 class="text-sm font-black text-indigo-500 uppercase tracking-widest border-b border-indigo-100 pb-2 mb-4">Section 2: Audit Trail</h4>
+        <div class="grid grid-cols-2 gap-4 text-xs">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="font-black text-slate-400 uppercase tracking-widest block mb-1">Entered By</span><span class="font-bold text-slate-700">${r.enterBy || '-'}</span></div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="font-black text-slate-400 uppercase tracking-widest block mb-1">Entered On</span><span class="font-bold text-slate-700">${r.enterOn || '-'}</span></div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2"><span class="font-black text-slate-400 uppercase tracking-widest block mb-1">Entry Origin</span><span class="font-bold text-slate-700">${r.entryFrom || '-'}</span></div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('pays-details-body').innerHTML = html;
+    modalEl.classList.remove('hidden');
+  };
+
+  window.openPays360 = function(cpn) {
+    // Break the 360 modal out of the hidden Sales tab so it becomes globally visible
+    var sh360 = document.getElementById('sh-360-modal');
+    if (sh360) {
+        document.body.appendChild(sh360);
+        // Force the modal's z-index high enough to cover the navbar
+        sh360.classList.remove('z-[300]');
+        sh360.classList.add('z-[9999]'); 
+    }
+    
+    // Call your existing Sales 360 function
+    if (typeof window.openSh360 === 'function') {
+      window.openSh360(cpn);
+    } else {
+      alert("System Error: 360 View engine not loaded.");
+    }
+  };
+  

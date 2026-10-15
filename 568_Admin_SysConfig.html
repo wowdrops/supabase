@@ -1,0 +1,77 @@
+<div id="tab-sys-config" class="hidden space-y-4 fade-in pb-20 relative">
+  <!-- Sticky Header -->
+  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-cyan-300 pt-2 pb-4">
+    <div class="flex justify-between items-center px-2">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+        System <span class="hidden md:inline"> Configurations</span>
+        <span id="sys-live-timer" class="hidden"></span>
+      </h2>
+    </div>
+  </div>
+
+  <!-- Settings Card -->
+  <div class="px-2 w-full max-w-4xl mx-auto mt-6">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+      
+      <!-- Card Header -->
+      <div class="bg-cyan-50 border-b border-cyan-100 p-4 md:p-6 flex items-center gap-4">
+        <div class="w-12 h-12 bg-cyan-100 text-cyan-600 rounded-xl flex justify-center items-center shrink-0 shadow-inner">
+           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-slate-800 uppercase tracking-widest">Global Setup Parameters</h3>
+          <p class="text-xs font-bold text-slate-500">Modifying these values instantly affects the live database.</p>
+        </div>
+      </div>
+      
+      <!-- Inputs Form -->
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 relative" id="sys-config-form">
+        <!-- Overlay loader -->
+        <div id="sys-config-loader" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center hidden">
+          <svg class="w-8 h-8 text-cyan-500 animate-spin mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <p class="text-xs font-black text-slate-500 uppercase tracking-widest">Processing...</p>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Per Day Can Count (BL4)</label>
+          <input type="number" id="cfg-per-day-can" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-800 outline-none focus:border-cyan-500 shadow-sm">
+        </div>
+        
+        <div>
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Lookup Restrict Can Qty (BL5)</label>
+          <input type="number" id="cfg-lookup-restrict" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-800 outline-none focus:border-cyan-500 shadow-sm">
+        </div>
+        
+        <div>
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Minimum Entry Qty (BL6)</label>
+          <input type="number" id="cfg-min-entry" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-800 outline-none focus:border-cyan-500 shadow-sm">
+        </div>
+        
+        <div>
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Per Day Can Count ON/OFF (BL7)</label>
+          <div class="relative">
+             <select id="cfg-per-day-onoff" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-800 outline-none focus:border-cyan-500 shadow-sm appearance-none cursor-pointer">
+               <option value="ON">ON</option>
+               <option value="OFF">OFF</option>
+             </select>
+             <!-- Custom Dropdown Arrow -->
+             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+             </div>
+          </div>
+        </div>
+        
+        <div class="md:col-span-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">VJ_PRICE (BL8)</label>
+          <input type="number" id="cfg-vj-price" class="w-full md:w-1/2 p-3 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-800 outline-none focus:border-cyan-500 shadow-sm">
+        </div>
+      </div>
+      
+      <!-- Footer Actions -->
+      <div class="bg-slate-100 p-4 border-t border-slate-200 flex justify-end gap-3">
+         <button onclick="window.loadSysConfig()" class="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition text-sm">Cancel</button>
+         <button onclick="window.saveSysConfig()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-black px-8 py-2.5 rounded-xl shadow-md transition text-sm uppercase tracking-widest active:scale-95">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>

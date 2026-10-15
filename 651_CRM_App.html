@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+    .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
+
+  <!-- AUTH LAYER -->
+  <div id="view-auth" class="flex items-center justify-center min-h-screen p-4 fade-in">
+    <div id="auth-login" class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm border border-slate-200">
+      <h2 class="text-2xl font-black text-slate-800 mb-6 text-center">CRM Sign In</h2>
+      <input type="text" id="crm-user" placeholder="Username" class="w-full p-3 mb-4 bg-slate-50 border rounded-xl outline-none font-bold">
+      <input type="password" id="crm-pass" placeholder="Password" class="w-full p-3 mb-4 bg-slate-50 border rounded-xl outline-none font-bold">
+      <button onclick="handleCRMLogin()" id="btn-crm-login" class="w-full bg-slate-900 text-white font-black py-3 rounded-xl hover:bg-slate-800 transition active:scale-95">Sign In</button>
+      <p id="crm-login-err" class="text-red-500 text-center font-bold mt-3 hidden text-sm"></p>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div id="view-workspace" class="hidden p-4 md:p-8 fade-in">
+    <header class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-widest">Telecaller Workspace</h1>
+      <button onclick="logoutCRM()" class="bg-red-50 text-red-600 font-bold px-4 py-2 rounded-lg text-sm border border-red-200 hover:bg-red-100 transition">Logout</button>
+    </header>
+
+    <div class="flex space-x-3 mb-6 overflow-x-auto pb-2 hide-scrollbar w-full border-b border-slate-200">
+      <button onclick="switchTab('pending')" id="tab-pending" class="px-5 py-2.5 bg-indigo-600 text-white font-black rounded-t-xl text-sm uppercase tracking-widest transition whitespace-nowrap">Fresh Leads</button>
+      <button onclick="switchTab('wip')" id="tab-wip" class="px-5 py-2.5 bg-transparent text-slate-500 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 transition whitespace-nowrap">Follow-up</button>
+      <button onclick="switchTab('completed')" id="tab-completed" class="px-5 py-2.5 bg-transparent text-slate-500 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 transition whitespace-nowrap">Completed Logs</button>
+      <button onclick="switchTab('patterns')" id="tab-patterns" class="px-5 py-2.5 bg-transparent text-slate-500 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 transition whitespace-nowrap">Pattern Alerts</button>
+      <button onclick="switchTab('feedbacks')" id="tab-feedbacks" class="px-5 py-2.5 bg-transparent text-slate-500 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 transition whitespace-nowrap">Customer Feedbacks</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- QUEUE PANEL -->
+      <div class="col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+        <h3 id="queue-title" class="font-black text-slate-700 mb-4 uppercase tracking-widest">My Queue</h3>
+
+        <!-- SEARCH AND SORT BAR -->
+        <div class="flex flex-wrap gap-2 mb-4">
+          <input type="text" id="queue-search" onkeyup="applyQueueFilters()" placeholder="Search CPN..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-500 shadow-inner">
+          <div class="flex gap-2 w-full mt-1">
+             <button onclick="sortQueue('cpn-asc')" class="flex-1 text-[10px] font-black uppercase tracking-widest bg-slate-100 hover:bg-slate-200 p-2 rounded-lg border border-slate-200 text-slate-600 transition">A-Z</button>
+             <button onclick="sortQueue('cpn-desc')" class="flex-1 text-[10px] font-black uppercase tracking-widest bg-slate-100 hover:bg-slate-200 p-2 rounded-lg border border-slate-200 text-slate-600 transition">Z-A</button>
+             <button id="btn-sort-metric" onclick="sortQueue('metric')" class="flex-1 text-[10px] font-black uppercase tracking-widest bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg border border-indigo-200 text-indigo-700 transition">Highest Days</button>
+          </div>
+        </div>
+
+        <div id="queue-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-2 hide-scrollbar"></div>
+      </div>
+
+      <!-- 360 PROFILE VIEW -->
+      <div id="customer-360-view" class="col-span-1 md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hidden">
+         <!-- Data injected dynamically via Lazy Loading -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.activeUser = null;
+    window.crmSetupData = null;
+    window.currentTab = 'pending';
+    window.masterQueues = { pending: [], wip: [], completed: [], hasMoreCompleted: false };
+    window.currentSortOrder = 'none'; 
+    window.sortMetricDirection = -1; // -1 for Highest First, 1 for Lowest First
+    window.completedPage = 1;         
+    window.activeTimerInterval = null;
+
+    window.onload = function () {
+      var saved = localStorage.getItem('wowdrops_crm_session');
+      if (saved) { window.activeUser = JSON.parse(saved); showWorkspace(); }
+    };
+
+    function showWorkspace() {
+      document.getElementById('view-auth').classList.add('hidden');
+      document.getElementById('view-workspace').classList.remove('hidden');
+
+      google.script.run.withSuccessHandler(function (setup) {
+        window.crmSetupData = setup;
+        switchTab('pending'); 
+      }).getCRMSetupData();
+    }
+
+    function switchTab(tab) {
+      window.currentTab = tab;
+      window.completedPage = 1; 
+      window.currentSortOrder = 'none'; 
+      
+      // FIX: Added 'patterns' and 'feedbacks' back to the loop
+      ['pending', 'wip', 'completed', 'patterns', 'feedbacks'].forEach(t => {
+        var el = document.getElementById('tab-' + t);
+        if (t === tab) el.className = "px-5 py-2.5 bg-indigo-600 text-white font-black rounded-t-xl text-sm uppercase tracking-widest transition whitespace-nowrap";
+        else el.className = "px-5 py-2.5 bg-transparent text-slate-500 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 transition whitespace-nowrap";
+      });
+
+      var btnMetric = document.getElementById('btn-sort-metric');
+      if (tab === 'completed') btnMetric.innerText = "Newest First";
+      else btnMetric.innerText = "Highest Days";
+
+      document.getElementById('customer-360-view').classList.add('hidden');
+      loadQueue(false);
+    }
+
+    function loadQueue(isLoadMore) {
+      var container = document.getElementById('queue-list');
+      
+      // 1. Check if it's a future tab and inject the placeholder immediately
+      if (window.currentTab === 'patterns' || window.currentTab === 'feedbacks') {
+        document.getElementById('queue-title').innerText = window.currentTab === 'patterns' ? 'Pattern Tracker' : 'Customer Feedbacks';
+        container.innerHTML = '<div class="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl text-center"><p class="text-slate-500 text-sm font-bold">Predictive AI module launching next phase.</p></div>';
+        return; // Stop the function here so it doesn't call the backend
+      }
+
+      // 2. Otherwise, load the CRM queues (Pending, WIP, Completed)
+      if (!isLoadMore) {
+        container.innerHTML = '<p class="text-sm font-bold text-indigo-500 animate-pulse">Scanning Master Database...</p>';
+      } else {
+        var btn = document.getElementById('btn-load-more');
+        if (btn) btn.innerText = "Fetching more...";
+      }
+      
+      google.script.run.withSuccessHandler(function(q) { 
+          if(isLoadMore) {
+              window.masterQueues.completed = window.masterQueues.completed.concat(q.completed);
+              window.masterQueues.hasMoreCompleted = q.hasMoreCompleted;
+          } else {
+              window.masterQueues = q; 
+          }
+          applyQueueFilters(); 
+      }).getAllCRMQueues(window.completedPage);
+    }
+
+    function sortQueue(order) {
+      if (order === 'metric') {
+          window.currentSortOrder = 'metric';
+          window.sortMetricDirection *= -1; // Toggle direction
+          var btnLabel = window.currentTab === 'completed' 
+             ? (window.sortMetricDirection === -1 ? "Newest First" : "Oldest First")
+             : (window.sortMetricDirection === -1 ? "Highest Days" : "Lowest Days");
+          document.getElementById('btn-sort-metric').innerText = btnLabel;
+      } else {
+          window.currentSortOrder = order;
+      }
+      applyQueueFilters();
+    }
+
+    function applyQueueFilters() {
+      var term = document.getElementById('queue-search').value.trim().toLowerCase();
+      var activeArray = window.masterQueues[window.currentTab] || [];
+
+      var filtered = activeArray.filter(function (item) { return item.cpn.toLowerCase().indexOf(term) > -1; });
+
+      if (window.currentSortOrder === 'cpn-asc') {
+          filtered.sort((a, b) => a.cpn.localeCompare(b.cpn));
+      } else if (window.currentSortOrder === 'cpn-desc') {
+          filtered.sort((a, b) => b.cpn.localeCompare(a.cpn));
+      } else if (window.currentSortOrder === 'metric') {
+          if (window.currentTab === 'completed') {
+             filtered.sort((a, b) => window.sortMetricDirection === -1 ? b.ts - a.ts : a.ts - b.ts);
+          } else {
+             filtered.sort((a, b) => window.sortMetricDirection === -1 ? b.days - a.days : a.days - b.days);
+          }
+      }
+
+      drawQueueList(filtered);
+    }
+
+    function drawQueueList(dataArray) {
+      var container = document.getElementById('queue-list');
+      var titles = { 'pending': 'Pending Leads', 'wip': 'WIP / Follow-ups', 'completed': 'Recent History' };
+      document.getElementById('queue-title').innerText = titles[window.currentTab] + ' (' + dataArray.length + ')';
+      
+      if(dataArray.length === 0) return container.innerHTML = '<p class="text-slate-500 text-sm font-bold p-3">No matching records found.</p>';
+      
+      var html = '';
+      for(var i = 0; i < dataArray.length; i++) {
+        var item = dataArray[i];
+        var subtext = "";
+        
+        if (window.currentTab === 'pending') subtext = '<p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">' + item.days + ' Days Inactive</p>';
+        else if (window.currentTab === 'wip') subtext = '<p class="text-[10px] font-bold text-amber-600 mt-1 uppercase tracking-widest">' + item.status + ' <span class="text-slate-400">(' + item.days + 'd)</span></p>';
+        else subtext = '<p class="text-[10px] font-bold text-emerald-600 mt-1 uppercase tracking-widest">' + item.status + ' | ' + item.dateStr + '</p>';
+
+        html += '<div onclick="loadCustomer360(\'' + item.cpn + '\')" class="p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition shadow-sm mb-2">' +
+                '<p class="font-black text-slate-800 text-base">' + item.cpn + '</p>' + subtext + '</div>';
+      }
+
+      if (window.currentTab === 'completed' && window.masterQueues.hasMoreCompleted) {
+          html += '<button id="btn-load-more" onclick="window.completedPage++; window.loadQueue(true);" class="w-full bg-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-300 transition mt-2 shadow-inner uppercase tracking-widest text-xs">Load More Logs</button>';
+      }
+      container.innerHTML = html;
+    }
+
+    // ==========================================
+    // ASYNCHRONOUS LAZY LOADING & LIVE TIMER
+    // ==========================================
+    function loadCustomer360(cpn) {
+      var view = document.getElementById('customer-360-view');
+      view.classList.remove('hidden');
+      
+      // Paint UI Skeletons & Timer
+      view.innerHTML = '<div class="flex items-center justify-between border-b pb-4 mb-4">' + 
+                       '<h2 id="crm-header-title" class="text-2xl md:text-3xl font-black text-indigo-600 animate-pulse">Loading ' + cpn + '...</h2>' +
+                       '<span id="crm-live-timer" class="bg-indigo-100 text-indigo-800 font-black px-3 py-1.5 rounded-lg text-sm border-2 border-indigo-200 shadow-inner">0.00s</span>' +
+                       '</div>' +
+                       '<div id="lz-profile" class="mb-6 p-4 rounded-xl border-2 border-dashed border-slate-200 animate-pulse bg-slate-50 h-24"></div>' +
+                       '<div id="lz-sales" class="mb-6 p-4 rounded-xl border-2 border-dashed border-slate-200 animate-pulse bg-slate-50 h-32"></div>' +
+                       '<div id="lz-history" class="mb-6 p-4 rounded-xl border-2 border-dashed border-slate-200 animate-pulse bg-slate-50 h-48"></div>';
+
+      var startTime = performance.now();
+      if(window.activeTimerInterval) clearInterval(window.activeTimerInterval);
+      window.activeTimerInterval = setInterval(function() {
+          var curr = ((performance.now() - startTime) / 1000).toFixed(2);
+          var badge = document.getElementById('crm-live-timer');
+          if(badge) badge.innerText = curr + "s";
+      }, 50);
+
+      var jobsCompleted = 0;
+      var totalJobs = 3;
+
+      function checkAllDone() {
+         jobsCompleted++;
+         if (jobsCompleted >= totalJobs) {
+            clearInterval(window.activeTimerInterval);
+            var finalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+            document.getElementById('crm-live-timer').outerHTML = '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded border border-emerald-200 text-[10px] uppercase tracking-widest whitespace-nowrap">Loaded in ' + finalTime + 's</span>';
+            
+            // FIX: Update the header text and remove the loading color/animation
+            var titleEl = document.getElementById('crm-header-title');
+            titleEl.innerText = "Profile: " + cpn;
+            titleEl.className = "text-2xl md:text-3xl font-black text-slate-800";
+         }
+      }
+
+      // LAZY CALL 1: Profile & Alerts
+      google.script.run.withSuccessHandler(function(res) {
+          var p = res.profile;
+          if(!p) { document.getElementById('lz-profile').innerHTML = '<p class="text-red-500 font-bold">Profile not found.</p>'; checkAllDone(); return; }
+
+          // FIX: Added Customer Name prominently at the top of the profile box
+          var html = '<div class="grid grid-cols-2 gap-4 text-sm font-bold mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">';
+          html += '<p class="col-span-2 text-xl font-black text-indigo-900 border-b border-indigo-200 pb-2 mb-1">👤 ' + p.name + '</p>';
+          html += '<p>Apt: ' + p.apt + ' | Blk: ' + p.blk + ' | Door: ' + p.door + '</p>';
+          html += '<p>Phone: ' + p.phone + ' | Rate: <span class="font-black text-emerald-600">₹' + p.rate + '</span></p>';
+          html += '<p class="col-span-2 text-center border-t border-indigo-200 mt-2 pt-2">Status: <span class="text-indigo-600 font-black uppercase tracking-widest">' + p.status + '</span></p></div>';
+
+          html += '<div class="flex flex-col xl:flex-row gap-4">';
+          if (res.liveData.hasOrder) {
+              html += '<div class="flex-1 bg-amber-100 border-4 border-amber-400 p-4 rounded-xl shadow-md flex justify-between items-center">';
+              html += '<div><p class="text-xs font-black text-amber-700 uppercase tracking-widest mb-1">⚠️ Active Order</p>';
+              html += '<p class="text-xl font-black text-amber-900">' + res.liveData.ordD + ' Cans <span class="text-sm">(' + res.liveData.ordDate + ')</span></p></div>';
+              
+              // NEW RULE: Only show Quick Close if NOT in Completed tab
+              if (window.currentTab !== 'completed') {
+                  html += '<button onclick="quickCloseInteraction(\'' + cpn + '\')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-lg text-sm transition active:scale-95 shadow-sm uppercase tracking-widest">Mark Self-Activated</button>';
+              }
+              html += '</div>';
+          }
+
+          var outColor = res.liveData.outstanding > 0 ? "bg-red-50 border-red-200 text-red-700" : "bg-emerald-50 border-emerald-200 text-emerald-700";
+          html += '<div class="flex-1 border-2 p-4 rounded-xl shadow-sm ' + outColor + '"><p class="text-xs font-black uppercase tracking-widest mb-1">Outstanding Balance</p><p class="text-xl font-black">₹' + res.liveData.outstanding.toLocaleString('en-IN') + '</p></div>';
+          html += '</div>';
+
+          // Store profile status silently in a hidden element to be picked up by form pre-filler
+          html += '<input type="hidden" id="hidden-curr-status" value="' + p.status + '">';
+
+          var el = document.getElementById('lz-profile');
+          el.className = "mb-6"; el.innerHTML = html;
+          checkAllDone();
+      }).getProfileAndAlerts(cpn);
+
+      // LAZY CALL 2: Sales & Pays
+      google.script.run.withSuccessHandler(function(res) {
+          var html = '<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">';
+          html += '<div><h4 class="font-black mb-3 text-slate-700 uppercase tracking-widest text-[10px] border-b pb-2">Recent Sales <span class="float-right text-emerald-600">Last: ' + res.lastDel + '</span></h4><div class="space-y-2">';
+          if (res.sales.length === 0) html += '<p class="text-xs font-bold text-slate-400 italic">No recent sales.</p>';
+          else res.sales.forEach(function(s) { html += '<div class="bg-white p-2 border border-slate-200 rounded-lg text-xs shadow-sm flex justify-between"><div><p class="font-black text-slate-700">' + s.date + '</p><p class="text-slate-500 font-bold">' + s.actD + ' F / ' + s.actE + ' E</p></div><div class="font-black text-emerald-600">₹' + s.amt + '</div></div>'; });
+          html += '</div></div>';
+
+          html += '<div><h4 class="font-black mb-3 text-slate-700 uppercase tracking-widest text-[10px] border-b pb-2">Recent Payments</h4><div class="space-y-2">';
+          if (res.pays.length === 0) html += '<p class="text-xs font-bold text-slate-400 italic">No recent payments.</p>';
+          else res.pays.forEach(function(p) { html += '<div class="bg-white p-2 border border-slate-200 rounded-lg text-xs shadow-sm flex justify-between"><div><p class="font-black text-slate-700">' + p.date + '</p><p class="text-slate-500 font-bold uppercase tracking-widest text-[8px]">' + p.mode + '</p></div><div class="font-black text-emerald-600">₹' + p.amt + '</div></div>'; });
+          html += '</div></div></div>';
+
+          var el = document.getElementById('lz-sales');
+          el.className = "mb-6"; el.innerHTML = html;
+          checkAllDone();
+      }).getSalesAndPays(cpn);
+
+      // LAZY CALL 3: History & Form Generation
+      google.script.run.withSuccessHandler(function(interactions) {
+          var html = '<h4 class="font-black mb-3 text-slate-700 uppercase tracking-widest text-sm border-b pb-2">Previous Call History</h4><div class="space-y-3 max-h-48 overflow-y-auto mb-6 pr-2 hide-scrollbar">';
+          
+          if (interactions.length === 0) html += '<p class="text-xs font-bold text-slate-400 italic">No previous call logs found.</p>';
+          else {
+            interactions.forEach(function(log) {
+              html += '<div class="p-3 bg-white border border-slate-200 rounded-xl text-xs shadow-sm"><div class="flex justify-between border-b border-slate-100 pb-2 mb-2"><span class="font-black text-slate-700">' + log.date + ' - ' + log.status + '</span><span class="font-bold text-slate-400">' + log.lastUpdated + ' by ' + log.actionBy + '</span></div><div class="grid grid-cols-2 gap-3 mb-3"><p><span class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Change</span> <br><span class="font-black text-indigo-600">' + log.prevStatus + ' &rarr; ' + log.newStatus + '</span></p><p><span class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Reason</span> <br><span class="font-bold text-slate-700">' + log.reason + '</span></p></div><div class="bg-slate-50 p-2 rounded-lg border border-slate-100"><p class="font-medium text-slate-800">' + log.remark + '</p></div></div>';
+            });
+          }
+          html += '</div>';
+
+          // PRE-FILL DATA
+          var preCallStatus = "", preReason = "", preRemark = "";
+          if (interactions.length > 0 && interactions[0].type === "Dormant Call") {
+             preCallStatus = interactions[0].status; preReason = interactions[0].reason; preRemark = interactions[0].remark.replace("⚠️ [ADMIN REVIEW REQUESTED] - ", "");
+          }
+
+          var setup = window.crmSetupData;
+          
+          if (window.currentTab === 'completed') {
+             // READ-ONLY VIEW FOR COMPLETED TAB
+             html += '<div class="mt-8 p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl text-center"><p class="text-slate-500 font-black uppercase tracking-widest text-sm mb-1">Ticket Closed</p><p class="text-xs text-slate-400 font-bold">This interaction has already been logged and archived. No further action can be taken.</p></div>';
+          } else {
+             // EDITABLE FORM FOR PENDING / WIP TABS
+             html += '<div class="mt-8 p-6 bg-slate-100 rounded-2xl border-2 border-slate-200"><h4 class="font-black text-slate-800 mb-4 uppercase tracking-widest text-sm">Log Interaction</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">';
+             html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Call Status</label><select id="crm-call-status" class="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm outline-none focus:border-indigo-500 bg-white">';
+             setup.callStatuses.forEach(function(s1) { var sel1 = (s1 === preCallStatus) ? 'selected' : ''; html += '<option value="' + s1 + '" ' + sel1 + '>' + s1 + '</option>'; });
+             html += '</select></div>';
+             html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Customer Status</label><select id="crm-cust-status" class="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm outline-none focus:border-indigo-500 bg-white">';
+             setup.customerStatuses.forEach(function(s2) { html += '<option value="' + s2 + '">' + s2 + '</option>'; }); 
+             html += '</select></div>';
+             html += '<div class="col-span-1 md:col-span-2"><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Reason for Dormancy</label><select id="crm-dorm-reason" class="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm outline-none focus:border-indigo-500 bg-white">';
+             setup.dormancyReasons.forEach(function(s3) { var sel3 = (s3 === preReason) ? 'selected' : ''; html += '<option value="' + s3 + '" ' + sel3 + '>' + s3 + '</option>'; });
+             html += '</select></div></div>';
+             html += '<textarea id="crm-remark" placeholder="Enter notes from the call here..." class="w-full p-4 rounded-xl border border-slate-300 mb-3 font-bold text-sm outline-none focus:border-indigo-500 h-24 shadow-inner bg-white">' + preRemark + '</textarea>';
+             html += '<div class="flex items-center mb-5"><input type="checkbox" id="crm-admin-escalate" class="w-5 h-5 text-indigo-600 bg-white border-slate-300 rounded"><label for="crm-admin-escalate" class="ml-2 text-sm font-black text-red-600 uppercase tracking-widest cursor-pointer">Flag for WOWDROPS Admin Review</label></div>';
+             html += '<button onclick="submitCRMFeedback(\'' + cpn + '\')" id="btn-save-interaction" class="bg-indigo-600 hover:bg-indigo-700 transition active:scale-95 text-white font-black px-6 py-4 rounded-xl w-full shadow-lg text-lg">Save Interaction</button></div>';
+          }
+          var el = document.getElementById('lz-history');
+          el.className = ""; el.innerHTML = html;
+
+          // Attach the precise customer status selected value dynamically since it loaded in an earlier async block
+          var hiddenStatus = document.getElementById('hidden-curr-status');
+          if (hiddenStatus) document.getElementById('crm-cust-status').value = hiddenStatus.value;
+
+          checkAllDone();
+      }).getCRMHistory(cpn);
+    }
+
+    function submitCRMFeedback(cpn) {
+      var btn = document.getElementById('btn-save-interaction');
+      btn.innerText = "Saving..."; btn.disabled = true;
+
+      var prevStatusEl = document.getElementById('hidden-curr-status');
+
+      var payload = {
+        cpn: cpn,
+        prevStatus: prevStatusEl ? prevStatusEl.value : "Unknown",
+        newStatus: document.getElementById('crm-cust-status').value,
+        callStatus: document.getElementById('crm-call-status').value,
+        reason: document.getElementById('crm-dorm-reason').value,
+        remark: document.getElementById('crm-remark').value,
+        adminEscalate: document.getElementById('crm-admin-escalate').checked,
+        username: window.activeUser.username
+      };
+
+      google.script.run.withSuccessHandler(function (res) {
+        if (res.success) {
+          document.getElementById('customer-360-view').innerHTML = '<h2 class="text-3xl font-black text-slate-400 mt-10 text-center">Interaction Saved</h2>';
+          setTimeout(function () { document.getElementById('customer-360-view').classList.add('hidden'); }, 1000);
+          loadQueue(); 
+        } else {
+          alert(res.message); btn.innerText = "Save Interaction"; btn.disabled = false;
+        }
+      }).saveTelecallerInteraction(payload);
+    }
+
+    function quickCloseInteraction(cpn) {
+      if (!confirm("Are you sure you want to close " + cpn + "? This will log them as 'Self-Activated'.")) return;
+
+      var view = document.getElementById('customer-360-view');
+      view.innerHTML = '<h2 class="text-2xl font-black text-emerald-600 mt-10 text-center animate-pulse">Auto-Closing Ticket...</h2>';
+
+      var prevStatusEl = document.getElementById('hidden-curr-status');
+
+      // Build the automated payload to instantly resolve the ticket
+      var payload = {
+        cpn: cpn,
+        prevStatus: prevStatusEl ? prevStatusEl.value : "Unknown",
+        newStatus: "ACTIVE",                 // Force status back to active
+        callStatus: window.crmSetupData.completedStatuses[0] || "CONNECTED",
+        reason: "Self-Activated",            
+        remark: "System Note: Customer placed an order independently. Ticket auto-closed via Quick Close.",
+        adminEscalate: false,
+        username: window.activeUser.username
+      };
+
+      // Re-use your existing high-speed backend save function
+      google.script.run.withSuccessHandler(function (res) {
+        if (res.success) {
+          view.innerHTML = '<h2 class="text-3xl font-black text-slate-400 mt-10 text-center">Ticket Closed</h2>';
+          setTimeout(function () { view.classList.add('hidden'); }, 1000);
+          loadQueue(); 
+        } else {
+          alert(res.message); 
+          loadQueue();
+        }
+      }).saveTelecallerInteraction(payload);
+    }
+
+    // --- AUTHENTICATION ---
+    function handleCRMLogin() {
+      var u = document.getElementById('crm-user').value;
+      var p = document.getElementById('crm-pass').value;
+
+      document.getElementById('btn-crm-login').innerText = "Verifying...";
+      google.script.run.withSuccessHandler(function (res) {
+        document.getElementById('btn-crm-login').innerText = "Sign In";
+        if (res.success) {
+          window.activeUser = res.adminData;
+          localStorage.setItem('wowdrops_crm_session', JSON.stringify(window.activeUser));
+          showWorkspace();
+        } else {
+          var e = document.getElementById('crm-login-err');
+          e.innerText = res.message; e.classList.remove('hidden');
+        }
+      }).authenticateCRMUser(u, p);
+    }
+
+    function logoutCRM() { localStorage.removeItem('wowdrops_crm_session'); window.location.reload(); }
+  </script>
+</body>
+</html>

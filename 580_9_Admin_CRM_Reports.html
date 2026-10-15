@@ -1,0 +1,53 @@
+<div id="tab-crm-reports" class="hidden fade-in space-y-6">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-indigo-200 pb-4">
+    <h2 class="text-3xl md:text-4xl font-black text-slate-800 uppercase tracking-tight">CRM Analytics</h2>
+    
+    <div class="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border-2 border-slate-200">
+      <input type="date" id="crm-rep-start" class="p-2 bg-slate-50 border rounded font-bold text-slate-600 outline-none">
+      <span class="font-black text-slate-400">TO</span>
+      <input type="date" id="crm-rep-end" class="p-2 bg-slate-50 border rounded font-bold text-slate-600 outline-none">
+      <button onclick="window.generateDormantConversionReport()" class="bg-indigo-600 text-white font-black px-6 py-2 rounded-lg hover:bg-indigo-700 transition">Analyze</button>
+    </div>
+  </div>
+
+  <div id="crm-rep-loading" class="hidden text-center py-12 text-2xl font-black text-indigo-400 animate-pulse">Crunching Data...</div>
+
+  <div id="crm-rep-content" class="hidden space-y-6">
+    <!-- KPI Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Existing: Total Calls -->
+      <div class="bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-xl">
+          <p class="text-sm font-black text-slate-400 uppercase tracking-widest">Total Calls Completed</p>
+          <p id="crm-rep-total" class="text-5xl font-black text-slate-800 mt-2">0</p>
+      </div>
+
+      <!-- Existing: Active -> Inactive -->
+      <div class="bg-rose-50 p-6 rounded-3xl border-4 border-rose-200 shadow-xl">
+          <p class="text-sm font-black text-rose-500 uppercase tracking-widest">Active &rarr; Inactive</p>
+          <p id="crm-rep-lost" class="text-5xl font-black text-rose-700 mt-2">0</p>
+      </div>
+
+      <!-- NEW: PENDING QUEUE -->
+      <div class="bg-indigo-50 p-6 rounded-3xl border-4 border-indigo-200 shadow-xl">
+          <p class="text-sm font-black text-indigo-500 uppercase tracking-widest">Current Pending Queue</p>
+          <p id="crm-rep-pending" class="text-5xl font-black text-indigo-700 mt-2">0</p>
+      </div>
+      
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Active to Inactive List -->
+      <div class="lg:col-span-2 bg-white rounded-3xl border-4 border-slate-200 shadow-xl p-6">
+         <h3 class="font-black text-slate-700 uppercase tracking-widest mb-4">Customers Marked Inactive</h3>
+         <div id="crm-rep-lost-list" class="space-y-3 max-h-64 overflow-y-auto pr-2"></div>
+      </div>
+
+      <!-- Root Cause Analysis -->
+      <div class="bg-white rounded-3xl border-4 border-slate-200 shadow-xl p-6">
+         <h3 class="font-black text-slate-700 uppercase tracking-widest mb-4">Reasons for Dormancy</h3>
+         <div id="crm-rep-reasons" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+</div>

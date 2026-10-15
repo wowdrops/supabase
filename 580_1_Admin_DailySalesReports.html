@@ -1,0 +1,26 @@
+<div id="tab-reports" class="hidden space-y-8 fade-in pb-12">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-4 border-slate-200 pb-4">
+            <div><h2 class="text-3xl md:text-4xl font-black text-slate-800 tracking-tight uppercase">Daily Sales Performance</h2></div>
+            <div class="flex items-center space-x-2 bg-white p-2 rounded-xl border-4 border-slate-200 shadow-sm w-full sm:w-auto">
+              <input type="month" id="report-month" class="px-3 py-2 outline-none text-lg font-bold text-slate-700 bg-transparent w-full">
+              <button onclick="window.generateDailySalesReport()" id="btn-fetch-report" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-lg text-lg font-bold transition whitespace-nowrap">Generate</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-sm"><span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Gross Month Revenue</span><span id="sum-rev" class="text-3xl md:text-4xl font-black text-emerald-600 mt-2 block">₹0.00</span></div>
+            <div class="bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-sm"><span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Dispatched (ACT D)</span><span id="sum-cans" class="text-3xl md:text-4xl font-black text-slate-800 mt-2 block">0 Cans</span></div>
+            <div class="bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-sm"><span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Recovered (ACT E)</span><span id="sum-empties" class="text-3xl md:text-4xl font-black text-amber-600 mt-2 block">0 Units</span></div>
+          </div>
+          <div class="bg-white rounded-3xl shadow-xl border-4 border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-lg border-collapse">
+                <thead class="bg-slate-100 text-slate-500 font-black border-b-4 border-slate-200 uppercase tracking-widest">
+                  <tr><th class="px-6 py-5">Delivery Log Date</th><th class="px-6 py-5 text-right">Amount (₹)</th><th class="px-6 py-5 text-center">Cans (ACT D)</th><th class="px-6 py-5 text-center">Empties (ACT E)</th></tr>
+                </thead>
+                <tbody id="report-tbody" class="divide-y-4 divide-slate-100 font-semibold text-slate-800">
+                  <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 font-black text-xl">Select a month and hit Generate.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>

@@ -1,0 +1,63 @@
+<!-- 754_Accounts_Sidebar.html -->
+<div id="sidebar-backdrop" onclick="window.toggleSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden sidebar-transition opacity-0 pointer-events-none"></div>
+
+<aside id="app-sidebar" class="fixed md:relative inset-y-0 left-0 w-64 bg-slate-950 text-slate-300 z-40 transform -translate-x-full md:translate-x-0 sidebar-transition flex flex-col justify-between overflow-y-auto border-r border-slate-800 h-full pt-16 hide-scrollbar shadow-2xl">
+
+  <div class="p-4 py-6">
+    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3 pl-2">Daily Operations</p>
+    <nav class="space-y-1">
+
+      <!-- MAKER DESK -->
+      <button onclick="window.goToAccountTab('maker-dashboard')" id="nav-tab-maker-dashboard" class="flex items-center justify-between w-full text-left py-2.5 px-3 rounded-md text-sm font-medium hover:text-white hover:bg-slate-800 transition border-l-4 border-transparent focus:border-teal-500">
+        <div class="flex items-center gap-3">
+          <svg class="w-4 h-4 shrink-0 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          <span class="tracking-wide">Maker Entry</span>
+        </div>
+      </button>
+      <!-- AUTOMATED DRAFTS (NEW) -->
+      <button onclick="window.goToAccountTab('maker-auto-drafts')" id="nav-tab-maker-auto-drafts" class="flex items-center justify-between w-full text-left py-2.5 px-3 rounded-md text-sm font-medium hover:text-white hover:bg-slate-800 transition border-l-4 border-transparent focus:border-teal-500">
+        <div class="flex items-center gap-3">
+          <svg class="w-4 h-4 shrink-0 text-fuchsia-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          <span class="tracking-wide">Automated Entry</span>
+        </div>
+      </button>
+      <!-- LEDGER REPORTS -->
+      <button onclick="window.goToAccountTab('ledger-reports')" id="nav-tab-ledger-reports" class="flex items-center justify-between w-full text-left py-2.5 px-3 rounded-md text-sm font-medium hover:text-white hover:bg-slate-800 transition border-l-4 border-transparent focus:border-teal-500">
+        <div class="flex items-center gap-3">
+          <svg class="w-4 h-4 shrink-0 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <span class="tracking-wide">Ledger Reports</span>
+        </div>
+      </button>
+
+    </nav>
+
+    <div id="nav-group-checker" class="mt-8">
+        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3 pl-2">Reconciliation</p>
+        <nav class="space-y-1">
+            <button onclick="window.goToAccountTab('bank-recon')" id="nav-tab-bank-recon" class="flex items-center justify-between w-full text-left py-2.5 px-3 rounded-md text-sm font-medium hover:text-white hover:bg-slate-800 transition border-l-4 border-transparent focus:border-teal-500">
+                <div class="flex items-center gap-3">
+                    <svg class="w-4 h-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <span class="tracking-wide">Bank Statement</span>
+                </div>
+            </button>
+            <button onclick="window.goToAccountTab('checker-approvals')" id="nav-tab-checker-approvals" class="flex items-center justify-between w-full text-left py-2.5 px-3 rounded-md text-sm font-medium hover:text-white hover:bg-slate-800 transition border-l-4 border-transparent focus:border-teal-500">
+                <div class="flex items-center gap-3">
+                    <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="tracking-wide">Pending Approvals</span>
+                </div>
+            </button>
+
+        </nav>
+    </div>
+  </div>
+
+  <div class="p-4 border-t border-slate-800 space-y-1 bg-slate-950">
+    <button onclick="window.logoutAccounts()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-bold text-rose-500 hover:text-rose-400 hover:bg-slate-800 transition border-l-4 border-transparent hover:border-rose-500">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+      </svg>
+      <span class="truncate tracking-wide">SECURE LOGOUT</span>
+    </button>
+    <p class="text-center text-slate-600 text-[8px] mt-4 shrink-0 font-bold tracking-widest uppercase">FINANCE PORTAL v1.0</p>
+  </div>
+</aside>

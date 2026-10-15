@@ -1,0 +1,50 @@
+<!DOCTYPE html> 
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- INJECT CSS -->
+  <?!= include('751_Accounts_APP_CSS'); ?>
+</head>
+
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen flex flex-col antialiased overflow-hidden">
+
+  <!-- AUTHENTICATION VIEW -->
+  <?!= include('752_Accounts_Auth'); ?>
+
+  <!-- MAIN WORKSPACE (Hidden until logged in) -->
+  <div id="view-workspace" class="hidden h-screen w-full relative fade-in">
+    
+    <?!= include('753_Accounts_Header'); ?>
+
+    <div class="flex h-full w-full overflow-hidden relative">
+      
+      <?!= include('754_Accounts_Sidebar'); ?>
+
+      <main id="scroll-area" class="flex-1 overflow-y-auto pt-24 pb-8 px-4 md:px-8 w-full relative">
+        
+        <!-- THE MAKER DASHBOARD (Receipt, Payment, Contra, JV) -->
+        <?!= include('755_Accounts_Maker'); ?>
+        <?!= include('756_Accounts_Checker'); ?>
+        <?!= include('757_Accounts_Maker_Auto'); ?>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- INJECT JAVASCRIPT -->
+  <?!= include('751_Accounts_APP_JS'); ?>
+  <?!= include('752_Accounts_Auth_JS'); ?>
+  <?!= include('753_Accounts_Header_JS'); ?>
+  <?!= include('754_Accounts_Sidebar_JS'); ?>
+  <?!= include('755_Accounts_Maker_JS'); ?>
+  <?!= include('756_Accounts_Checker_JS'); ?>
+  <?!= include('757_Accounts_Maker_Auto_JS'); ?>
+</body>
+</html>

@@ -1,0 +1,521 @@
+<!-- 755_Accounts_Maker_JS.html -->
+<script>
+  window.currentVoucherType = 'RECEIPT';
+  window.masterLedgers = [];
+  window.isMakerLoaded = false;
+  window.cachedMakerApprovalQueue = [];
+  window.cachedMakerRejectedQueue = [];
+
+  const voucherConfig = {
+    'RECEIPT': { cardBorder: 'border-l-teal-500', btnBg: 'bg-teal-700', btnHover: 'hover:bg-teal-800', tabBg: 'bg-teal-50', tabText: 'text-teal-800', tabBorder: 'border-teal-600', drLabel: 'Debit (Receiving) Account', crLabel: 'Credit (Giving) Account' },
+    'PAYMENT': { cardBorder: 'border-l-rose-500', btnBg: 'bg-rose-700', btnHover: 'hover:bg-rose-800', tabBg: 'bg-rose-50', tabText: 'text-rose-800', tabBorder: 'border-rose-600', drLabel: 'Debit (Expense/Receiver)', crLabel: 'Credit (Paying Bank/Cash)' },
+    'CONTRA': { cardBorder: 'border-l-blue-500', btnBg: 'bg-blue-700', btnHover: 'hover:bg-blue-800', tabBg: 'bg-blue-50', tabText: 'text-blue-800', tabBorder: 'border-blue-600', drLabel: 'Debit (Bank/Cash Receiving)', crLabel: 'Credit (Bank/Cash Giving)' },
+    'JOURNAL': { cardBorder: 'border-l-violet-500', btnBg: 'bg-violet-700', btnHover: 'hover:bg-violet-800', tabBg: 'bg-violet-50', tabText: 'text-violet-800', tabBorder: 'border-violet-600', drLabel: 'Debit Account', crLabel: 'Credit Account' }
+  };
+
+  window.MakerLoad = function () {
+    // 1. ALWAYS refresh the live queues when opening the tab
+    if (typeof window.loadMakerQueues === 'function') {
+        window.loadMakerQueues();
+    }
+
+    // 2. Prevent double-fetching static ledger dropdowns
+    if (window.isMakerLoaded) return; 
+    
+    document.getElementById('maker-active-date').value = new Date().toISOString().split('T')[0];
+    
+    google.script.run.withSuccessHandler(function (res) {
+      if (res.success) {
+        window.masterLedgers = res.data;
+        window.populateLedgerDropdowns();
+        window.isMakerLoaded = true;
+      }
+    }).withFailureHandler(function(err) {
+        console.error("Ledger Fetch Error:", err);
+    }).accounts_getLedgerMaster();
+
+    setTimeout(function() {
+      const defaultBtn = document.getElementById('btn-vch-receipt');
+      if (defaultBtn) defaultBtn.focus();
+    }, 100);
+  };
+
+  // The main function to fetch all queues for the Maker Dashboard
+  window.loadMakerQueues = function() {
+    
+    google.script.run.withSuccessHandler(function (res) {        
+        if (res.success) {
+            window.cachedMakerApprovalQueue = res.data.pendingApproval;
+            window.cachedMakerRejectedQueue = res.data.rejected; // SAVE TO CACHE
+            if (typeof renderPendingMaker === 'function') renderPendingMaker(res.data.pendingMaker);
+            if (typeof renderPendingApproval === 'function') renderPendingApproval(res.data.pendingApproval);
+            if (typeof renderRejected === 'function') renderRejected(res.data.rejected);
+        } else {
+            alert("Backend Script Failed: " + res.message);
+        }
+    }).withFailureHandler(function(err) {
+        alert("CRITICAL ERROR connecting to backend: " + err.message);
+    }).accounts_getMakerQueue();
+  };
+
+  // 1. RENDER PENDING MAKER (DRAFTS)
+  function renderPendingMaker(data) {
+    const pc = document.getElementById('maker-queue-drafts-pc');
+    const mobile = document.getElementById('maker-queue-drafts-mobile');
+
+    if (data.length === 0) {
+      document.getElementById('maker-queue-drafts-empty').classList.remove('hidden');
+      pc.parentElement.classList.add('hidden'); mobile.classList.add('hidden');
+      return;
+    }
+    document.getElementById('maker-queue-drafts-empty').classList.add('hidden');
+    pc.parentElement.classList.remove('hidden'); mobile.classList.remove('hidden');
+
+    let pcHtml = '', mobHtml = '';
+    data.forEach(vch => {
+      let btnHtml = `<div class="flex items-center gap-2 justify-end">
+             <button onclick="window.viewBreakdown('${vch.jvId}')" class="text-slate-500 hover:text-indigo-700 bg-slate-100 hover:bg-indigo-100 px-3 py-1.5 rounded font-black text-[10px] uppercase transition">Data</button>
+             <button onclick="window.openAutoModal('${vch.jvId}')" class="bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-600 hover:text-white px-3 py-1.5 rounded font-black text-[10px] uppercase transition shadow-sm">Map</button>
+          </div>`;
+
+      pcHtml += `<tr class="hover:bg-slate-50">
+             <td class="p-3"><p class="font-black text-slate-800">${vch.formattedDate}</p><p class="text-[10px] font-bold text-slate-400 uppercase">${vch.jvId}</p></td>
+             <td class="p-3 text-xs font-bold text-slate-700">${vch.narration}</td>
+             <td class="p-3 text-right font-black text-slate-800">₹ ${parseFloat(vch.amount).toLocaleString('en-IN')}</td>
+             <td class="p-3 text-center">${btnHtml}</td>
+          </tr>`;
+
+      mobHtml += `<div class="bg-white p-3 rounded-xl border-l-4 border-l-fuchsia-500 shadow-sm flex flex-col gap-2">
+             <div class="flex justify-between"><span class="text-[10px] font-black text-slate-500">${vch.jvId}</span><span class="font-black text-slate-800">₹ ${parseFloat(vch.amount).toLocaleString('en-IN')}</span></div>
+             <p class="text-xs font-bold text-slate-700">${vch.narration}</p>
+             <div class="mt-2 flex justify-end">${btnHtml}</div>
+          </div>`;
+    });
+    pc.innerHTML = pcHtml; mobile.innerHTML = mobHtml;
+  }
+
+  // 2. RENDER PENDING APPROVAL (EDITABLE)
+  function renderPendingApproval(data) {
+    const pc = document.getElementById('maker-queue-pending-pc');
+    const mobile = document.getElementById('maker-queue-pending-mobile');
+
+    if (data.length === 0) {
+      document.getElementById('maker-queue-pending-empty').classList.remove('hidden');
+      pc.parentElement.classList.add('hidden'); mobile.classList.add('hidden');
+      return;
+    }
+    document.getElementById('maker-queue-pending-empty').classList.add('hidden');
+    pc.parentElement.classList.remove('hidden'); mobile.classList.remove('hidden');
+
+    let pcHtml = '', mobHtml = '';
+    data.forEach(vch => {
+      let badge = "bg-slate-100 text-slate-600 border-slate-200";
+      if (vch.type === 'RECEIPT') badge = "bg-teal-50 text-teal-700";
+      if (vch.type === 'PAYMENT') badge = "bg-rose-50 text-rose-700";
+
+      let btnHtml = `<button onclick="window.openMakerEditModal('${vch.jvId}')" class="bg-white border-2 border-amber-200 text-amber-600 hover:bg-amber-50 px-3 py-1.5 rounded font-black text-[10px] uppercase transition shadow-sm">Edit</button>`;
+
+      pcHtml += `<tr class="hover:bg-amber-50/30">
+             <td class="p-3"><p class="font-black text-slate-800">${vch.formattedDate}</p><p class="text-[10px] font-bold text-slate-400 uppercase">${vch.jvId}</p></td>
+             <td class="p-3"><span class="px-2 py-1 rounded text-[9px] font-black uppercase ${badge}">${vch.type}</span></td>
+             <td class="p-3 text-xs"><p><span class="text-[9px] font-black text-slate-400">DR</span> <span class="font-bold">${vch.drAccountName}</span></p><p><span class="text-[9px] font-black text-slate-400">CR</span> <span class="font-bold">${vch.crAccountName}</span></p></td>
+             <td class="p-3 text-right font-black text-slate-800">₹ ${parseFloat(vch.amount).toLocaleString('en-IN')}</td>
+             <td class="p-3 text-center">${btnHtml}</td>
+          </tr>`;
+
+      mobHtml += `<div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
+             <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-500">${vch.jvId}</span><span class="px-2 py-1 rounded text-[9px] font-black uppercase ${badge}">${vch.type}</span></div>
+             <div class="text-xs bg-slate-50 p-2 rounded"><p><span class="text-[9px] font-black text-slate-400">DR</span> <span class="font-bold">${vch.drAccountName}</span></p><p><span class="text-[9px] font-black text-slate-400">CR</span> <span class="font-bold">${vch.crAccountName}</span></p></div>
+             <div class="flex justify-between items-center mt-1"><p class="font-black text-slate-800">₹ ${parseFloat(vch.amount).toLocaleString('en-IN')}</p>${btnHtml}</div>
+          </div>`;
+    });
+    pc.innerHTML = pcHtml; mobile.innerHTML = mobHtml;
+  }
+
+  // 3. RENDER REJECTED VOUCHERS
+  function renderRejected(data) {
+    const pc = document.getElementById('maker-queue-rejected-pc');
+    const mobile = document.getElementById('maker-queue-rejected-mobile');
+
+    if (data.length === 0) {
+      document.getElementById('maker-queue-rejected-empty').classList.remove('hidden');
+      pc.parentElement.classList.add('hidden'); mobile.classList.add('hidden');
+      return;
+    }
+    document.getElementById('maker-queue-rejected-empty').classList.add('hidden');
+    pc.parentElement.classList.remove('hidden'); mobile.classList.remove('hidden');
+
+    let pcHtml = '', mobHtml = '';
+    data.forEach(vch => {
+      let btnHtml = `<div class="flex gap-2 justify-center">
+             <button onclick="window.voidMakerVoucher('${vch.jvId}')" class="bg-white border-2 border-slate-300 text-slate-600 hover:bg-slate-100 px-3 py-1.5 rounded font-black text-[10px] uppercase transition">Void</button>
+             <button onclick="window.openMakerEditModal('${vch.jvId}')" class="bg-rose-600 text-white hover:bg-rose-700 px-3 py-1.5 rounded font-black text-[10px] uppercase transition shadow-sm">Fix & Resubmit</button>
+          </div>`;
+
+      pcHtml += `<tr class="bg-rose-50/30 hover:bg-rose-50/60">
+             <td class="p-3"><p class="font-black text-slate-800">${vch.formattedDate}</p><p class="text-[10px] font-bold text-slate-400 uppercase">${vch.jvId}</p></td>
+             <td class="p-3"><span class="px-2 py-1 rounded text-[9px] font-black uppercase bg-white border border-rose-200 text-rose-700">${vch.type}</span></td>
+             <td class="p-3 text-xs"><p><span class="text-[9px] font-black text-rose-400">DR</span> <span class="font-bold">${vch.drAccountName}</span></p><p><span class="text-[9px] font-black text-rose-400">CR</span> <span class="font-bold">${vch.crAccountName}</span></p></td>
+             <td class="p-3 text-right font-black text-slate-800">₹ ${parseFloat(vch.amount).toLocaleString('en-IN')}</td>
+             <td class="p-3 text-center">${btnHtml}</td>
+          </tr>`;
+
+      mobHtml += `<div class="bg-white p-3 rounded-xl border border-rose-200 shadow-sm flex flex-col gap-2">
+             <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-500">${vch.jvId}</span><span class="px-2 py-1 rounded text-[9px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-100">${vch.type}</span></div>
+             <div class="text-xs bg-rose-50/50 p-2 rounded"><p><span class="text-[9px] font-black text-rose-400">DR</span> <span class="font-bold">${vch.drAccountName}</span></p><p><span class="text-[9px] font-black text-rose-400">CR</span> <span class="font-bold">${vch.crAccountName}</span></p></div>
+             <div class="flex justify-between items-center mt-1"><p class="font-black text-slate-800">₹ ${parseFloat(vch.amount).toLocaleString('en-IN')}</p></div>
+             <div class="mt-2">${btnHtml}</div>
+          </div>`;
+    });
+    pc.innerHTML = pcHtml; mobile.innerHTML = mobHtml;
+  }
+
+  // Maker hits Void on a rejected voucher
+  window.voidMakerVoucher = function (jvId) {
+    if (!confirm("Are you sure you want to permanently void this voucher? The amount will be set to 0.")) return;
+
+    const payload = {
+      jvId: jvId,
+      action: 'VOID',
+      userEmail: window.activeAccountsSession ? window.activeAccountsSession.username : 'Maker'
+    };
+
+    // Reuse the same backend process as the Checker!
+    google.script.run.withSuccessHandler(function (res) {
+      if (res.success) {
+        alert("Voucher successfully voided."); // ADDED SUCCESS MESSAGE
+        window.loadMakerQueues(); // Reload tables instantly
+      } else {
+        alert(res.message);
+      }
+    }).withFailureHandler(function (err) {
+      alert("Network Error");
+    }).accounts_processVoucherAction(payload);
+  };
+
+  // 4. EDIT MODAL LOGIC
+  window.openMakerEditModal = function (jvId) {
+    const vch = window.cachedMakerApprovalQueue.find(v => v.jvId === jvId) || 
+                  window.cachedMakerRejectedQueue.find(v => v.jvId === jvId);
+    if (!vch) return;
+
+    document.getElementById('edit-sub-jv').value = jvId;
+    document.getElementById('edit-sub-type').value = vch.type;
+    document.getElementById('edit-sub-id-display').innerText = jvId;
+    document.getElementById('edit-sub-type-display').innerText = vch.type;
+    document.getElementById('edit-sub-amount').value = vch.amount;
+    document.getElementById('edit-sub-dr-search').value = vch.drAccountName;
+    document.getElementById('edit-sub-dr-account').value = vch.drAccountCode;
+    document.getElementById('edit-sub-cr-search').value = vch.crAccountName;
+    document.getElementById('edit-sub-cr-account').value = vch.crAccountCode;
+    document.getElementById('edit-sub-narration').value = vch.narration;
+
+    document.getElementById('edit-sub-error').classList.add('hidden');
+
+    // Initialize Autocomplete engine for this modal
+    window.currentVoucherType = vch.type;
+    window.setupAutocomplete('edit-sub-dr-search', 'edit-sub-dr-dropdown', 'edit-sub-dr-account', 'edit-sub-cr-account');
+    window.setupAutocomplete('edit-sub-cr-search', 'edit-sub-cr-dropdown', 'edit-sub-cr-account', 'edit-sub-dr-account');
+
+    document.getElementById('modal-edit-submitted').classList.remove('hidden');
+  };
+
+  window.closeMakerEditModal = function () { document.getElementById('modal-edit-submitted').classList.add('hidden'); };
+
+  window.saveMakerEdit = function () {
+    var btn = document.getElementById('btn-edit-sub');
+    var err = document.getElementById('edit-sub-error');
+
+    var payload = {
+      jvId: document.getElementById('edit-sub-jv').value,
+      type: document.getElementById('edit-sub-type').value,
+      drAccount: document.getElementById('edit-sub-dr-account').value,
+      crAccount: document.getElementById('edit-sub-cr-account').value,
+      amount: parseFloat(document.getElementById('edit-sub-amount').value),
+      narration: document.getElementById('edit-sub-narration').value
+    };
+
+    if (!payload.drAccount || !payload.crAccount || isNaN(payload.amount) || !payload.narration) {
+      err.innerText = "All fields are required and must contain valid data."; err.classList.remove('hidden'); return;
+    }
+    if (payload.drAccount === payload.crAccount) {
+      err.innerText = "Debit and Credit cannot be the same."; err.classList.remove('hidden'); return;
+    }
+
+    err.classList.add('hidden');
+    btn.innerText = "Saving..."; btn.disabled = true;
+
+    google.script.run.withSuccessHandler(function (res) {
+      btn.innerText = "Save Changes"; btn.disabled = false;
+      if (res.success) {
+        window.closeMakerEditModal();
+        window.loadMakerQueues(); // Refresh the lists instantly
+      } else {
+        err.innerText = res.message; err.classList.remove('hidden');
+      }
+    }).withFailureHandler(function (e) {
+      btn.innerText = "Save Changes"; btn.disabled = false;
+      err.innerText = "Network Error"; err.classList.remove('hidden');
+    }).accounts_editSubmittedVoucher(payload);
+  };
+
+  window.populateLedgerDropdowns = function () {
+    // Initialize the smart autocomplete engine for both inputs
+    window.setupAutocomplete('vch-dr-search', 'dr-dropdown', 'vch-dr-account', 'vch-cr-account');
+    window.setupAutocomplete('vch-cr-search', 'cr-dropdown', 'vch-cr-account', 'vch-dr-account');
+  };
+
+  window.setupAutocomplete = function (inputId, dropdownId, hiddenId, oppositeHiddenId) {
+    const inputEl = document.getElementById(inputId);
+    const dropdownEl = document.getElementById(dropdownId);
+    const hiddenEl = document.getElementById(hiddenId);
+
+    // Tracks keyboard navigation position
+    let currentFocus = -1;
+
+    // Helper: Highlight the active item
+    function addActive(items) {
+      if (!items || items.length === 0) return false;
+      removeActive(items);
+
+      if (currentFocus >= items.length) currentFocus = 0;
+      if (currentFocus < 0) currentFocus = (items.length - 1);
+
+      // Add visual highlight
+      items[currentFocus].classList.add("bg-teal-100", "border-l-4", "border-teal-500");
+      items[currentFocus].classList.remove("hover:bg-teal-50");
+
+      // Auto-scroll the dropdown so the item is always visible
+      items[currentFocus].scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+    // Helper: Remove highlight from all items
+    function removeActive(items) {
+      for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove("bg-teal-100", "border-l-4", "border-teal-500");
+        items[i].classList.add("hover:bg-teal-50");
+      }
+    }
+
+    // 1. Filter Logic on Type
+    // 1. Filter Logic on Type (UPGRADED WITH STRICT ACCOUNTING RULES)
+    inputEl.addEventListener('input', function () {
+      const val = this.value.toLowerCase();
+      const oppositeId = document.getElementById(oppositeHiddenId).value;
+
+      hiddenEl.value = '';
+      dropdownEl.innerHTML = '';
+      currentFocus = -1;
+
+      let matches = window.masterLedgers.filter(l => {
+        // A. Basic Text Match (Name or Group)
+        const textMatch = l.name.toLowerCase().includes(val) || l.group.toLowerCase().includes(val);
+        if (!textMatch) return false;
+
+        // B. Mutual Exclusion (Cannot select the exact same ledger on both sides)
+        if (l.code === oppositeId) return false;
+
+        // C. Strict Accounting Rules based on Voucher Type
+        const isCashOrBank = l.group.toLowerCase().includes('cash') || l.group.toLowerCase().includes('bank');
+
+        if (window.currentVoucherType === 'RECEIPT') {
+          // In a Receipt, the Debit (Receiving) account MUST be Cash or Bank.
+          if (inputId === 'vch-dr-search' && !isCashOrBank) return false;
+        }
+        else if (window.currentVoucherType === 'PAYMENT') {
+          // In a Payment, the Credit (Giving) account MUST be Cash or Bank.
+          if (inputId === 'vch-cr-search' && !isCashOrBank) return false;
+        }
+        else if (window.currentVoucherType === 'CONTRA') {
+          // In a Contra, BOTH sides MUST be Cash or Bank.
+          if (!isCashOrBank) return false;
+        }
+        else if (window.currentVoucherType === 'JOURNAL') {
+          // In a Journal, NEITHER side should be Cash or Bank (standard accounting practice).
+          if (isCashOrBank) return false;
+        }
+
+        return true; // If it passes all tests, show it in the list!
+      });
+
+      if (matches.length > 0) {
+        matches.forEach(l => {
+          let div = document.createElement('div');
+          div.className = "autocomplete-item px-4 py-2.5 hover:bg-teal-50 cursor-pointer border-b border-slate-100 transition last:border-0";
+          div.innerHTML = `<p class="text-sm font-bold text-slate-800">${l.name}</p><p class="text-[10px] text-slate-500 font-bold uppercase tracking-wide">${l.group}</p>`;
+
+          div.onmousedown = function (e) {
+            e.preventDefault();
+            inputEl.value = l.name;
+            hiddenEl.value = l.code;
+            dropdownEl.classList.add('hidden');
+          };
+          dropdownEl.appendChild(div);
+        });
+        dropdownEl.classList.remove('hidden');
+      } else {
+        dropdownEl.innerHTML = `<div class="px-4 py-3 text-xs text-slate-500 italic">No valid ledgers found for this voucher type.</div>`;
+        dropdownEl.classList.remove('hidden');
+      }
+    });
+
+    // 2. Keyboard Navigation Engine (Arrow Keys & Enter)
+    inputEl.addEventListener("keydown", function (e) {
+      let items = dropdownEl.getElementsByClassName("autocomplete-item");
+
+      if (e.key === "ArrowDown") {
+        currentFocus++;
+        addActive(items);
+      } else if (e.key === "ArrowUp") {
+        currentFocus--;
+        addActive(items);
+      } else if (e.key === "Enter") {
+        e.preventDefault(); // Stop accidental form submissions
+        if (!dropdownEl.classList.contains('hidden') && currentFocus > -1) {
+          // Simulate a mouse click on the highlighted item
+          if (items) items[currentFocus].dispatchEvent(new MouseEvent('mousedown'));
+        }
+      }
+    });
+
+    // 3. Show entire list when they click into the empty box
+    inputEl.addEventListener('focus', function () {
+      this.dispatchEvent(new Event('input'));
+    });
+
+    // 4. Hide dropdown and validate when clicking away
+    inputEl.addEventListener('blur', function () {
+      setTimeout(() => {
+        dropdownEl.classList.add('hidden');
+        if (!hiddenEl.value) {
+          inputEl.value = ''; // Erase text if they didn't pick a valid DB ledger
+        }
+      }, 150);
+    });
+  };
+
+  window.selectVoucherType = function (type) {
+    window.currentVoucherType = type;
+    const style = voucherConfig[type];
+
+    document.querySelectorAll('.voucher-tab-btn').forEach(btn => {
+      btn.className = "voucher-tab-btn flex-1 min-w-[120px] bg-white border-slate-200 text-slate-500 border-2 px-4 py-3 rounded-md text-xs font-bold uppercase tracking-widest hover:border-slate-300 transition";
+    });
+
+    const activeTab = document.getElementById('btn-vch-' + type.toLowerCase());
+    activeTab.className = `voucher-tab-btn flex-1 min-w-[120px] ${style.tabBg} ${style.tabBorder} ${style.tabText} border-2 px-4 py-3 rounded-md text-xs font-bold uppercase tracking-widest transition shadow-sm`;
+
+    const formCard = document.getElementById('voucher-form-card');
+    formCard.className = `bg-white border border-slate-300 border-l-4 ${style.cardBorder} rounded-md shadow-lg p-6 md:p-8 transition-colors duration-300`;
+
+    const btnSubmit = document.getElementById('btn-submit-voucher');
+    btnSubmit.className = `w-full md:w-auto ml-auto ${style.btnBg} ${style.btnHover} text-white font-bold text-sm px-8 py-3.5 rounded-md shadow transition active:scale-[0.98] uppercase tracking-widest`;
+
+    document.getElementById('lbl-voucher-title').innerText = type.charAt(0) + type.slice(1).toLowerCase() + ' Voucher';
+    document.getElementById('lbl-dr-account').innerText = style.drLabel;
+    document.getElementById('lbl-cr-account').innerText = style.crLabel;
+
+    // Clear form on switch to prevent accidental wrong-entries
+    document.getElementById('vch-amount').value = '';
+    document.getElementById('vch-dr-search').value = ''; // Updated ID
+    document.getElementById('vch-dr-account').value = '';
+    document.getElementById('vch-cr-search').value = ''; // Updated ID
+    document.getElementById('vch-cr-account').value = '';
+    document.getElementById('vch-narration').value = '';
+    document.getElementById('vch-error-msg').classList.add('hidden');
+  };
+
+  window.submitVoucher = function () {
+    const errorBox = document.getElementById('vch-error-msg');
+    const btn = document.getElementById('btn-submit-voucher');
+
+    const payload = {
+      date: document.getElementById('maker-active-date').value,
+      voucherType: window.currentVoucherType,
+      amount: parseFloat(document.getElementById('vch-amount').value),
+      drAccount: document.getElementById('vch-dr-account').value,
+      crAccount: document.getElementById('vch-cr-account').value,
+      narration: document.getElementById('vch-narration').value.trim(),
+      maker: window.activeAccountsSession ? window.activeAccountsSession.username : 'Unknown'
+    };
+
+    if (!payload.date || !payload.amount || isNaN(payload.amount) || !payload.drAccount || !payload.crAccount || !payload.narration) {
+      errorBox.innerText = "Error: All fields, including narration, are required.";
+      errorBox.classList.remove('hidden');
+      return;
+    }
+
+    if (payload.drAccount === payload.crAccount) {
+      errorBox.innerText = "Error: Debit and Credit accounts cannot be the same.";
+      errorBox.classList.remove('hidden');
+      return;
+    }
+
+    errorBox.classList.add('hidden');
+    btn.disabled = true;
+    const originalBtnText = btn.innerHTML;
+    btn.innerHTML = 'POSTING...';
+
+    google.script.run.withSuccessHandler(function (res) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+
+      if (res.success) {
+        alert("Success! " + payload.voucherType + " Voucher posted to Ledger.");
+        document.getElementById('vch-amount').value = '';
+        document.getElementById('vch-narration').value = '';
+
+        // NEW: Instantly refresh the queues below so the Maker sees their new voucher!
+        if (typeof window.loadMakerQueues === 'function') {
+            window.loadMakerQueues();
+        }
+
+      } else {
+        errorBox.innerText = res.message || "Failed to post transaction.";
+        errorBox.classList.remove('hidden');
+      }
+    }).withFailureHandler(function (err) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+      errorBox.innerText = "Network Error. Check connection.";
+      errorBox.classList.remove('hidden');
+    }).accounts_postTransaction(payload);
+  };
+  // 6. Global Keyboard Shortcuts (Alt + 1-4)
+  document.addEventListener("keydown", function (e) {
+    // Only trigger if we are actively on the Maker Desk view
+    const formCard = document.getElementById('voucher-form-card');
+    if (!formCard || formCard.offsetParent === null) return;
+
+    // Listen for Alt + Number keys
+    if (e.altKey) {
+      switch (e.key) {
+        case '1':
+          e.preventDefault();
+          window.selectVoucherType('RECEIPT');
+          break;
+        case '2':
+          e.preventDefault();
+          window.selectVoucherType('PAYMENT');
+          break;
+        case '3':
+          e.preventDefault();
+          window.selectVoucherType('CONTRA');
+          break;
+        case '4':
+          e.preventDefault();
+          window.selectVoucherType('JOURNAL');
+          break;
+      }
+
+      // Keep hands on the keyboard: Auto-focus the Amount field after switching
+      setTimeout(function () {
+        const amtInput = document.getElementById('vch-amount');
+        if (amtInput) amtInput.focus();
+      }, 50);
+    }
+  });
+
+
+
+</script>

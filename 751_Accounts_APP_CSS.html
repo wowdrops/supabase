@@ -1,0 +1,33 @@
+<style>
+  /* 751_Accounts_APP_CSS.html */
+  
+  /* Base Animations */
+  .fade-in { animation: fadeIn 0.3s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .slide-in { animation: slideIn 0.3s ease-out forwards; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Fintech specific tabular formatting for all currency amounts */
+  .fintech-amount { 
+    font-variant-numeric: tabular-nums; 
+    letter-spacing: -0.02em; 
+  }
+
+  /* Sidebar & Accordion Animations */
+  .sidebar-transition { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+  .accordion-content { max-height: 0; transition: max-height 0.3s ease-in-out; overflow: hidden; }
+  .accordion-content.open { max-height: 500px; }
+
+  /* Custom Scrollbar for heavy data grids */
+  .hide-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .hide-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+  
+  /* Glass Header */
+  .glass-header { 
+    background: rgba(255, 255, 255, 0.95); 
+    backdrop-filter: blur(8px); 
+    -webkit-backdrop-filter: blur(8px); 
+  }
+</style>

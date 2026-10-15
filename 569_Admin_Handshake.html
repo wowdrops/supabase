@@ -1,0 +1,92 @@
+<div id="tab-handshake-log" class="hidden space-y-4 fade-in pb-20 relative">
+
+  <!-- Sticky Header -->
+  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-emerald-300 pt-2 pb-4">
+    <div class="flex justify-between items-center px-2">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+        EOD Handshake <span class="hidden md:inline"> Log</span>
+        <span id="handshake-live-timer" class="hidden"></span>
+        <button onclick="window.toggleHandshakeHeader()" class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none">
+          <svg id="handshake-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
+          </svg>
+        </button>
+      </h2>
+    </div>
+
+    <!-- Collapsible Controls -->
+    <div id="handshake-header-collapsible" class="transition-all duration-300 origin-top">
+      <div class="px-2 mt-4 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
+        
+        <!-- Live Count Badge -->
+        <span class="text-[10px] md:text-xs font-black bg-slate-200 text-slate-600 px-3 py-2 rounded-lg uppercase tracking-widest shadow-sm whitespace-nowrap mb-1 lg:mb-0">
+          Showing: <b id="handshake-total-count" class="text-slate-900">0</b>
+        </span>
+
+        <!-- Filters & Javascript Search -->
+        <div class="flex flex-col md:flex-row gap-3 w-full lg:w-auto bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+          
+          <!-- Date Filter Group -->
+          <div class="flex gap-3 items-end w-full md:w-auto border-r-0 md:border-r border-slate-200 pr-0 md:pr-3">
+            <div class="w-full md:w-32">
+              <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">From Date</label>
+              <input type="date" id="handshake-flt-from" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs outline-none focus:border-emerald-500">
+            </div>
+            <div class="w-full md:w-32">
+              <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">To Date</label>
+              <input type="date" id="handshake-flt-to" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs outline-none focus:border-emerald-500">
+            </div>
+            <button onclick="window.loadHandshakeLog()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-lg transition shadow text-xs tracking-widest uppercase h-[34px]">Fetch</button>
+          </div>
+
+          <!-- Live JS Search Box -->
+          <div class="w-full md:w-48 flex items-end">
+            <input type="text" id="handshake-search" onkeyup="window.filterHandshakeTable()" placeholder="🔍 Quick Search..." class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs outline-none focus:border-emerald-500 h-[34px]">
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table Container -->
+  <div class="px-2 w-full mt-4">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden relative" style="max-height: 70vh;">
+      <div class="overflow-y-auto w-full h-full custom-scrollbar">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead class="bg-emerald-100 text-emerald-900 text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-sm">
+            <tr>
+              <th class="p-3 border-b border-emerald-200">Timestamp</th>
+              <th class="p-3 border-b border-emerald-200">Driver</th>
+              <th class="p-3 border-b border-emerald-200">Manager</th>
+              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Full VJ">F-VJ</th>
+              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Full NVJ">F-NVJ</th>
+              <th class="p-3 border-b border-emerald-200 text-center" title="Empty VJ">E-VJ</th>
+              <th class="p-3 border-b border-emerald-200 text-center" title="Empty NVJ">E-NVJ</th>
+              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Replace VJ">R-VJ</th>
+              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Replace NVJ">R-NVJ</th>
+              <th class="p-3 border-b border-emerald-200 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="handshake-table-body" class="divide-y divide-slate-100 text-xs">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Scroll Buttons -->
+  <div class="fixed bottom-8 right-6 z-[100] flex flex-col gap-3">
+    <button onclick="window.scrollAdminTo('top')" class="w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 transition opacity-80 hover:opacity-100 outline-none" title="Scroll to Top">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
+      </svg>
+    </button>
+    <button onclick="window.scrollAdminTo('bottom')" class="w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 transition opacity-80 hover:opacity-100 outline-none" title="Scroll to Bottom">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+  </div>
+</div>

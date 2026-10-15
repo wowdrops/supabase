@@ -1,0 +1,79 @@
+<!-- 752_Accounts_Auth_JS.html -->
+<script>
+  window.activeAccountsSession = null; 
+
+  // Single clean listener for page load
+  document.addEventListener("DOMContentLoaded", function() {
+    var savedSession = localStorage.getItem('wowdrops_accounts_session');
+    if (savedSession) {
+      window.activeAccountsSession = JSON.parse(savedSession);
+      window.unlockWorkspace();
+    }
+  });
+
+  window.handleAccountsLogin = function() {
+    var user = document.getElementById('login-user').value.trim();
+    var pass = document.getElementById('login-pass').value.trim();
+    var errBox = document.getElementById('login-error');
+    var btn = document.getElementById('btn-login');
+
+    if (!user || !pass) {
+      errBox.innerText = "Please enter both username and password.";
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    errBox.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Authenticating...';
+
+    google.script.run.withSuccessHandler(function(res) {
+      btn.disabled = false;
+      btn.innerHTML = 'Authenticate';
+
+      if (res.success) {
+        var role = res.adminData.role.toUpperCase();
+        var allowedRoles = ["SUPER ADMIN", "ADMIN", "ACCOUNTANT", "MANAGER"]; 
+        
+        if (!allowedRoles.includes(role)) {
+            errBox.innerText = "Access Denied: You do not have Finance Portal privileges.";
+            errBox.classList.remove('hidden');
+            return;
+        }
+
+        window.activeAccountsSession = res.adminData;
+        localStorage.setItem('wowdrops_accounts_session', JSON.stringify(res.adminData));
+        window.unlockWorkspace();
+      } else {
+        errBox.innerText = res.message || "Invalid credentials.";
+        errBox.classList.remove('hidden');
+      }
+    }).withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = 'Authenticate';
+      errBox.innerText = "Network Error. Please check your connection.";
+      errBox.classList.remove('hidden');
+    }).authenticateAdmin(user, pass);
+  };
+
+  window.unlockWorkspace = function() {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-workspace').classList.remove('hidden');
+    
+    document.getElementById('disp-admin-name').innerText = window.activeAccountsSession.username;
+    document.getElementById('disp-role-name').innerText = window.activeAccountsSession.role;
+    document.getElementById('disp-admin-initial').innerText = window.activeAccountsSession.username.charAt(0).toUpperCase();
+
+    if (typeof window.goToAccountTab === 'function') {
+        window.goToAccountTab('maker-dashboard');
+    }
+  };
+
+  window.logoutAccounts = function() {
+    localStorage.removeItem('wowdrops_accounts_session');
+    window.activeAccountsSession = null;
+    document.getElementById('view-workspace').classList.add('hidden');
+    document.getElementById('view-login').classList.remove('hidden');
+    document.getElementById('login-pass').value = '';
+  };
+</script>

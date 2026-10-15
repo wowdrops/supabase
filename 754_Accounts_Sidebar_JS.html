@@ -1,0 +1,93 @@
+<script>
+  window.toggleSidebar = function() {
+    var sidebar = document.getElementById('app-sidebar');
+    var backdrop = document.getElementById('sidebar-backdrop');
+    
+    // Toggle Mobile State
+    sidebar.classList.toggle('-translate-x-full');
+    // Toggle Desktop State (Overrides the default 'always open' on large screens)
+    sidebar.classList.toggle('md:-translate-x-full');
+    
+    // Handle Backdrop (Only needed on mobile)
+    if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+      backdrop.classList.remove('hidden');
+      setTimeout(function() { backdrop.classList.remove('opacity-0', 'pointer-events-none'); }, 10);
+    } else {
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(function() { backdrop.classList.add('hidden'); }, 300);
+    }
+  };  
+
+  window.toggleAccordion = function(contentId, iconId) {
+    var content = document.getElementById(contentId);
+    var icon = document.getElementById(iconId);
+    
+    if (content.classList.contains('open')) {
+      content.classList.remove('open');
+      icon.classList.remove('rotate-180');
+    } else {
+      // Optional: Close other accordions
+      document.querySelectorAll('.accordion-content').forEach(function(el) {
+        el.classList.remove('open');
+      });
+      document.querySelectorAll('.transition-transform.rotate-180').forEach(function(el) {
+        el.classList.remove('rotate-180');
+      });
+      
+      content.classList.add('open');
+      icon.classList.add('rotate-180');
+    }
+  };
+
+  window.goToAccountTab = function(tabId) {
+    // Hide all tabs
+    document.querySelectorAll('.accounts-tab-view').forEach(function(el) {
+      el.classList.add('hidden');
+    });
+    
+    // Show the requested tab (we will add the .accounts-tab-view class to our Maker HTML)
+    var targetTab = document.getElementById('tab-' + tabId);
+    if (targetTab) {
+      targetTab.classList.remove('hidden');
+      targetTab.classList.add('fade-in');
+    }
+
+    // Highlight the active menu button with Fintech styling
+    document.querySelectorAll('#app-sidebar button').forEach(function(btn) {
+      btn.classList.remove('border-teal-500', 'text-white', 'bg-slate-800');
+      btn.classList.add('border-transparent', 'text-slate-400');
+    });
+     
+    var navBtn = document.getElementById('nav-tab-' + tabId);
+    if (navBtn) {
+      navBtn.classList.remove('border-transparent', 'text-slate-400');
+      navBtn.classList.add('border-teal-500', 'text-white', 'bg-slate-800');
+    }
+
+    // Auto-close sidebar on mobile after clicking a link
+    if (window.innerWidth < 768) {
+      window.toggleSidebar();
+    }
+    
+    // Scroll to top
+    var scrollArea = document.getElementById('scroll-area');
+    if(scrollArea) scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Trigger Maker Load only when Maker tab is clicked (Assuming your Maker tab ID is 'maker-entry' or similar. Update if needed.)
+    if ((tabId === 'maker-entry' || tabId === 'maker-dashboard') && typeof window.MakerLoad === 'function') {
+        window.MakerLoad();
+    }
+
+    // Trigger Checker Load when Checker tab is clicked
+    if (tabId === 'checker-approvals' && typeof window.CheckerLoad === 'function') {
+        window.CheckerLoad();
+    }
+
+    // Trigger Maker Auto Load when Automated Drafts tab is clicked
+    if (tabId === 'maker-auto-drafts' && typeof window.MakerAutoLoad === 'function') {
+        window.MakerAutoLoad();
+    }
+
+
+  };
+</script>

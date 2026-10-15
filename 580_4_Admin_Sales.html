@@ -1,0 +1,153 @@
+<div id="tab-sales" class="hidden space-y-4 fade-in pb-20 relative">
+
+  <!-- STICKY HEADER WITH TIMER & COLLAPSE TOGGLE -->
+  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-indigo-200 pt-2 pb-4 shadow-sm">
+    <div class="flex justify-between items-center px-2">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+        Sales <span class="hidden md:inline">History</span>
+        <span id="sh-live-timer" class="hidden"></span>
+        <button onclick="window.toggleSalesHistoryHeader()"
+          class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none ml-auto">
+          <svg id="sh-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none"
+            stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
+          </svg>
+        </button>
+      </h2>
+    </div>
+
+    <!-- COLLAPSIBLE FILTER PANEL -->
+    <div id="sh-header-collapsible" class="transition-all duration-300 origin-top mt-4 px-2">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-3">
+        <div class="flex flex-col md:flex-row gap-3">
+          <div
+            class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200 w-full md:w-auto shrink-0">
+            <input type="date" id="sales-start"
+              class="bg-transparent border-none text-slate-700 text-sm font-bold outline-none focus:ring-0">
+            <span class="font-bold text-slate-400">TO</span>
+            <input type="date" id="sales-end"
+              class="bg-transparent border-none text-slate-700 text-sm font-bold outline-none focus:ring-0">
+
+            <!-- NEW TARGET CPN FILTER -->
+            <input type="text" id="target-cpn" placeholder="Target CPN (Opt)"
+              class="bg-white border border-slate-200 text-slate-700 text-sm font-bold outline-none focus:border-indigo-500 rounded-lg px-3 py-1.5 w-36 uppercase shadow-inner placeholder:normal-case transition-all">
+
+            <button onclick="window.loadSalesData()"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-black text-sm shadow transition tracking-widest uppercase">Fetch</button>
+          </div>
+          <div class="relative flex-1">
+            <svg class="w-5 h-5 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" id="sh-search" placeholder="Search CPN, Name, Apt, Blk, Door..."
+              onkeyup="window.filterSalesHistoryData()"
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:border-indigo-500 outline-none transition shadow-inner text-sm">
+          </div>
+        </div>
+        <div class="flex flex-col md:flex-row gap-3">
+           <select id="sh-flt-apt" onchange="window.updateSalesHistoryBlockDropdown()" class="w-full md:w-1/3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-indigo-500"><option value="ALL">ALL APARTMENTS</option></select>
+           <select id="sh-flt-blk" onchange="window.filterSalesHistoryData()" class="w-full md:w-1/3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-indigo-500"><option value="ALL">ALL BLOCKS</option></select>
+           <!-- NEW: EXCEPTION FILTER -->
+           <select id="sh-flt-exc" onchange="window.filterSalesHistoryData()" class="w-full md:w-1/3 p-2.5 bg-rose-50 border border-rose-300 text-rose-800 rounded-xl font-black text-sm outline-none focus:border-rose-500 shadow-inner">
+             <option value="ALL">SHOW ALL</option>
+             <option value="EXCEPTIONS">EXCEPTIONS / SHORTAGES ONLY</option>
+           </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE AREA (Horizontal scrolling totals embedded in header) -->
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative hide-scrollbar">
+    <table class="w-full text-left border-collapse whitespace-nowrap">
+      <thead class="bg-slate-800 text-white text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-md">
+        <!-- HORIZONTAL SCROLLING TOTALS (Perfectly Aligned) -->
+        <tr class="bg-slate-900 border-b-2 border-slate-700">
+          <th class="p-3 sticky left-0 z-30 bg-slate-950 border-r border-slate-700 text-indigo-300 font-black">Filtered: <span id="sh-tot-count">0</span></th>
+          <th class="p-3"></th><!-- Date -->
+          <th class="p-3"></th><!-- Apt -->
+          <th class="p-3"></th><!-- Customer -->
+          <th class="p-3"></th><!-- Ord D -->
+          <th class="p-3"></th><!-- Ord E -->
+          <th class="p-3"></th><!-- Ord Rep -->
+          <th class="p-3 text-center text-indigo-400 text-sm font-black" id="rep-sales-d">0</th>
+          <th class="p-3 text-center text-amber-400 text-sm font-black" id="rep-sales-e">0</th>
+          <th class="p-3 text-center text-rose-400 text-sm font-black" id="rep-sales-rep">0</th>
+          <th class="p-3"></th><!-- Rate -->
+          <th class="p-3 text-right text-emerald-400 text-sm font-black" id="rep-sales-amt">₹0</th>
+          <th class="p-3" colspan="3"></th><!-- Logged By, Photo, Actions -->
+        </tr>
+        <!-- ACTUAL HEADERS -->
+        <tr>
+          <th class="p-4 sticky left-0 z-30 bg-slate-900 border-r border-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">CPN NO</th>
+          <th class="p-4 font-black">Date</th>
+          <th class="p-4 font-black">Apt / Blk / Door</th>
+          <th class="p-4 font-black text-indigo-300">Customer Details</th>
+          <th class="p-4 font-black text-center text-slate-400">Ord D</th>
+          <th class="p-4 font-black text-center text-slate-400">Ord E</th>
+          <th class="p-4 font-black text-center text-slate-400">Ord Rep</th>
+          <th class="p-4 font-black text-center text-indigo-300">Act D</th>
+          <th class="p-4 font-black text-center text-amber-300">Act E</th>
+          <th class="p-4 font-black text-center text-rose-300">Act Rep</th>
+          <th class="p-4 font-black text-right">Rate</th>
+          <th class="p-4 font-black text-right text-emerald-300">Amount</th>
+          <th class="p-4 font-black text-slate-300">Logged By & On</th>
+          <th class="p-4 font-black text-center">Photo</th>
+          <th class="p-4 font-black text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="sales-tbody" class="text-sm font-bold text-slate-700 divide-y divide-slate-100">
+        <!-- Injected via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DETAILS MODAL (3 Sections) -->
+  <div id="sales-details-modal"
+    class="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
+    <div
+      class="bg-white border border-slate-200 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="p-5 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center shadow-sm z-10">
+        <div>
+          <h3 class="text-xl font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2"><svg
+              class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg> Sales Deep Dive</h3>
+          <p id="sh-modal-subtitle" class="text-xs font-bold text-indigo-600 mt-1 uppercase tracking-widest">CPN123 -
+            DD/MM/YYYY</p>
+        </div>
+        <button onclick="document.getElementById('sales-details-modal').classList.add('hidden')"
+          class="text-indigo-400 hover:text-indigo-900 text-3xl font-black outline-none transition">&times;</button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50 hide-scrollbar" id="sales-details-body">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- NATIVE 360 CPN VIEW MODAL -->
+  <div id="sh-360-modal"
+    class="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-2 md:p-6 fade-in">
+    <div
+      class="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
+      <div class="p-4 md:p-6 bg-slate-900/90 border-b border-slate-800 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-3">
+          <h3 id="sh-360-title" class="text-xl md:text-2xl font-black text-indigo-400 uppercase tracking-wider">Customer
+            360 View</h3>
+          <span id="sh-360-timer"
+            class="bg-indigo-950 text-indigo-300 border border-indigo-800 text-xs font-bold px-2.5 py-1 rounded-lg">0.00s</span>
+        </div>
+        <button onclick="window.closeSh360()"
+          class="text-slate-400 hover:text-white transition p-2 bg-slate-800 hover:bg-slate-700 rounded-xl font-black text-xl leading-none outline-none">&times;</button>
+      </div>
+      <div id="sh-360-content" class="p-4 md:p-6 overflow-y-auto space-y-6 flex-1 hide-scrollbar">
+        <!-- Injected Dynamically -->
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,31 @@
+<!-- 753_Accounts_Header.html -->
+<div id="main-header" class="fixed top-0 left-0 right-0 z-50 px-4 py-2 flex justify-between items-center transition-all duration-300 border-b border-slate-200 shadow-sm h-16 bg-white">
+    
+    <div class="flex items-center gap-4">
+        <!-- Hamburger Menu -->
+        <button onclick="window.toggleSidebar()" class="relative z-50 p-1.5 -ml-1 text-slate-500 hover:text-teal-700 hover:bg-teal-50 rounded-md transition outline-none border border-transparent focus:border-teal-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+        
+        <div class="flex items-center fade-in border-l border-slate-200 pl-4">
+            <a href="https://wowdrops.github.io" target="_blank" rel="noopener noreferrer" class="shrink-0 flex items-center">
+                <img src="wowLogo.jpg" class="h-8 w-auto grayscale contrast-125" alt="Logo">
+            </a>
+            <div class="ml-3 hidden sm:block">
+              <h1 class="font-bold tracking-tight text-base leading-none text-slate-900 uppercase">WOWDROPS <span class="font-black text-teal-700">FINANCE</span></h1>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-right flex items-center gap-3">
+        <div class="hidden sm:block text-right">
+            <p id="disp-role-name" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Role</p>
+            <p id="disp-admin-name" class="text-xs text-slate-900 font-bold">Pending...</p>
+        </div>
+        <div class="w-8 h-8 bg-teal-50 rounded border border-teal-200 flex items-center justify-center text-teal-800 font-black shadow-sm">
+            <span id="disp-admin-initial">?</span>
+        </div>
+    </div>
+</div>

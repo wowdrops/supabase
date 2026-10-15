@@ -1,0 +1,26 @@
+// Supabase Client Initialization
+    const SUPABASE_URL = 'https://vzhnypcrckrngwaugwkq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6aG55cGNyY2tybmd3YXVnd2txIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NjU2NjQsImV4cCI6MjEwNzI0MTY2NH0.qCjMlyvtwxPBSZ16ifJeJwcOI-TtX5YETU71ekzEHaM';
+    window.supabase1 = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyjFmWj4H1MkoDMXZVFqBQz5TBWoP1G9mPC_M04nt06UjuY-so9ir4ybt9NT1ZHjIU/exec"; // project in script.google.com 
+
+
+
+// Temporary safety bridge while migrating from GAS to Supabase
+if (typeof google === 'undefined') {
+  window.google = {
+    script: {
+      run: new Proxy({}, {
+        get(target, prop) {
+          if (prop === 'withSuccessHandler' || prop === 'withFailureHandler') {
+            return () => window.google.script.run;
+          }
+          return (...args) => {
+            console.warn(`⚠️ [GAS Migration Pending] "${prop}" was called with:`, args);
+          };
+        }
+      })
+    }
+  };
+}

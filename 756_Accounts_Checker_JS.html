@@ -1,0 +1,325 @@
+<!-- 756_Accounts_Checker_JS.html -->
+<script>
+  window.cachedPendingVouchers = [];
+  window.activeChkTimerInterval = null;
+
+  window.toggleChkHeader = function() {
+      var col = document.getElementById('chk-header-collapsible');
+      var icon = document.getElementById('chk-header-icon');
+      if (col.classList.contains('hidden')) { 
+          col.classList.remove('hidden'); 
+          icon.classList.add('rotate-180'); 
+      } else { 
+          col.classList.add('hidden'); 
+          icon.classList.remove('rotate-180'); 
+      }
+  };
+
+  window.CheckerLoad = function() {
+    // 1. Timer Init (Matches Delivery QC)
+    var timerBadge = document.getElementById('chk-live-timer');
+    if (timerBadge) {
+        timerBadge.outerHTML = '<span id="chk-live-timer" class="bg-indigo-100 text-indigo-800 font-black px-3 py-1.5 rounded-lg text-sm border-2 border-indigo-200 shadow-inner">0.00s</span>';
+        timerBadge = document.getElementById('chk-live-timer'); 
+    }
+
+    var startTime = performance.now();
+    if(window.activeChkTimerInterval) clearInterval(window.activeChkTimerInterval);
+    
+    window.activeChkTimerInterval = setInterval(function() {
+        var curr = ((performance.now() - startTime) / 1000).toFixed(2);
+        var badge = document.getElementById('chk-live-timer');
+        if(badge) badge.innerText = curr + "s";
+    }, 50);
+
+    // 2. UI Reset
+    document.getElementById('chk-table-body').innerHTML = '';
+    document.getElementById('chk-mobile-cards').innerHTML = '';
+    
+    document.getElementById('chk-loading').classList.remove('hidden');
+    document.getElementById('chk-loading').style.display = "flex";
+    document.getElementById('chk-empty').classList.add('hidden');
+    document.getElementById('chk-pc-table-container').style.display = "none";
+    document.getElementById('chk-mobile-wrapper').style.display = "none";
+
+    // 3. Fetch Data
+    google.script.run
+      .withFailureHandler(function(err) {
+          clearInterval(window.activeChkTimerInterval);
+          var badge = document.getElementById('chk-live-timer');
+          if(badge) badge.outerHTML = '<span id="chk-live-timer" class="bg-red-100 text-red-800 font-bold px-2 py-1 rounded border border-red-200 text-[10px] uppercase tracking-widest">Failed</span>';
+          alert("Error fetching pending vouchers: " + err);
+      })
+      .withSuccessHandler(function(res) {
+        clearInterval(window.activeChkTimerInterval);
+        var finalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+        var badge = document.getElementById('chk-live-timer');
+        if(badge) badge.outerHTML = '<span id="chk-live-timer" class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded border border-emerald-200 text-[10px] uppercase tracking-widest">Loaded in ' + finalTime + 's</span>';
+
+        document.getElementById('chk-loading').classList.add('hidden');
+        document.getElementById('chk-loading').style.display = "none";
+        
+        if (res.success) {
+          window.cachedPendingVouchers = res.data;
+          document.getElementById('chk-count-total').innerText = res.data.length;
+
+          if (res.data.length === 0) {
+            document.getElementById('chk-empty').classList.remove('hidden');
+          } else {
+            document.getElementById('chk-pc-table-container').style.display = "";
+            document.getElementById('chk-mobile-wrapper').style.display = "";
+            window.renderCheckerUI(res.data);
+          }
+        } else {
+          alert("Error fetching pending vouchers: " + res.message);
+        }
+    }).accounts_getPendingVouchers();
+  };
+
+  window.renderCheckerUI = function(data) {
+    const tBody = document.getElementById('chk-table-body');
+    const cardsContainer = document.getElementById('chk-mobile-cards');
+    
+    let tableRows = '';
+    let mobileCards = '';
+
+    data.forEach(vch => {
+      // Dynamic styling based on voucher type
+      let badgeColor = "bg-slate-100 text-slate-600 border-slate-200";
+      if(vch.type === 'RECEIPT') badgeColor = "bg-teal-50 text-teal-700 border-teal-200";
+      if(vch.type === 'PAYMENT') badgeColor = "bg-rose-50 text-rose-700 border-rose-200";
+      if(vch.type === 'CONTRA') badgeColor = "bg-blue-50 text-blue-700 border-blue-200";
+      if(vch.type === 'JOURNAL') badgeColor = "bg-violet-50 text-violet-700 border-violet-200";
+      
+      const formattedAmt = parseFloat(vch.amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+      // --- 1. PC TABLE ROW (First Col is Sticky) ---
+      tableRows += `
+        <tr class="hover:bg-slate-50 transition group">
+          <td class="p-4 sticky left-0 bg-white group-hover:bg-slate-50 z-10 shadow-[1px_0_0_rgba(226,232,240,1)] transition">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="chk-voucher-select mt-1 w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-indigo-500 cursor-pointer" value="${vch.jvId}" onchange="window.updateBulkActionUI()">
+              <div>
+                <p class="font-black text-slate-800">${vch.formattedDate}</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">${vch.jvId}</p>
+              </div>
+            </div>
+          </td>
+          <td class="p-4">
+            <span class="px-2 py-1.5 rounded border text-[10px] font-black uppercase tracking-widest shadow-sm ${badgeColor}">${vch.type}</span>
+          </td>
+          <td class="p-4 max-w-[250px] whitespace-normal">
+            <p class="text-sm leading-tight"><span class="font-black text-slate-400 mr-1 text-[10px] uppercase">Dr</span> <span class="font-bold text-slate-800">${vch.drAccountName}</span></p>
+            <p class="text-sm leading-tight mt-1"><span class="font-black text-slate-400 mr-1 text-[10px] uppercase">Cr</span> <span class="font-bold text-slate-800">${vch.crAccountName}</span></p>
+            <p class="text-[10px] font-bold text-slate-400 mt-1.5 italic bg-slate-50 p-1 rounded border border-slate-100 w-max truncate max-w-full" title="${vch.narration}">💬 ${vch.narration}</p>
+          </td>
+          <td class="p-4 text-right font-black text-slate-800 text-base">
+            ₹ ${formattedAmt}
+          </td>
+          <td class="p-4 text-center">
+            <button onclick="window.openCheckerModal('${vch.jvId}')" class="bg-white text-indigo-600 hover:bg-indigo-600 hover:text-white border-2 border-indigo-200 hover:border-indigo-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition shadow-sm">
+              Review
+            </button>
+          </td>
+        </tr>
+      `;
+
+      // --- 2. MOBILE CARD ---
+      mobileCards += `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+           <div class="bg-slate-800 p-3 text-white flex justify-between items-center shadow-inner">
+              <div class="flex items-center gap-3">
+                 <input type="checkbox" class="chk-voucher-select w-4 h-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 cursor-pointer" value="${vch.jvId}" onchange="window.updateBulkActionUI()">
+                 <div>
+                    <p class="font-black tracking-widest uppercase text-sm">${vch.jvId}</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${vch.formattedDate}</p>
+                 </div>
+              </div>
+              <span class="px-2 py-1 rounded border text-[9px] font-black uppercase tracking-widest ${badgeColor}">${vch.type}</span>
+           </div>
+           
+           <div class="p-4 flex-1 flex flex-col bg-slate-50">
+              <div class="flex justify-between items-end mb-4">
+                 <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amount</p>
+                    <p class="text-xl font-black text-slate-800">₹ ${formattedAmt}</p>
+                 </div>
+                 <button onclick="window.openCheckerModal('${vch.jvId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white border-2 border-indigo-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition shadow-sm active:scale-95">
+                    Review
+                 </button>
+              </div>
+              
+              <div class="space-y-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                 <p class="text-xs leading-tight"><span class="font-black text-slate-400 mr-1 text-[9px] uppercase tracking-widest">Dr</span> <span class="font-bold text-slate-800">${vch.drAccountName}</span></p>
+                 <div class="w-full h-px bg-slate-100"></div>
+                 <p class="text-xs leading-tight"><span class="font-black text-slate-400 mr-1 text-[9px] uppercase tracking-widest">Cr</span> <span class="font-bold text-slate-800">${vch.crAccountName}</span></p>
+              </div>
+              
+              <div class="mt-3">
+                 <p class="text-[10px] font-bold text-slate-500 italic bg-slate-100 p-2 rounded-lg border border-slate-200">💬 ${vch.narration}</p>
+              </div>
+           </div>
+        </div>
+      `;
+    });
+
+    tBody.innerHTML = tableRows;
+    cardsContainer.innerHTML = mobileCards;
+  };
+
+  // Re-use your modal and processing logic from earlier
+  window.openCheckerModal = function(jvId) {
+    const voucher = window.cachedPendingVouchers.find(v => v.jvId === jvId);
+    if (!voucher) return;
+
+    document.getElementById('chk-jv-id').value = voucher.jvId;
+    document.getElementById('chk-dr-name').innerText = voucher.drAccountName;
+    document.getElementById('chk-cr-name').innerText = voucher.crAccountName;
+    document.getElementById('chk-amount').value = voucher.amount;
+    document.getElementById('chk-narration').value = voucher.narration;
+    
+    document.getElementById('chk-modal-error').classList.add('hidden');
+    document.getElementById('modal-checker-edit').classList.remove('hidden');
+  };
+
+  window.closeCheckerModal = function() {
+    document.getElementById('modal-checker-edit').classList.add('hidden');
+  };
+
+  window.processVoucher = function(actionType) {
+    const errBox = document.getElementById('chk-modal-error');
+    const btnApprove = document.getElementById('btn-chk-approve');
+    
+    const payload = {
+      jvId: document.getElementById('chk-jv-id').value,
+      action: actionType,
+      userEmail: window.activeAccountsSession ? window.activeAccountsSession.username : 'Admin',
+      newAmount: parseFloat(document.getElementById('chk-amount').value),
+      newNarration: document.getElementById('chk-narration').value.trim()
+    };
+
+    if (isNaN(payload.newAmount) || payload.newAmount <= 0) {
+      errBox.innerText = "Amount must be a valid number greater than 0.";
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    errBox.classList.add('hidden');
+    const originalText = btnApprove.innerText;
+    btnApprove.innerText = "Processing...";
+    btnApprove.disabled = true;
+
+    google.script.run.withSuccessHandler(function(res) {
+      btnApprove.innerText = originalText;
+      btnApprove.disabled = false;
+      
+      if (res.success) {
+        window.closeCheckerModal();
+        window.CheckerLoad(); 
+      } else {
+        errBox.innerText = res.message;
+        errBox.classList.remove('hidden');
+      }
+    }).withFailureHandler(function(err) {
+      btnApprove.innerText = originalText;
+      btnApprove.disabled = false;
+      errBox.innerText = "Network Error: " + err;
+      errBox.classList.remove('hidden');
+    }).accounts_processVoucherAction(payload);
+  };
+
+  window.toggleAllCheckboxes = function(masterCheckbox) {
+    const isChecked = masterCheckbox.checked;
+    
+    // Sync both master checkboxes so PC and Mobile stay aligned
+    const pcMaster = document.getElementById('chk-select-all');
+    const mobMaster = document.getElementById('chk-select-all-mobile');
+    if (pcMaster) pcMaster.checked = isChecked;
+    if (mobMaster) mobMaster.checked = isChecked;
+
+    const checkboxes = document.querySelectorAll('.chk-voucher-select');
+    checkboxes.forEach(chk => chk.checked = isChecked);
+    window.updateBulkActionUI();
+  };
+
+  window.updateBulkActionUI = function() {
+    const checkboxes = document.querySelectorAll('.chk-voucher-select');
+    const selectedIds = new Set(); 
+    
+    checkboxes.forEach(chk => {
+      if (chk.checked) selectedIds.add(chk.value);
+    });
+
+    const bulkBar = document.getElementById('chk-bulk-actions');
+    const countBadge = document.getElementById('chk-selected-count');
+    const pcMaster = document.getElementById('chk-select-all');
+    const mobMaster = document.getElementById('chk-select-all-mobile');
+    
+    if (selectedIds.size > 0) {
+      countBadge.innerText = selectedIds.size;
+      bulkBar.classList.remove('hidden');
+    } else {
+      bulkBar.classList.add('hidden');
+      // Uncheck both master boxes if nothing is selected
+      if (pcMaster) pcMaster.checked = false;
+      if (mobMaster) mobMaster.checked = false;
+    }
+  };
+
+  window.processBulk = function(actionType) {
+    const checkboxes = document.querySelectorAll('.chk-voucher-select');
+    const selectedIds = new Set();
+    
+    checkboxes.forEach(chk => {
+      if (chk.checked) selectedIds.add(chk.value);
+    });
+
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Are you sure you want to ${actionType} ${selectedIds.size} vouchers?`)) {
+      return;
+    }
+
+    const payload = {
+      jvIds: Array.from(selectedIds),
+      action: actionType,
+      userEmail: window.activeAccountsSession ? window.activeAccountsSession.username : 'Admin'
+    };
+
+    const bulkBar = document.getElementById('chk-bulk-actions');
+    const originalHTML = bulkBar.innerHTML; // Save the original buttons and layout
+
+    // Show a quick loading state
+    bulkBar.innerHTML = `<div class="w-full text-center py-2 text-sm font-black animate-pulse tracking-widest text-indigo-200">Processing ${selectedIds.size} vouchers...</div>`;
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        // 1. Restore the original HTML so the UI doesn't break
+        bulkBar.innerHTML = originalHTML;
+        
+        // 2. Hide the bar since the items are now processed
+        bulkBar.classList.add('hidden');
+        
+        // 3. Uncheck the master checkboxes
+        const pcMaster = document.getElementById('chk-select-all');
+        const mobMaster = document.getElementById('chk-select-all-mobile');
+        if (pcMaster) pcMaster.checked = false;
+        if (mobMaster) mobMaster.checked = false;
+
+        // 4. Handle response
+        if (res.success) {
+          window.CheckerLoad(); // Reloads the UI on success
+        } else {
+          alert("Bulk action failed: " + res.message);
+          window.CheckerLoad(); 
+        }
+      })
+      .withFailureHandler(function(err) {
+        bulkBar.innerHTML = originalHTML;
+        bulkBar.classList.add('hidden');
+        alert("Network Error: " + err);
+        window.CheckerLoad();
+      })
+      .accounts_processBulkAction(payload);
+  };
+</script>

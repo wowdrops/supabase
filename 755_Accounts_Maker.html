@@ -1,0 +1,292 @@
+<!-- 755_Accounts_Maker.html -->
+<div id="tab-maker-dashboard" class="accounts-tab-view hidden fade-in pb-20 max-w-5xl mx-auto">
+
+  <div class="mb-6 flex justify-between items-end border-b border-slate-200 pb-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 tracking-tight uppercase">Maker Desk</h2>
+      <p class="text-slate-500 text-[10px] mt-1 font-bold tracking-widest uppercase">Transaction Data Entry</p>
+    </div>
+    <div class="text-right">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Active Date</p>
+      <input type="date" id="maker-active-date"
+        class="bg-white border border-slate-300 text-slate-800 text-sm font-bold p-2 rounded-md outline-none focus:border-teal-500 shadow-sm">
+    </div>
+  </div>
+
+  <!-- Voucher Type Tabs -->
+  <div class="flex flex-wrap md:flex-nowrap gap-2 md:gap-4 mb-6">
+    <button id="btn-vch-receipt" onclick="window.selectVoucherType('RECEIPT')"
+      class="voucher-tab-btn flex-1 min-w-[120px] bg-teal-50 border-teal-600 text-teal-800 border-2 px-4 py-3 rounded-md text-xs font-bold uppercase tracking-widest transition shadow-sm">
+      Receipt <span
+        class="block text-[9px] font-black opacity-60 mt-0.5 border border-teal-200/50 rounded w-max mx-auto px-1 py-0.5">ALT
+        + 1</span>
+    </button>
+
+    <button id="btn-vch-payment" onclick="window.selectVoucherType('PAYMENT')"
+      class="voucher-tab-btn flex-1 min-w-[120px] bg-white border-slate-200 text-slate-500 border-2 px-4 py-3 rounded-md text-xs font-bold uppercase tracking-widest hover:border-slate-300 transition">
+      Payment <span
+        class="block text-[9px] font-black opacity-60 mt-0.5 border border-slate-200 rounded w-max mx-auto px-1 py-0.5">ALT
+        + 2</span>
+    </button>
+
+    <button id="btn-vch-contra" onclick="window.selectVoucherType('CONTRA')"
+      class="voucher-tab-btn flex-1 min-w-[120px] bg-white border-slate-200 text-slate-500 border-2 px-4 py-3 rounded-md text-xs font-bold uppercase tracking-widest hover:border-slate-300 transition">
+      Contra <span
+        class="block text-[9px] font-black opacity-60 mt-0.5 border border-slate-200 rounded w-max mx-auto px-1 py-0.5">ALT
+        + 3</span>
+    </button>
+
+    <button id="btn-vch-journal" onclick="window.selectVoucherType('JOURNAL')"
+      class="voucher-tab-btn flex-1 min-w-[120px] bg-white border-slate-200 text-slate-500 border-2 px-4 py-3 rounded-md text-xs font-bold uppercase tracking-widest hover:border-slate-300 transition">
+      Journal <span
+        class="block text-[9px] font-black opacity-60 mt-0.5 border border-slate-200 rounded w-max mx-auto px-1 py-0.5">ALT
+        + 4</span>
+    </button>
+  </div>
+
+  <!-- DYNAMIC ENTRY FORM -->
+  <div id="voucher-form-card"
+    class="bg-white border border-slate-300 border-l-4 border-l-teal-500 rounded-md shadow-lg p-6 md:p-8 transition-colors duration-300">
+
+    <div class="flex justify-between items-center mb-6">
+      <h3 id="lbl-voucher-title" class="text-lg font-bold text-slate-800 tracking-tight">Receipt Voucher</h3>
+      <span
+        class="bg-slate-100 border border-slate-200 text-slate-500 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest">Draft</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+      <!-- AMOUNT -->
+      <div class="md:col-span-2">
+        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Amount (₹)</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</span>
+          <input type="number" id="vch-amount" placeholder="0.00"
+            class="fintech-amount w-full pl-10 p-4 bg-slate-50 border border-slate-300 rounded-md font-bold text-3xl text-slate-900 outline-none focus:bg-white transition shadow-inner">
+        </div>
+      </div>
+
+      <!-- DEBIT ACCOUNT (SEARCHABLE) -->
+      <div class="relative">
+        <label id="lbl-dr-account"
+          class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Debit (Receiving)
+          Account</label>
+        <input type="text" id="vch-dr-search" autocomplete="off" placeholder="Type to search ledgers..."
+          class="w-full p-3 bg-white border border-slate-300 rounded-md font-semibold text-sm text-slate-800 outline-none shadow-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition pr-10">
+        <input type="hidden" id="vch-dr-account"> <!-- Stores the actual DB ID -->
+
+        <!-- Dropdown Container -->
+        <div id="dr-dropdown"
+          class="hidden absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-xl max-h-56 overflow-y-auto hide-scrollbar">
+        </div>
+
+        <span
+          class="absolute right-3 top-10 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 pointer-events-none">Dr</span>
+      </div>
+
+      <!-- CREDIT ACCOUNT (SEARCHABLE) -->
+      <div class="relative">
+        <label id="lbl-cr-account"
+          class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Credit (Giving)
+          Account</label>
+        <input type="text" id="vch-cr-search" autocomplete="off" placeholder="Type to search ledgers..."
+          class="w-full p-3 bg-white border border-slate-300 rounded-md font-semibold text-sm text-slate-800 outline-none shadow-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition pr-10">
+        <input type="hidden" id="vch-cr-account"> <!-- Stores the actual DB ID -->
+
+        <!-- Dropdown Container -->
+        <div id="cr-dropdown"
+          class="hidden absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-xl max-h-56 overflow-y-auto hide-scrollbar">
+        </div>
+
+        <span
+          class="absolute right-3 top-10 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 pointer-events-none">Cr</span>
+      </div>
+
+    </div>
+
+    <!-- NARRATION -->
+    <div class="mb-6">
+      <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Narration /
+        Remarks</label>
+      <input type="text" id="vch-narration" placeholder="Enter transaction details..."
+        class="w-full p-3 bg-slate-50 border border-slate-300 rounded-md font-medium text-sm text-slate-800 outline-none focus:bg-white transition shadow-inner">
+    </div>
+
+    <!-- SUBMIT BUTTON -->
+    <div class="pt-6 border-t border-slate-200 flex items-center justify-between">
+      <p id="vch-error-msg" class="text-xs font-bold text-red-600 hidden tracking-wide"></p>
+      <button onclick="window.submitVoucher()" id="btn-submit-voucher"
+        class="w-full md:w-auto ml-auto bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm px-8 py-3.5 rounded-md shadow transition active:scale-[0.98] uppercase tracking-widest">
+        Post to Ledger
+      </button>
+    </div>
+
+  </div>
+  <!-- MAKER QUEUES SECTION -->
+  <div class="mt-12 space-y-10">
+
+    <!-- QUEUE 1: PENDING MAKER (Drafts needing mapping) -->
+    <div>
+      <h3
+        class="text-sm font-black text-fuchsia-700 uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-fuchsia-100 pb-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        Action Required (Auto Drafts)
+      </h3>
+
+      <!-- PC Table -->
+      <div class="hidden md:block overflow-x-auto shadow-sm rounded-xl border border-slate-200 bg-white">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wider">
+            <tr>
+              <th class="p-3 font-black">Date & ID</th>
+              <th class="p-3 font-black">Narration / Details</th>
+              <th class="p-3 font-black text-right">Amount (₹)</th>
+              <th class="p-3 font-black text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="maker-queue-drafts-pc" class="text-sm divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <!-- Mobile Cards -->
+      <div id="maker-queue-drafts-mobile" class="md:hidden space-y-4"></div>
+      <div id="maker-queue-drafts-empty"
+        class="hidden p-6 text-center text-slate-400 font-bold italic bg-white rounded-xl border border-slate-200">No
+        automated drafts pending mapping.</div>
+    </div>
+
+    <!-- QUEUE 2: PENDING APPROVAL (Submitted but editable) -->
+    <div>
+      <h3
+        class="text-sm font-black text-amber-600 uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-amber-100 pb-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Awaiting Checker Approval
+      </h3>
+
+      <!-- PC Table -->
+      <div class="hidden md:block overflow-x-auto shadow-sm rounded-xl border border-slate-200 bg-white">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wider">
+            <tr>
+              <th class="p-3 font-black">Date & ID</th>
+              <th class="p-3 font-black">Type</th>
+              <th class="p-3 font-black">Ledgers (Dr / Cr)</th>
+              <th class="p-3 font-black text-right">Amount (₹)</th>
+              <th class="p-3 font-black text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="maker-queue-pending-pc" class="text-sm divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <!-- Mobile Cards -->
+      <div id="maker-queue-pending-mobile" class="md:hidden space-y-4"></div>
+      <div id="maker-queue-pending-empty"
+        class="hidden p-6 text-center text-slate-400 font-bold italic bg-white rounded-xl border border-slate-200">No
+        vouchers waiting for approval.</div>
+    </div>
+    <!-- QUEUE 3: REJECTED (Needs Correction or Voiding) -->
+    <div>
+      <h3
+        class="text-sm font-black text-rose-600 uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-rose-100 pb-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+          </path>
+        </svg>
+        Rejected / Needs Correction
+      </h3>
+
+      <div class="hidden md:block overflow-x-auto shadow-sm rounded-xl border border-rose-200 bg-white">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead class="bg-rose-50 text-rose-700 text-[10px] uppercase tracking-wider">
+            <tr>
+              <th class="p-3 font-black">Date & ID</th>
+              <th class="p-3 font-black">Type</th>
+              <th class="p-3 font-black">Ledgers (Dr / Cr)</th>
+              <th class="p-3 font-black text-right">Amount (₹)</th>
+              <th class="p-3 font-black text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="maker-queue-rejected-pc" class="text-sm divide-y divide-rose-50"></tbody>
+        </table>
+      </div>
+      <div id="maker-queue-rejected-mobile" class="md:hidden space-y-4"></div>
+      <div id="maker-queue-rejected-empty"
+        class="hidden p-6 text-center text-slate-400 font-bold italic bg-white rounded-xl border border-slate-200">No
+        rejected vouchers.</div>
+    </div>
+  </div>
+
+  <!-- EDIT SUBMITTED VOUCHER MODAL -->
+  <div id="modal-edit-submitted"
+    class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-visible fade-in">
+
+      <div class="bg-amber-50 border-b border-amber-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+        <h3 class="font-black text-amber-900 text-sm uppercase tracking-widest flex items-center gap-2">Edit Submitted
+          Voucher</h3>
+        <button onclick="window.closeMakerEditModal()"
+          class="text-amber-700 hover:text-amber-900 font-black text-xl leading-none">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-5 bg-slate-50">
+        <input type="hidden" id="edit-sub-jv">
+        <input type="hidden" id="edit-sub-type">
+
+        <div class="flex justify-between items-center">
+          <span id="edit-sub-id-display"
+            class="text-[10px] font-black bg-slate-200 text-slate-600 px-2 py-1 rounded uppercase tracking-widest"></span>
+          <span id="edit-sub-type-display"
+            class="text-[10px] font-black px-2 py-1 rounded border uppercase tracking-widest"></span>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Amount (₹)</label>
+          <input type="number" id="edit-sub-amount"
+            class="w-full p-2.5 bg-white border border-slate-300 rounded font-black text-lg text-slate-800 outline-none focus:border-amber-500">
+        </div>
+
+        <div class="relative">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Debit Account
+            (Dr)</label>
+          <input type="text" id="edit-sub-dr-search" autocomplete="off"
+            class="w-full p-2.5 bg-white border border-slate-300 rounded font-semibold text-sm text-slate-800 outline-none focus:border-amber-500 transition">
+          <input type="hidden" id="edit-sub-dr-account">
+          <div id="edit-sub-dr-dropdown"
+            class="hidden absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded shadow-xl max-h-40 overflow-y-auto">
+          </div>
+        </div>
+
+        <div class="relative">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Credit Account
+            (Cr)</label>
+          <input type="text" id="edit-sub-cr-search" autocomplete="off"
+            class="w-full p-2.5 bg-white border border-slate-300 rounded font-semibold text-sm text-slate-800 outline-none focus:border-amber-500 transition">
+          <input type="hidden" id="edit-sub-cr-account">
+          <div id="edit-sub-cr-dropdown"
+            class="hidden absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded shadow-xl max-h-40 overflow-y-auto">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Narration</label>
+          <input type="text" id="edit-sub-narration"
+            class="w-full p-2.5 bg-white border border-slate-300 rounded text-sm font-medium text-slate-800 outline-none focus:border-amber-500">
+        </div>
+
+        <p id="edit-sub-error"
+          class="text-xs font-bold text-rose-600 hidden bg-rose-50 p-2 rounded border border-rose-200"></p>
+      </div>
+
+      <div class="bg-white border-t border-slate-200 p-4 flex gap-3 rounded-b-2xl">
+        <button id="btn-edit-sub" onclick="window.saveMakerEdit()"
+          class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black text-xs px-4 py-3.5 rounded-xl uppercase tracking-widest transition shadow-lg">Save
+          Changes</button>
+      </div>
+    </div>
+  </div>
+</div>

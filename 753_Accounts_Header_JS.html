@@ -1,0 +1,10 @@
+<script>
+  // Reserved for specific header logic (e.g., global search dropdowns, profile popovers)
+  window.updateHeaderStatus = function(statusText) {
+    // Utility to briefly show saving/syncing status in the header if needed later
+    var nameEl = document.getElementById('disp-admin-name');
+    var originalName = window.activeAccountsSession ? window.activeAccountsSession.username : "";
+    nameEl.innerText = statusText;
+    setTimeout(function() { nameEl.innerText = originalName; }, 3000);
+  };
+</script>

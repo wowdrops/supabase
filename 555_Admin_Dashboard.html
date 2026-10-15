@@ -1,0 +1,184 @@
+<div id="tab-dashboard" class="space-y-8 fade-in pb-12">
+  <div class="border-b-4 border-slate-200 pb-4">
+    <div class="flex flex-row justify-between items-center gap-2 md:gap-4">
+      <div class="flex items-center gap-2 md:gap-4">
+        <h2 class="text-2xl sm:text-3xl md:text-5xl font-black text-slate-800 tracking-tight uppercase">Operations & Ledger</h2>
+        <span id="dash-load-time" class="hidden text-[10px] md:text-sm font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 whitespace-nowrap"></span>
+      </div>
+      <button onclick="window.loadDashboardData(true)"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-lg font-black shadow-lg transition active:scale-95 flex items-center gap-1.5 shrink-0">
+        <svg class="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        <span class="hidden md:inline">Refresh Data</span>
+        <span class="md:hidden">Refresh</span>
+      </button>
+    </div>
+    <div class="flex flex-row gap-2 mt-6">
+      <button id="btn-dash-tab-1" onclick="window.switchDashTab(1)"
+        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap">Operations</button>
+      <button id="btn-dash-tab-2" onclick="window.switchDashTab(2)"
+        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap">Ledger</button>
+    </div>
+  </div>
+
+  <div id="dash-loading" class="py-24 text-center text-indigo-600 font-black text-3xl animate-pulse">Click Refresh Data</div>
+
+  <!-- TAB 1: OPERATIONS -->
+  <div id="dash-content-1" class="hidden space-y-10 fade-in">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      
+      <!-- LEFT COLUMN: CURRENT ORDERS (TALL CARD) -->
+      <div class="lg:col-span-5 flex flex-col h-full">
+        <div onclick="window.navigateFromDashboard('orders')"
+          class="cursor-pointer hover:-translate-y-1 transition shadow-xl hover:shadow-2xl bg-indigo-900 p-6 md:p-8 rounded-3xl text-white relative overflow-hidden border-4 border-indigo-800 flex flex-col h-full">
+          <div class="relative z-10 flex-1 flex flex-col">
+            <div class="flex justify-between items-start">
+              <span class="text-xl md:text-2xl font-bold uppercase tracking-widest text-indigo-200">Current Orders</span>
+              <span class="bg-indigo-800 text-indigo-100 px-4 py-2 rounded-xl text-sm md:text-base font-black shadow-inner" id="dash-ord-count">0 Orders</span>
+            </div>
+            
+            <h3 id="dash-ord-amt" class="text-5xl md:text-6xl lg:text-7xl font-black mt-6">₹0</h3>
+            
+            <!-- RESTORED: CLASSIC FULL & EMPTY COUNTS -->
+            <p class="text-3xl md:text-4xl text-indigo-200 font-bold mt-4 flex gap-6">
+              <span>Full: <b id="dash-ord-cans" class="text-white">0</b></span>
+              <span class="text-indigo-700">|</span>
+              <span>Empty: <b id="dash-ord-empties" class="text-white">0</b></span>
+            </p>
+            
+            <!-- INTEGRATED CAPACITY DASHBOARD -->
+            <div class="mt-auto pt-8">
+              <div class="bg-indigo-950/60 p-5 rounded-2xl border-2 border-indigo-800 shadow-inner">
+                <p class="text-xs font-black text-indigo-300 uppercase tracking-widest mb-4 border-b-2 border-indigo-800/50 pb-2">Daily Capacity Dashboard</p>
+                <div class="grid grid-cols-2 gap-y-5 gap-x-4">
+                   <div><p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Total Allowed</p><p class="text-2xl font-black text-indigo-100 mt-1" id="dash-ord-allowed">0</p></div>
+                   <div><p class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Available Cans</p><p class="text-2xl font-black text-emerald-400 mt-1" id="dash-ord-avail">0</p></div>
+                   
+                   <div><p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest" title="Physical Supply (ORD D - PEND)">Normal Placed</p><p class="text-xl font-bold text-white mt-1" id="dash-ord-normal">0</p></div>
+                   <div><p class="text-[10px] text-amber-400 font-bold uppercase tracking-widest">Pending Placed</p><p class="text-xl font-bold text-amber-400 mt-1" id="dash-ord-pend">0</p></div>
+                   
+                   <div class="col-span-2"><p class="text-[10px] text-rose-400 font-bold uppercase tracking-widest">Replacement Placed</p><p class="text-xl font-bold text-rose-400 mt-1" id="dash-ord-rep">0</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: DELIVERY, SALES, PAYS -->
+      <div class="lg:col-span-7 flex flex-col gap-6 lg:gap-8">
+        
+        <!-- Live Delivery -->
+        <div onclick="window.navigateFromDashboard('delivery', 'ALL')" class="cursor-pointer hover:-translate-y-1 transition shadow-xl hover:shadow-2xl bg-cyan-900 p-6 md:p-8 rounded-3xl text-white relative overflow-hidden border-4 border-cyan-800">
+          <div>
+            <span class="text-xl md:text-2xl font-bold uppercase tracking-widest text-cyan-200">Live Delivery</span>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-4">
+              <h3 id="dash-del-amt" class="text-5xl md:text-6xl font-black">₹0</h3>
+              <div class="text-left sm:text-right mt-4 sm:mt-0">
+                 <p class="text-sm md:text-lg font-bold text-cyan-300">ORD: <b id="dash-del-ord" class="text-white">0</b></p>
+                 <p class="text-lg md:text-2xl font-bold text-cyan-100"><b id="dash-del-cust" class="text-white">0</b> Customers</p>
+                 <p class="text-sm md:text-lg font-bold text-cyan-300 mt-1">ACT D: <b id="dash-del-actd" class="text-white">0</b><span class="mx-2">|</span>ACT E: <b id="dash-del-acte" class="text-white">0</b></p>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-6">
+            <div onclick="event.stopPropagation(); window.navigateFromDashboard('delivery', 'DELIVERED')" class="bg-cyan-800/50 p-4 rounded-2xl border-2 border-cyan-700 hover:bg-cyan-700 transition cursor-pointer text-center">
+              <p class="text-[10px] md:text-sm font-bold text-cyan-200 uppercase tracking-widest">Delivered Doors</p>
+              <p id="dash-del-doors-done" class="text-3xl md:text-4xl font-black text-emerald-400 mt-1">0</p>
+            </div>
+            <div onclick="event.stopPropagation(); window.navigateFromDashboard('delivery', 'PENDING')" class="bg-cyan-800/50 p-4 rounded-2xl border-2 border-cyan-700 hover:bg-cyan-700 transition cursor-pointer text-center">
+              <p class="text-[10px] md:text-sm font-bold text-cyan-200 uppercase tracking-widest">Pending Doors</p>
+              <p id="dash-del-doors-pend" class="text-3xl md:text-4xl font-black text-amber-400 mt-1">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sales and Pays Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 flex-1">
+          <div class="bg-white p-6 md:p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col justify-between h-full">
+            <div onclick="window.navigateFromDashboard('sales', 'latest')" class="cursor-pointer hover:opacity-75 transition">
+              <span id="dash-label-sales-last" class="text-sm md:text-lg font-bold uppercase tracking-widest text-slate-400">Loading...</span>
+              <h3 id="dash-sales-amt" class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 mt-2">₹0</h3>
+              <p class="text-base md:text-xl text-slate-500 font-bold mt-4">Delivered: <b id="dash-sales-cans" class="text-indigo-600">0</b><span class="text-slate-300 mx-2">|</span>Empty: <b id="dash-sales-empties" class="text-amber-600">0</b></p>
+            </div>
+            <div onclick="window.navigateFromDashboard('sales', 'second')" class="mt-6 pt-4 border-t-4 border-slate-100 cursor-pointer hover:text-indigo-600 transition">
+              <p class="text-sm md:text-lg font-bold text-slate-400"><span id="dash-label-sales-secondlast">Loading...</span>: <b id="dash-sales-yday">₹0</b></p>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 md:p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col justify-between h-full">
+            <div onclick="window.navigateFromDashboard('pays', 'latest')" class="cursor-pointer hover:opacity-75 transition">
+              <span id="dash-label-pays-last" class="text-sm md:text-lg font-bold uppercase tracking-widest text-slate-400">Loading...</span>
+              <h3 id="dash-pays-amt" class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 mt-2">₹0</h3>
+            </div>
+            <div onclick="window.navigateFromDashboard('pays', 'second')" class="mt-6 pt-4 border-t-4 border-slate-100 cursor-pointer hover:text-emerald-600 transition">
+              <p class="text-sm md:text-lg font-bold text-slate-400"><span id="dash-label-pays-secondlast">Loading...</span>: <b id="dash-pays-yday">₹0</b></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: LEDGER (UNCHANGED) -->
+  <div id="dash-content-2" class="hidden space-y-10 fade-in">
+    <!-- ROW 1: TOTAL OUTSTANDING BLOCK -->
+    <div onclick="window.navigateFromDashboard('outstanding')" class="cursor-pointer hover:-translate-y-1 transition shadow-xl hover:shadow-2xl bg-slate-50 rounded-3xl border-4 border-rose-200 p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+      <div class="bg-rose-600 p-5 md:p-10 text-center rounded-2xl shadow-inner w-full">
+        <h3 class="text-xl md:text-3xl font-extrabold uppercase tracking-widest text-rose-100 mb-1 md:mb-2">Total Outstanding</h3>
+        <p id="dash-grand-out" class="text-4xl sm:text-5xl md:text-8xl font-black text-white tracking-tight drop-shadow-md">₹0</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 md:p-8 border-2 border-slate-200 shadow-sm text-center w-full">
+        <h4 class="text-lg md:text-3xl font-black text-slate-800 mb-3 md:mb-4 border-b-2 border-slate-100 pb-2 uppercase tracking-widest" id="lbl-curr-month">Month</h4>
+        <div class="grid grid-cols-3 gap-2 md:gap-6 divide-x-2 divide-slate-100">
+          <div><p class="text-[10px] md:text-base font-bold text-slate-400 uppercase tracking-wider">Sales</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-slate-800 mt-1 md:mt-2" id="curr-sales">₹0</p></div>
+          <div><p class="text-[10px] md:text-base font-bold text-slate-400 uppercase tracking-wider">Pay</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-emerald-600 mt-1 md:mt-2" id="curr-pay">₹0</p></div>
+          <div><p class="text-[10px] md:text-base font-bold text-slate-400 uppercase tracking-wider">Pend</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-rose-600 mt-1 md:mt-2" id="curr-pend">₹0</p></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 md:p-8 border-2 border-slate-200 shadow-sm text-center w-full">
+        <h4 class="text-lg md:text-3xl font-black text-slate-800 mb-3 md:mb-4 border-b-2 border-slate-100 pb-2 uppercase tracking-widest" id="lbl-prev-month">Month</h4>
+        <div class="grid grid-cols-3 gap-2 md:gap-6 divide-x-2 divide-slate-100">
+          <div><p class="text-[10px] md:text-base font-bold text-slate-400 uppercase tracking-wider">Sales</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-slate-800 mt-1 md:mt-2" id="prev-sales">₹0</p></div>
+          <div><p class="text-[10px] md:text-base font-bold text-slate-400 uppercase tracking-wider">Pay</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-emerald-600 mt-1 md:mt-2" id="prev-pay">₹0</p></div>
+          <div><p class="text-[10px] md:text-base font-bold text-slate-400 uppercase tracking-wider">Pend</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-rose-600 mt-1 md:mt-2" id="prev-pend">₹0</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2: PAYMENT ALLOCATIONS -->
+    <div class="bg-white p-8 rounded-3xl border-4 border-emerald-100 shadow-sm border-b-8 border-b-emerald-500 flex flex-col justify-center text-center">
+      <span class="text-lg md:text-xl font-bold uppercase tracking-wider text-slate-400">Payment Allocations (Latest)</span>
+      <h3 id="dash-clean-pay" class="text-5xl md:text-6xl font-black text-slate-800 mt-6 mb-8">₹0</h3>
+      <div class="grid grid-cols-3 gap-2 border-t-4 border-emerald-50 pt-6 mt-auto">
+         <div class="text-center"><p class="text-xs font-bold text-slate-400 uppercase">Current</p><p id="dash-pay-curr" class="text-xl md:text-2xl font-black text-emerald-600">₹0</p></div>
+         <div class="text-center border-l-2 border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase">Previous</p><p id="dash-pay-prev" class="text-xl md:text-2xl font-black text-emerald-600">₹0</p></div>
+         <div class="text-center border-l-2 border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase">Older</p><p id="dash-pay-older" class="text-xl md:text-2xl font-black text-emerald-600">₹0</p></div>
+      </div>
+    </div>
+
+    <!-- ROW 3: DEFAULTERS (Top 10) -->
+    <div class="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-2xl mt-8">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-4 border-red-50 pb-4 gap-4">
+        <h4 class="text-2xl md:text-3xl font-black text-red-600 uppercase tracking-widest flex items-center gap-4">
+          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Defaulters (Top 10)
+        </h4>
+        <div class="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+          <button id="btn-def-highest" onclick="window.switchDefaulterView('highest')" class="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black bg-white shadow-sm text-red-700 transition">Highest Debt</button>
+          <button id="btn-def-oldest" onclick="window.switchDefaulterView('oldest')" class="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black text-slate-500 hover:text-slate-800 transition">Longest Pending</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left whitespace-nowrap">
+          <thead class="bg-slate-100 text-slate-500 text-xl font-black uppercase tracking-widest border-b-4 border-slate-200">
+            <tr><th class="px-6 py-5 rounded-tl-xl">Customer</th><th class="px-6 py-5">Location</th><th class="px-6 py-5 text-right">Total Owed</th><th class="px-6 py-5 text-center rounded-tr-xl">Action</th></tr>
+          </thead>
+          <tbody id="dash-defaulters" class="divide-y-4 divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

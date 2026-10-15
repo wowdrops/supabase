@@ -1,0 +1,179 @@
+<!-- 561_Admin_Master_Customer.html -->
+<div id="tab-master-customer" class="hidden pb-20">
+  
+  <!-- ========================================= -->
+  <!-- MAIN CONTENT (Animated)                   -->
+  <!-- ========================================= -->
+  <div class="fade-in space-y-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+      <div>
+        <h2 id="cust-header-title" class="text-3xl font-black text-slate-800 tracking-tight uppercase">Customer Directory</h2>
+        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Master Database Management</p>
+      </div>
+      <div class="flex w-full md:w-auto gap-3">
+        <div class="relative flex-1 md:w-80">
+          <svg class="w-5 h-5 absolute left-3 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="cust-search" onkeyup="window.filterCustomers()" placeholder="Search CPN, Name, Apt..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition">
+        </div>
+        <button id="btnMasterCustomerAddNew" onclick="window.openAddCustomerWizard()" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl shadow-lg transition flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="cust-loading" class="hidden text-center py-12">
+      <p class="text-2xl font-black text-slate-400 animate-pulse">Syncing Database...</p>
+    </div>
+
+    <div id="customer-list-container" class="space-y-4">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ========================================= -->
+  <!-- MODALS LAYER (Un-animated, Fixed to Screen)-->
+  <!-- ========================================= -->
+
+  <!-- 1. ADD CUSTOMER WIZARD MODAL -->
+  <div id="modal-wizard" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 flex flex-col">
+        <div class="bg-indigo-600 p-6 text-white flex justify-between items-center shrink-0">
+          <h3 class="text-2xl font-black tracking-widest uppercase">New Customer Onboarding</h3>
+          <button onclick="window.closeModal('modal-wizard')" class="p-1 hover:bg-indigo-700 rounded-lg transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        </div>
+        <div class="p-6 overflow-y-auto">
+          <!-- Progress Bar (4 Steps) -->
+          <div class="flex gap-2 mb-8">
+            <div id="wiz-ind-1" class="h-2 flex-1 bg-indigo-600 rounded-full transition-colors"></div>
+            <div id="wiz-ind-2" class="h-2 flex-1 bg-slate-200 rounded-full transition-colors"></div>
+            <div id="wiz-ind-3" class="h-2 flex-1 bg-slate-200 rounded-full transition-colors"></div>
+            <div id="wiz-ind-4" class="h-2 flex-1 bg-slate-200 rounded-full transition-colors"></div>
+          </div>
+          
+          <!-- Step 1: Primary -->
+          <div id="wiz-step-1" class="space-y-4 fade-in">
+            <h4 class="text-lg font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Step 1: Primary Location & Contact</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Apartment *</label><input type="text" id="add-apt" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Block / Tower *</label><input type="text" id="add-blk" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Door Number *</label><input type="text" id="add-door" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sheet Name</label><input type="text" id="add-sheetname" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">POC 1 (Name) *</label><input type="text" id="add-poc1" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Contact 1 (Phone) *</label><input type="number" id="add-con1" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">POC 2</label><input type="text" id="add-poc2" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email ID</label><input type="email" id="add-email" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pay Type</label>
+                <select id="add-paytype" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"><option value="">Select</option><option value="ONLINE">ONLINE</option><option value="CASH">CASH</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Delivery -->
+          <div id="wiz-step-2" class="space-y-4 fade-in hidden">
+            <h4 class="text-lg font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Step 2: Delivery Configuration</h4>
+            <div class="grid grid-cols-1 gap-4">
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Default Rate (₹) *</label><input type="number" id="add-rate" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Delivery Color Code</label>
+                <select id="add-color" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"><option value="">None</option><option value="RED">RED</option><option value="BLUE">BLUE</option><option value="GREEN">GREEN</option></select>
+              </div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Delivery Remark / Instructions</label><input type="text" id="add-remark" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+            </div>
+          </div>
+
+          <!-- Step 3: Deposit & Waivers -->
+          <div id="wiz-step-3" class="space-y-4 fade-in hidden">
+            <h4 class="text-lg font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Step 3: Can Deposit & Limits</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="col-span-1 md:col-span-2"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Can Deposit / Advance (₹) *</label><input type="number" id="add-advance" value="0" min="0" class="w-full p-4 bg-slate-50 border-2 border-slate-300 rounded-xl text-2xl font-black text-emerald-600"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Max Ord D (Cans) *</label><input type="number" id="add-maxd" value="3" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Max Ord E (Empties) *</label><input type="number" id="add-maxe" value="3" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Overdue Waiver *</label>
+                <select id="add-ow" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"><option value="No">No</option><option value="Yes">Yes</option></select>
+              </div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Prev Mon Waiver *</label>
+                <select id="add-pmw" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"><option value="No">No</option><option value="Yes">Yes</option></select>
+              </div>
+              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Prev Mon Waiver Days *</label><input type="number" id="add-pmwd" value="0" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
+            </div>
+          </div>
+          
+          <!-- Step 4: Preview -->
+          <div id="wiz-step-4" class="space-y-4 fade-in hidden">
+            <h4 class="text-lg font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Step 4: Review & Confirm</h4>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2 text-sm">
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apt / Blk / Door</p><p id="prev-abd" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sheet Name</p><p id="prev-sheet" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pay Type</p><p id="prev-pay" class="font-bold text-slate-800"></p></div>
+              
+              <div class="col-span-2 md:col-span-3 border-t border-slate-200 my-1"></div>
+              
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">POC 1 & Con 1</p><p id="prev-poc1" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">POC 2</p><p id="prev-poc2" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</p><p id="prev-email" class="font-bold text-slate-800"></p></div>
+
+              <div class="col-span-2 md:col-span-3 border-t border-slate-200 my-1"></div>
+
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Default Rate</p><p id="prev-rate" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Del Color & Remark</p><p id="prev-del" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Can Deposit</p><p id="prev-adv" class="font-bold text-emerald-600"></p></div>
+
+              <div class="col-span-2 md:col-span-3 border-t border-slate-200 my-1"></div>
+
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Max D/E</p><p id="prev-max" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waivers (OD / Prev)</p><p id="prev-wvr" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waiver Days</p><p id="prev-wvrd" class="font-bold text-slate-800"></p></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-between shrink-0">
+          <button id="wiz-btn-back" onclick="window.wizardBack()" class="px-6 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-xl hidden transition">Back</button>
+          <button id="wiz-btn-next" onclick="window.wizardNext()" class="px-6 py-3 font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl ml-auto transition">Next Step</button>
+          <button id="wiz-btn-save" onclick="window.submitNewCustomer()" class="px-6 py-3 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl ml-auto hidden transition shadow-lg">Save & Create Customer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. DYNAMIC EDIT MODAL -->
+  <div id="modal-edit" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 flex flex-col">
+        <div class="bg-slate-800 p-5 text-white flex justify-between items-center shrink-0">
+          <div>
+            <h3 id="edit-modal-title" class="text-xl font-black tracking-widest uppercase">Edit Profile</h3>
+            <p id="edit-modal-cpn" class="text-sm font-bold text-indigo-300 uppercase tracking-widest">CPN000</p>
+          </div>
+          <button onclick="window.closeModal('modal-edit')" class="p-1 hover:bg-slate-700 rounded-lg transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        </div>
+        
+        <div id="edit-modal-body" class="p-6 overflow-y-auto space-y-4">
+          <!-- Form injected by JS -->
+        </div>
+        
+        <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end shrink-0">
+          <button id="btn-save-edit" onclick="window.saveCustomerEdit()" class="px-6 py-3 font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow">Apply Updates</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. REVOKE & DELETE CONFIRM MODALS -->
+  <div id="modal-action" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-center p-8">
+        <div id="action-icon" class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
+          <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 id="action-title" class="text-2xl font-black text-slate-800 tracking-tight mb-2">Warning</h3>
+        <p id="action-desc" class="text-sm font-bold text-slate-500 mb-8">Are you sure you want to proceed?</p>
+        <div class="flex flex-col gap-3">
+          <button id="btn-action-confirm" class="w-full px-6 py-4 font-black text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow">Yes, Proceed</button>
+          <button onclick="window.closeModal('modal-action')" class="w-full px-6 py-4 font-black text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,113 @@
+<div id="tab-delivery" class="hidden space-y-4 fade-in pb-20 relative">
+          
+  <!-- MAIN STICKY HEADER AREA WITH LIVE TIMER & COLLAPSE TOGGLE -->
+  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-cyan-200 pt-2 pb-4 shadow-sm">
+    <div class="flex justify-between items-center px-2">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+        Delivery <span class="hidden md:inline">Monitor</span>
+        
+        <!-- UNIVERSAL DYNAMIC TIMER BADGE -->
+        <span id="del-live-timer" class="hidden"></span>
+        
+        <button onclick="window.toggleDelHeader()" class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none ml-auto">
+          <svg id="del-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+        </button>
+      </h2>
+    </div>
+
+    <!-- COLLAPSIBLE ACTION PANEL -->
+    <div id="del-header-collapsible" class="transition-all duration-300 origin-top">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 px-2 mt-4">
+        <div class="flex bg-slate-200 p-1.5 rounded-xl w-full md:w-auto">
+          <button onclick="window.switchDelTab('del-ledger')" id="btn-del-ledger" class="flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm md:text-lg font-black bg-white shadow-sm text-cyan-700 transition">Ledger View</button>
+          <button onclick="window.switchDelTab('del-visual')" id="btn-del-visual" class="flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm md:text-lg font-black text-slate-500 hover:text-slate-800 transition">Visual Map</button>
+          <button onclick="window.switchDelTab('del-driver')" id="btn-del-driver" class="flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm md:text-lg font-black text-slate-500 hover:text-slate-800 transition">Driver View</button>
+          <button onclick="window.loadDeliveryData()" class="ml-2 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-lg text-sm font-black shadow transition">Sync</button>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 mx-2">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center"><p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Customers</p><p id="rep-del-cust" class="text-3xl md:text-5xl font-black text-slate-800 mt-2">0</p></div>
+        <div class="bg-indigo-50 p-6 rounded-2xl shadow-sm border border-indigo-200 text-center"><p class="text-sm font-bold text-indigo-500 uppercase tracking-widest">Ordered</p><p id="rep-del-ord" class="text-3xl md:text-5xl font-black text-indigo-700 mt-2">0</p></div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center"><p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Sales Amt</p><p id="rep-del-amt" class="text-3xl md:text-5xl font-black text-emerald-600 mt-2">₹0</p></div>
+        <div class="bg-rose-50 p-6 rounded-2xl shadow-sm border border-rose-200 text-center"><p class="text-sm font-bold text-rose-500 uppercase tracking-widest">Unload Pend</p><p id="rep-del-unloads" class="text-3xl md:text-5xl font-black text-rose-700 mt-2">0</p></div>
+        <div class="bg-amber-50 p-6 rounded-2xl shadow-sm border border-amber-200 text-center"><p class="text-sm font-bold text-amber-600 uppercase tracking-widest">Load Pend</p><p id="rep-del-loads" class="text-3xl md:text-5xl font-black text-amber-700 mt-2">0</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="del-ledger" class="block mx-2 mt-4">
+    <div class="mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div class="flex gap-3 overflow-x-auto pb-2 w-full md:w-auto">
+        <button onclick="window.filterDelLedger('ALL')" id="flt-del-all" class="shrink-0 px-6 py-3 rounded-xl text-sm font-black bg-slate-800 text-white shadow-md transition">Show All</button>
+        <button onclick="window.filterDelLedger('DELIVERED')" id="flt-del-done" class="shrink-0 px-6 py-3 rounded-xl text-sm font-black bg-white border-2 border-slate-200 text-slate-500 hover:bg-slate-50 transition">Delivered Only</button>
+        <button onclick="window.filterDelLedger('PENDING')" id="flt-del-pend" class="shrink-0 px-6 py-3 rounded-xl text-sm font-black bg-white border-2 border-slate-200 text-slate-500 hover:bg-slate-50 transition">Pending Only</button>
+      </div>
+      <div class="relative w-full md:w-80">
+        <svg class="w-5 h-5 absolute left-3 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" id="search-live-delivery" onkeyup="window.searchLiveDelivery()" placeholder="Search CPN, Name, Apt, Blk..." class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-cyan-600 outline-none shadow-sm transition">
+      </div>
+    </div>
+
+    <!-- TABLE AREA -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative">
+      <table class="w-full text-left whitespace-nowrap text-sm border-collapse">
+        <thead class="bg-slate-800 text-white text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-md">
+          <tr>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('cpn')">CPNNO ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('apt')">Apt ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('blk')">Blk ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('door')">Door ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('name')">Name ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('contact')">Contact ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('ordDate')">Ord Date ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('ordD')">Ord D ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('ordE')">Ord E ↕</th>
+            
+            <!-- NEW COLUMNS ADDED HERE -->
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center text-amber-300" onclick="window.sortLiveDelivery('pend')">Pend ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center text-rose-300" onclick="window.sortLiveDelivery('rep')">Rep ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('repReason')">Rep Reason ↕</th>
+            <!-- END NEW COLUMNS -->
+
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('delDate')">Del Date ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('actD')">Act D ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('actE')">Act E ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-right" onclick="window.sortLiveDelivery('rate')">Rate ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('ordComment')">Ord Comment ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('delComment')">Del Comment ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-right text-emerald-300" onclick="window.sortLiveDelivery('amt')">Amount ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('uniqueNo')">Unique No ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('ordEnterOn')">Ord Enter On ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('ordEnterBy')">Ord Enter By ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('delEnterOn')">Del Enter On ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('delEnterBy')">Del Enter By ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('doorQC')">Door QC ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('colFull')">Col Full ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('varFull')">Var Full ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('varEmpty')">Var Empty ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('varReason')">Var Reason ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('unloadOn')">Unload On ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('unloadBy')">Unload By ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('loadOn')">Load On ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700" onclick="window.sortLiveDelivery('loadBy')">Load By ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-right" onclick="window.sortLiveDelivery('advAmt')">Adv Amt ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('actDVJ')">Act D VJ ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('actDNVJ')">Act D NVJ ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('actEVJ')">Act E VJ ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 text-center" onclick="window.sortLiveDelivery('actENVJ')">Act E NVJ ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 bg-slate-900 text-center" onclick="window.sortLiveDelivery('v2bFull')">V2B Full ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black border-r border-slate-700 bg-slate-900 text-center" onclick="window.sortLiveDelivery('b2vFull')">B2V Full ↕</th>
+            <th class="px-4 py-4 cursor-pointer hover:bg-slate-700 font-black bg-slate-900 text-center" onclick="window.sortLiveDelivery('b2vEmpty')">B2V Empty ↕</th>
+          </tr>
+        </thead>
+        <tbody id="delivery-tbody" class="divide-y divide-slate-100 font-semibold text-slate-700"></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div id="del-visual" class="hidden space-y-8 mt-4 mx-2"></div>
+  <div id="del-driver" class="hidden mt-4 mx-2">
+    <!-- Centered wrapper, buttons, and table will be rendered here by JS -->
+  </div>
+</div>

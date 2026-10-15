@@ -1,1 +1,329 @@
-i love babu
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOWDROPS | Next-Gen Water Delivery</title>
+    
+    <link rel="icon" href="wowLogo.jpg" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* Slate 950 */
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* Abstract glowing orbs */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            animation: float 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(5%, 5%) scale(1.1); }
+            100% { transform: translate(-5%, -5%) scale(0.9); }
+        }
+
+        /* Frosted Glass */
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Scroll Reveal Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="antialiased selection:bg-indigo-500/30">
+
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+        <div class="glow-orb w-[600px] h-[600px] bg-indigo-900/20 top-[-200px] left-[-100px]"></div>
+        <div class="glow-orb w-[500px] h-[500px] bg-emerald-900/10 top-[40%] right-[-100px]" style="animation-delay: -5s;"></div>
+        <div class="glow-orb w-[800px] h-[800px] bg-blue-900/10 bottom-[-300px] left-[20%]"></div>
+    </div>
+
+    <!-- ULTRA-MINIMAL HEADER -->
+    <header class="fixed top-0 left-0 w-full z-50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3 md:py-4 flex justify-between items-center gap-1">
+            
+            <!-- Left: Logo & Text -->
+            <a href="#" class="flex items-center gap-1 sm:gap-2 group shrink-0">
+                <img src="wowLogo.jpg" alt="WOWDROPS" class="h-8 md:h-12 w-auto transition-transform group-hover:scale-105 shrink-0">
+                <div class="flex flex-col justify-center">
+                    <h1 class="text-[12px] sm:text-sm md:text-2xl font-black tracking-tight leading-none text-white mb-0.5 whitespace-nowrap">WOW DROPS</h1>
+                    <p class="text-[7px] sm:text-[8px] md:text-[11px] text-slate-400 font-bold tracking-[0.2em] uppercase leading-none">Chennai</p>
+                </div>
+            </a>
+            
+            <!-- Right: Customer Care & Portal Button -->
+            <div class="flex items-center gap-1.5 sm:gap-2 md:gap-6 shrink-0">
+                <!-- Customer Care (Desktop/Tablet) -->
+                <a href="tel:+917092888999" class="hidden md:flex flex-col text-right group">
+                    <span class="text-[9px] text-indigo-400 font-bold uppercase tracking-widest mb-0.5 group-hover:text-indigo-300 transition">Customer Care</span>
+                    <span class="text-sm font-black text-white tracking-wide">7092 888 999</span>
+                </a>
+
+                <!-- Customer Care (Mobile icon only) -->
+                <a href="tel:+917092888999" class="md:hidden flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 border border-slate-800 text-indigo-400 hover:bg-slate-800 hover:text-indigo-300 transition shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                </a>
+                
+                <!-- Customer Portal Button -->
+                <a href="351_portal_supa.html" class="relative inline-flex h-8 sm:h-9 md:h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-50 transition-transform hover:scale-105 active:scale-95 shrink-0">
+                    <span class="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#818cf8_0%,#312e81_50%,#818cf8_100%)]"></span>
+                    <span class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-2.5 sm:px-3 md:px-6 py-1 text-[9px] sm:text-[10px] md:text-sm font-bold text-white backdrop-blur-3xl gap-1 md:gap-2 whitespace-nowrap">
+                        Customer Portal
+                        <svg class="w-3 h-3 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </span>
+                </a>
+            </div>
+            
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen flex items-center justify-center px-4 pt-20">
+        <div class="max-w-4xl mx-auto text-center z-10 reveal">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                Smart Water Delivery System
+            </div>
+            <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-slate-200 to-slate-500 tracking-tight leading-[1.1] mb-6">
+                Hydration, <br>Engineered for the Future.
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
+                Experience pure, mineral-rich water delivered through our seamless digital ecosystem. Live tracking, transparent ledgers, and secure payments—all at your fingertips.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <a href="#how-it-works" class="text-sm font-bold text-slate-300 hover:text-white transition flex items-center gap-2 py-3 px-6 rounded-full border border-slate-700 hover:bg-slate-800">
+                    See How It Works
+                    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCT DISPLAY SECTION -->
+    <section id="our-product" class="py-24 px-4 relative z-10 border-t border-slate-900 bg-slate-950/30">
+        <div class="max-w-4xl mx-auto text-center reveal">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-bold uppercase tracking-widest mb-6">
+                Core Premium Offering
+            </div>
+            <h2 class="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">What We Sell</h2>
+            <p class="text-slate-400 font-medium max-w-2xl mx-auto mb-12">
+                We supply pristine, mineral-fortified balanced drinking water packaged safely in high-grade premium 20-liter cans, optimized explicitly for our community neighbors.
+            </p>
+            
+            <div class="glass max-w-md mx-auto p-6 rounded-3xl border border-slate-850 shadow-2xl transition-all duration-300 hover:border-indigo-500/30">
+                <!-- Product Image with CSS Watermark and PRICE TAG -->
+                <div class="w-full h-80 bg-slate-900 rounded-2xl mb-6 overflow-hidden flex items-center justify-center border border-slate-800 relative group">
+                    
+                    <!-- NEW PRICE TAG -->
+                    <div class="absolute top-4 right-4 bg-emerald-500/90 backdrop-blur-sm text-white font-black px-4 py-1.5 rounded-xl border border-emerald-400/50 shadow-2xl z-20 transform group-hover:scale-105 transition-transform">
+                        Rs 40
+                    </div>
+
+                    <img src="https://lh3.googleusercontent.com/d/150cf1iUi7a6hclSTWK27ABDMA_KHBU-f" alt="Wowdrops Premium 20L Water Can" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                    
+                    <!-- DYNAMIC WATERMARK -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-500 z-10">
+                        <span class="text-4xl md:text-5xl font-black text-white tracking-[0.3em] uppercase transform -rotate-12 drop-shadow-2xl select-none" style="text-shadow: 2px 4px 10px rgba(0,0,0,0.8);">
+                            WOW DROPS
+                        </span>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-bold text-white mb-2 text-left flex justify-between items-center">
+                    <span>Premium 20L Water Can</span>
+                    <span class="text-sm font-semibold bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full">Neighbor Supply</span>
+                </h3>
+                <p class="text-slate-400 text-sm text-left leading-relaxed">
+                    Multistage purified water enriched with vital minerals. Every single batch is strictly sealed and systematically tracked through your personal dashboard interface.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- STORYTELLING: THE WOWDROPS ECOSYSTEM -->
+    <section id="how-it-works" class="py-24 px-4 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">The Wowdrops Ecosystem</h2>
+                <p class="text-slate-400 font-medium">How we orchestrate millions of drops to your door at lightning speed.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1: Customer -->
+                <div class="glass p-8 rounded-3xl border-t-2 border-t-indigo-500/50 reveal group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 tracking-tight">1. You Command</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Log into your personalized dashboard. View your dynamic stock limits, check real-time outstanding ledgers, and place precise orders for cans and empties in seconds.
+                    </p>
+                    <ul class="space-y-2 text-xs font-semibold text-slate-500">
+                        <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> Live Stock Availability</li>
+                        <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> 1-Click UPI Payments</li>
+                    </ul>
+                </div>
+
+                <!-- Card 2: Delivery -->
+                <div class="glass p-8 rounded-3xl border-t-2 border-t-sky-500/50 reveal group hover:-translate-y-2 transition-transform duration-300" style="transition-delay: 100ms;">
+                    <div class="w-14 h-14 bg-sky-500/20 rounded-2xl flex items-center justify-center text-sky-400 mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 tracking-tight">2. We Execute</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        The moment your request is submitted, it instantly pings our dedicated Delivery Portal. Our fleet is dynamically routed to ensure your drops arrive flawlessly.
+                    </p>
+                    <ul class="space-y-2 text-xs font-semibold text-slate-500">
+                        <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-sky-400"></div> Geo-Optimized Routing</li>
+                        <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-sky-400"></div> Digital Drop-off Proofs</li>
+                    </ul>
+                </div>
+
+                <!-- Card 3: Admin & CRM -->
+                <div class="glass p-8 rounded-3xl border-t-2 border-t-amber-500/50 reveal group hover:-translate-y-2 transition-transform duration-300" style="transition-delay: 200ms;">
+                    <div class="w-14 h-14 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400 mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3 tracking-tight">3. We Care</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Behind the scenes, our intelligent CRM constantly works for you. Automated ledger reconciliation and active support ensure your account is always perfectly balanced.
+                    </p>
+                    <ul class="space-y-2 text-xs font-semibold text-slate-500">
+                        <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Direct Bank Sync</li>
+                        <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Alerts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT US PAGE ANCHOR SECTION -->
+    <section id="main-contact" class="py-20 px-4 text-center relative z-10 border-t border-slate-900 bg-slate-950/20">
+        <div class="max-w-3xl mx-auto glass p-8 md:p-12 rounded-3xl border border-slate-850 shadow-xl reveal">
+            <h2 class="text-3xl font-black text-white mb-4 tracking-tight">Contact Us</h2>
+            <p class="text-slate-400 font-medium mb-8">Have explicit delivery issues, onboarding inquiries, or processing errors? Connect directly.</p>
+            <div class="grid md:grid-cols-2 gap-6 max-w-xl mx-auto text-left">
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 flex items-center gap-4">
+                    <div class="bg-indigo-500/10 p-3 rounded-xl text-indigo-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Call / WhatsApp</p>
+                        <a href="tel:+917092888999" class="text-white font-black hover:text-indigo-400 transition">+91 70928 88999</a>
+                    </div>
+                </div>
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 flex items-center gap-4">
+                    <div class="bg-indigo-500/10 p-3 rounded-xl text-indigo-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Official Email</p>
+                        <a href="mailto:wowdropsfoodandbeverages@gmail.com" class="text-white font-black text-sm hover:text-indigo-400 transition break-all">wowdropsfoodandbeverages@gmail.com</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STAFF & COMPLIANCE FOOTER -->
+    <footer class="border-t border-slate-800/50 bg-slate-950/50 pt-16 pb-8 relative z-10 mt-20">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-8 items-end">
+            
+            <!-- Customer Links: UPDATED TO POINT TO NEW HTML PAGES -->
+            <div>
+                <img src="wowLogo.jpg" alt="WOWDROPS" class="h-8 w-auto mb-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition">
+                <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-slate-500">
+                    <a href="201_TermsAndConditions.html" class="hover:text-indigo-400 transition">Terms & Conditions</a>
+                    <a href="201_PrivacyPolicy.html" class="hover:text-indigo-400 transition">Privacy Policy</a>
+                    <a href="201_ReturnAndRefund.html" class="hover:text-emerald-400 transition">Return & Refund Policy</a>
+                    <a href="201_ShippingPolicy.html" class="hover:text-emerald-400 transition">Shipping Policy</a>
+                    <a href="#main-contact" class="hover:text-white transition">Support</a>
+                </div>
+            </div>
+
+            <!-- Authorized Personnel Section -->
+            <div class="md:text-right">
+                <p class="text-[10px] uppercase tracking-widest text-slate-700 font-bold mb-3">Authorized Personnel Only</p>
+                <div class="flex flex-wrap md:justify-end gap-3 text-xs font-bold text-slate-600">
+                    <a href="451_Delivery_App.html" class="hover:text-sky-400 transition bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">Fleet Delivery</a>
+                    <a href="651_CRM_App.html" class="hover:text-amber-400 transition bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">CRM Engine</a>
+                    <a href="550_Admin_App.html" class="hover:text-rose-400 transition bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">Sys Admin</a>
+                    <a href="751_Accounts_App.html" class="hover:text-emerald-400 transition bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">Accounts</a>
+                </div>
+            </div>
+            
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-6 mt-12 text-center text-[10px] font-bold text-slate-700">
+            © 2026 WOWDROPS FOOD AND BEVERAGES. ALL RIGHTS RESERVED.
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('glass', 'border-b', 'border-slate-800/50');
+            } else {
+                navbar.classList.remove('glass', 'border-b', 'border-slate-800/50');
+            }
+        });
+
+        // Intersection Observer for scroll animations
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOptions = {
+            threshold: 0.15,
+            rootMargin: "0px 0px -50px 0px"
+        };
+        const revealOnScroll = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, revealOptions);
+
+        revealElements.forEach(el => {
+            revealOnScroll.observe(el);
+        });
+    </script>
+</body>
+</html>

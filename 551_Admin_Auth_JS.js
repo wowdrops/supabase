@@ -227,7 +227,7 @@ window.showNotif = function (el, msg, success) {
 
 window.goToReport = function (tabName, filterArg) {
     var brand = document.getElementById('header-brand-area');
-    if (brand) brand.innerHTML = "<a href='https://wowdrops.github.io' target='_blank' rel='noopener noreferrer' class='shrink-0 flex items-center'><img src='wowLogo.jpg' class='h-16 w-auto' alt='Logo'></a>";
+    if (brand) brand.innerHTML = "<a href='https://wowdrops.github.io/supabase' target='_blank' rel='noopener noreferrer' class='shrink-0 flex items-center'><img src='wowLogo.jpg' class='h-16 w-auto' alt='Logo'></a>";
     window._executeRouting(tabName, filterArg);
 };
 
@@ -254,7 +254,7 @@ window.navigateFromDashboard = function (reportId, filterArg) {
 
 window.returnToDashboard = function () {
     var brand = document.getElementById('header-brand-area');
-    if(brand) brand.innerHTML = "<a href='https://wowdrops.github.io' target='_blank' rel='noopener noreferrer' class='shrink-0 flex items-center'><img src='wowLogo.jpg' class='h-16 w-auto' alt='Logo'></a>";
+    if(brand) brand.innerHTML = "<a href='https://wowdrops.github.io/supabase' target='_blank' rel='noopener noreferrer' class='shrink-0 flex items-center'><img src='wowLogo.jpg' class='h-16 w-auto' alt='Logo'></a>";
     window._executeRouting('dashboard');
     if(typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
     if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.loadDashboardData === 'function') window.loadDashboardData(true);

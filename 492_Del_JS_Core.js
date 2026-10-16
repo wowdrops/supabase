@@ -4,7 +4,7 @@
 
 (function() {
     window.onerror = function(msg, url, line) { alert("App Script Error: " + msg + " (Line " + line + ")"); return false; };
-    const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyjFmWj4H1MkoDMXZVFqBQz5TBWoP1G9mPC_M04nt06UjuY-so9ir4ybt9NT1ZHjIU/exec"; // project in script.google.com 
+    //const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyjFmWj4H1MkoDMXZVFqBQz5TBWoP1G9mPC_M04nt06UjuY-so9ir4ybt9NT1ZHjIU/exec"; // project in script.google.com 
 
     window.APP_CONFIG = {
         AUTO_SYNC: true,            

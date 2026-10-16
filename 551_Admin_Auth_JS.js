@@ -4,8 +4,6 @@ window.windowWidthBabu = 1024;
 window.activeAdminSession = null;
 window.isSidebarOpen = window.innerWidth >= window.windowWidthBabu;
 
-const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyjFmWj4H1MkoDMXZVFqBQz5TBWoP1G9mPC_M04nt06UjuY-so9ir4ybt9NT1ZHjIU/exec"; // project in script.google.com 
-
 // Global Data Caches
 window.activeReportData = { delivery: [] };
 window.masterOutstandingData = [];

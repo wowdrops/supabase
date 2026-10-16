@@ -698,6 +698,14 @@ window.renderQCDashboard = function (blocksData) {
 };
 
 window.openExceptionReview = function() {
+
+    // --- NEW FIX: Force modal to the absolute top layer of the browser ---
+    var modal = document.getElementById('admin-exception-modal');
+    if (modal && modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+    // --------------------------------------------------------------------
+
     var container = document.getElementById('exception-table-container');
     var headerHTML = '<table class="w-full text-left border-collapse"><thead class="bg-amber-100 text-amber-900 text-[10px] uppercase tracking-widest sticky top-0 shadow-sm z-10"><tr><th class="p-4 border-b border-amber-200">Location</th><th class="p-4 border-b border-amber-200 text-center">Ordered (Ord)</th><th class="p-4 border-b border-amber-200 text-center">Actual Delivered (Act)</th><th class="p-4 border-b border-amber-200 text-center">Shortage</th><th class="p-4 border-b border-amber-200">Driver Note / Exception</th><th class="p-4 border-b border-amber-200 text-center">Rollover / Status</th></tr></thead><tbody class="divide-y divide-slate-200 text-xs">';
     

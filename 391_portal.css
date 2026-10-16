@@ -1,5 +1,5 @@
 .glass-header {
-  background: rgba(30, 58, 138, 0.85);
+  background: rgba(30, 58, 18, 0.85);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
@@ -26,7 +26,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .skeleton {
-  background: #fff8f0;
+  background: #ffffff;
   border-radius: 4px;
   animation: pulse 1.5s infinite ease-in-out;
 }

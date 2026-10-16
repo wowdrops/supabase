@@ -4,7 +4,7 @@
     window.supabase1 = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxGjQDZmL6jfJebCNt8UGFwi6svY4nxDBIJEYRTejb-cCetktkl-yNrF8lbW_WAwJE/exec"; // project in script.google.com 
-
+    const IMGBB_API_KEY = "cff2fdf9d4e5b567d42e947d309a1b84";  // REPLACE THIS WITH YOUR FREE IMGBB API KEY (from api.imgbb.com)// logged in using google acc wowdropschennai@gmail.com to get free API
 
 
 // Temporary safety bridge while migrating from GAS to Supabase

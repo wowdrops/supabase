@@ -11,8 +11,7 @@
         window.uploadImageToCloud = async function(base64Data) {
             if (!base64Data || base64Data.length < 10) return "";
             try {
-                // REPLACE THIS WITH YOUR FREE IMGBB API KEY (from api.imgbb.com)// logged in using google acc wowdropschennai@gmail.com to get free API
-                const IMGBB_API_KEY = "cff2fdf9d4e5b567d42e947d309a1b84"; 
+                
                 
                 let b64 = base64Data.split(',')[1] || base64Data;
                 let formData = new FormData();

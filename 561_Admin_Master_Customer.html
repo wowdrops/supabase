@@ -1,9 +1,6 @@
 <!-- 561_Admin_Master_Customer.html -->
 <div id="tab-master-customer" class="hidden pb-20">
   
-  <!-- ========================================= -->
-  <!-- MAIN CONTENT (Animated)                   -->
-  <!-- ========================================= -->
   <div class="fade-in space-y-6">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
       <div>
@@ -30,10 +27,6 @@
     </div>
   </div>
 
-  <!-- ========================================= -->
-  <!-- MODALS LAYER (Un-animated, Fixed to Screen)-->
-  <!-- ========================================= -->
-
   <!-- 1. ADD CUSTOMER WIZARD MODAL -->
   <div id="modal-wizard" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
     <div class="flex min-h-full items-center justify-center p-4">
@@ -58,7 +51,6 @@
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Apartment *</label><input type="text" id="add-apt" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Block / Tower *</label><input type="text" id="add-blk" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Door Number *</label><input type="text" id="add-door" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
-              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sheet Name</label><input type="text" id="add-sheetname" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">POC 1 (Name) *</label><input type="text" id="add-poc1" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Contact 1 (Phone) *</label><input type="number" id="add-con1" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">POC 2</label><input type="text" id="add-poc2" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
@@ -89,12 +81,11 @@
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Max Ord D (Cans) *</label><input type="number" id="add-maxd" value="3" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Max Ord E (Empties) *</label><input type="number" id="add-maxe" value="3" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
               <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Overdue Waiver *</label>
-                <select id="add-ow" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"><option value="No">No</option><option value="Yes">Yes</option></select>
+                <select id="add-ow" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold">
+                  <option value="FALSE">FALSE</option>
+                  <option value="TRUE">TRUE</option>
+                </select>
               </div>
-              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Prev Mon Waiver *</label>
-                <select id="add-pmw" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"><option value="No">No</option><option value="Yes">Yes</option></select>
-              </div>
-              <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Prev Mon Waiver Days *</label><input type="number" id="add-pmwd" value="0" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-bold"></div>
             </div>
           </div>
           
@@ -103,7 +94,6 @@
             <h4 class="text-lg font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2">Step 4: Review & Confirm</h4>
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2 text-sm">
               <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apt / Blk / Door</p><p id="prev-abd" class="font-bold text-slate-800"></p></div>
-              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sheet Name</p><p id="prev-sheet" class="font-bold text-slate-800"></p></div>
               <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pay Type</p><p id="prev-pay" class="font-bold text-slate-800"></p></div>
               
               <div class="col-span-2 md:col-span-3 border-t border-slate-200 my-1"></div>
@@ -121,8 +111,7 @@
               <div class="col-span-2 md:col-span-3 border-t border-slate-200 my-1"></div>
 
               <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Max D/E</p><p id="prev-max" class="font-bold text-slate-800"></p></div>
-              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waivers (OD / Prev)</p><p id="prev-wvr" class="font-bold text-slate-800"></p></div>
-              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waiver Days</p><p id="prev-wvrd" class="font-bold text-slate-800"></p></div>
+              <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Overdue Waiver</p><p id="prev-wvr" class="font-bold text-slate-800"></p></div>
             </div>
           </div>
         </div>
@@ -130,7 +119,7 @@
         <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-between shrink-0">
           <button id="wiz-btn-back" onclick="window.wizardBack()" class="px-6 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-xl hidden transition">Back</button>
           <button id="wiz-btn-next" onclick="window.wizardNext()" class="px-6 py-3 font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl ml-auto transition">Next Step</button>
-          <button id="wiz-btn-save" onclick="window.submitNewCustomer()" class="px-6 py-3 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl ml-auto hidden transition shadow-lg">Save & Create Customer</button>
+          <button id="wiz-btn-save" onclick="window.submitNewCustomer()" class="px-6 py-3 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl ml-auto hidden transition shadow-lg">Save & Create</button>
         </div>
       </div>
     </div>

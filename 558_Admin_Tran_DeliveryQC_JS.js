@@ -332,14 +332,44 @@ window.executeTransferToSales = async function () {
             });
         });
 
-        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-        const { data: eodLogs } = await supabase1.from('eod_log').select('driver_mail_id').eq('status', 'Completed').gte('timestamp', todayStart.toISOString());
-        var verifiedDrivers = eodLogs ? eodLogs.map(l => l.driver_mail_id.toLowerCase()) : [];
-        var pendingDrivers = Array.from(uniqueDrivers).filter(d => !verifiedDrivers.includes(d));
+        // --- NEW HANDSHAKE VALIDATION LOGIC ---
+        var pendingDrivers = [];
+        var driverDates = {};
+        
+        // 1. Group the exact delivery dates for each driver in this sync batch
+        allDeliveriesToMigrate.forEach(d => {
+            if (d.enterBy && d.delDate) {
+                var drv = d.enterBy.trim().toLowerCase();
+                if (!driverDates[drv]) driverDates[drv] = new Set();
+                
+                var dateOnly = d.delDate;
+                if (dateOnly.includes('T')) dateOnly = dateOnly.split('T')[0];
+                driverDates[drv].add(dateOnly);
+            }
+        });
+
+        // 2. Ask Supabase if any of these drivers have an ACTIVE (un-handshaked) shift
+        const { data: activeLogs } = await supabase1.from('eod_log')
+            .select('driver_mail_id, created_at')
+            .in('driver_mail_id', Array.from(uniqueDrivers))
+            .eq('status', 'Active');
+
+        if (activeLogs) {
+            activeLogs.forEach(log => {
+                var drv = log.driver_mail_id.toLowerCase();
+                var logDate = log.created_at.split('T')[0];
+                
+                // If the driver has an ACTIVE shift on the exact same day as the deliveries being pushed, block it!
+                if (driverDates[drv] && driverDates[drv].has(logDate)) {
+                    if (!pendingDrivers.includes(drv)) pendingDrivers.push(drv);
+                }
+            });
+        }
 
         if (pendingDrivers.length > 0) {
             throw new Error("TRANSFER BLOCKED: Missing EOD Handshake for: " + pendingDrivers.join(', '));
         }
+        // ---------------------------------------
 
         const { data: ordData } = await supabase1.from('orders').select('cpn_no').eq('status', 'PENDING');
         var currentOrders = ordData ? ordData.map(o => o.cpn_no.toUpperCase()) : [];

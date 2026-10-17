@@ -224,64 +224,73 @@ window.exportDormantCSV = function () {
   a.click();
 };
 
-window.pushDormantListToCRM = async function () {
-  var checkboxes = document.querySelectorAll('.dormant-cb:checked');
-  if (checkboxes.length === 0) return alert("Select at least one customer to push.");
+window.pushDormantListToCRM = async function() {
+    var checkboxes = document.querySelectorAll('.dormant-cb:checked');
+    if (checkboxes.length === 0) return alert("Select at least one customer to push.");
 
-  var selectedCpns = Array.from(checkboxes).map(cb => cb.value);
-  var payload = window.currentDormantData.filter(cust => selectedCpns.includes(String(cust.cpn))).map(cust => ({
-    cpn: cust.cpn, name: cust.name, phone: cust.contact || "No Number", days: cust.daysDormant || 0, currentStatus: cust.status || "ACTIVE"
-  }));
+    var selectedCpns = Array.from(checkboxes).map(cb => cb.value);
+    var payload = window.currentDormantData.filter(cust => selectedCpns.includes(String(cust.cpn))).map(cust => ({
+        cpn: cust.cpn, name: cust.name, phone: cust.contact || "No Number", days: cust.daysDormant || 0, currentStatus: cust.status || "ACTIVE"
+    }));
 
-  var forcePush = document.getElementById('force-push-crm').checked;
-  if (!payload.length) return alert("No dormant customers currently loaded to push.");
+    var forcePush = document.getElementById('force-push-crm').checked;
+    if (!payload.length) return alert("No dormant customers currently loaded to push.");
+    
+    var btn = document.getElementById('btn-push-crm');
+    var originalText = btn.innerText; btn.innerText = "Pushing to CRM..."; btn.disabled = true;
 
-  var btn = document.getElementById('btn-push-crm');
-  var originalText = btn.innerText; btn.innerText = "Pushing to CRM..."; btn.disabled = true;
+    try {
+        const { data: setupData } = await supabase1.from('setup').select('value').eq('key', 'wip_statuses').maybeSingle();
+        var wipStatuses = setupData && setupData.value ? setupData.value.split(',').map(s => s.trim().toUpperCase()) : [];
 
-  try {
-    const { data: setupData } = await supabase1.from('setup').select('value').eq('key', 'wip_statuses').maybeSingle();
-    var wipStatuses = setupData && setupData.value ? setupData.value.split(',').map(s => s.trim().toUpperCase()) : [];
+        const { data: existingData, error: extErr } = await supabase1.from('crm_dormant_call_logs').select('cpn_no, call_status');
+        if (extErr) throw extErr;
 
-    const { data: existingData, error: extErr } = await supabase1.from('crm_dormant_call_logs').select('cpn_no, call_status');
-    if (extErr) throw extErr;
-
-    var activeCPNs = {};
-    if (existingData) {
-      existingData.forEach(row => {
-        var callStatus = (row.call_status || "").trim().toUpperCase();
-        if (callStatus === "" || callStatus === "PENDING" || wipStatuses.includes(callStatus)) {
-          activeCPNs[(row.cpn_no || "").trim().toUpperCase()] = true;
+        var activeCPNs = {};
+        if (existingData) {
+            existingData.forEach(row => {
+                var callStatus = (row.call_status || "").trim().toUpperCase();
+                if (callStatus === "" || callStatus === "PENDING" || wipStatuses.includes(callStatus)) {
+                    activeCPNs[(row.cpn_no || "").trim().toUpperCase()] = true;
+                }
+            });
         }
-      });
+
+        var timestamp = new Date();
+        var newRows = [];
+        var skippedCount = 0;
+
+        payload.forEach(c => {
+            var cleanCpn = String(c.cpn).trim().toUpperCase();
+            if (!forcePush && activeCPNs[cleanCpn]) { skippedCount++; return; }
+
+            var dateSuffix = timestamp.toLocaleDateString('en-IN', {year:'2-digit', month:'2-digit', day:'2-digit'}).replace(/\//g, '');
+            var logId = "DORM-" + dateSuffix + "-" + Math.floor(1000 + Math.random() * 9000);
+            var currentUser = window.activeAdminSession ? window.activeAdminSession.username : 'Admin';
+
+            newRows.push({
+                log_id: logId, 
+                date_added: timestamp.toISOString().split('T')[0], // <-- FIXED: Added the required date field
+                cpn_no: cleanCpn, 
+                customer_name: c.name || "Unknown", 
+                phone: c.phone || "N/A", 
+                days_dormant: c.days || 0,
+                call_status: "Pending", 
+                action_taken_by: "Admin", 
+                created_by: currentUser, 
+                created_at: timestamp.toISOString(), 
+                last_updated: timestamp.toISOString()
+            });
+        });
+
+        if (newRows.length > 0) {
+            const { error: insErr } = await supabase1.from('crm_dormant_call_logs').insert(newRows);
+            if (insErr) throw insErr;
+        }
+        alert(newRows.length + " customers pushed. " + skippedCount + " skipped (already active in queue).");
+    } catch(err) {
+        alert("Error pushing to CRM: " + err.message);
+    } finally {
+        btn.innerText = originalText; btn.disabled = false;
     }
-
-    var timestamp = new Date();
-    var newRows = [];
-    var skippedCount = 0;
-
-    payload.forEach(c => {
-      var cleanCpn = String(c.cpn).trim().toUpperCase();
-      if (!forcePush && activeCPNs[cleanCpn]) { skippedCount++; return; }
-
-      var dateSuffix = timestamp.toLocaleDateString('en-IN', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\//g, '');
-      var logId = "DORM-" + dateSuffix + "-" + Math.floor(1000 + Math.random() * 9000);
-      var currentUser = window.activeAdminSession ? window.activeAdminSession.username : 'Admin';
-
-      newRows.push({
-        log_id: logId, cpn_no: cleanCpn, customer_name: c.name || "Unknown", phone: c.phone || "N/A", days_dormant: c.days || 0,
-        call_status: "Pending", action_taken_by: "Admin", created_by: currentUser, created_at: timestamp.toISOString(), last_updated: timestamp.toISOString()
-      });
-    });
-
-    if (newRows.length > 0) {
-      const { error: insErr } = await supabase1.from('crm_dormant_call_logs').insert(newRows);
-      if (insErr) throw insErr;
-    }
-    alert(newRows.length + " customers pushed. " + skippedCount + " skipped (already active in queue).");
-  } catch (err) {
-    alert("Error pushing to CRM: " + err.message);
-  } finally {
-    btn.innerText = originalText; btn.disabled = false;
-  }
 };

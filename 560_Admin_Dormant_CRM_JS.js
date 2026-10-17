@@ -1,7 +1,7 @@
 window.crmReportMasterData = null;
-  window.crmActiveCategory = null;
+window.crmActiveCategory = null;
 
-  window.switchCRMDashTab = function (tabNum) {
+window.switchCRMDashTab = function (tabNum) {
     document.getElementById('crm-dash-content-1').classList.add('hidden');
     document.getElementById('crm-dash-content-2').classList.add('hidden');
 
@@ -12,20 +12,20 @@ window.crmReportMasterData = null;
     document.getElementById('btn-crm-tab-' + tabNum).className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap";
 
     if (tabNum === 2 && !window.crmReportMasterData) {
-      window.fetchCRMDashboardStats();
+        window.fetchCRMDashboardStats();
     }
-  };
+};
 
-  window.fetchCRMDashboardStats = async function (days) {
+window.fetchCRMDashboardStats = async function (days) {
     days = parseInt(days) || 7;
 
     var btns = document.querySelectorAll('.crm-days-btn');
     for (var i = 0; i < btns.length; i++) btns[i].className = "crm-days-btn px-6 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl text-sm font-black transition-all";
-    
+
     var activeBtn = document.getElementById('btn-crm-days-' + days);
     if (activeBtn) {
-      activeBtn.className = "crm-days-btn px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black shadow-md transition-all";
-      document.getElementById('crm-custom-days').value = "";
+        activeBtn.className = "crm-days-btn px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black shadow-md transition-all";
+        document.getElementById('crm-custom-days').value = "";
     }
 
     var badges = document.querySelectorAll('.crm-days-badge');
@@ -74,12 +74,12 @@ window.crmReportMasterData = null;
                 var newStatus = (row.new_customer_status || "").trim().toUpperCase();
                 var reason = (row.reason_for_dormancy || "Unspecified").trim();
                 var tcRemark = row.telecaller_feedback || "";
-                
-                var formatDt = dt => dt ? new Date(dt).toLocaleString('en-IN', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : "N/A";
+
+                var formatDt = dt => dt ? new Date(dt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : "N/A";
 
                 var record = {
-                    logId: row.log_id, 
-                    enterDate: formatDt(row.created_at), 
+                    logId: row.log_id,
+                    enterDate: formatDt(row.created_at),
                     lastUpdateDate: formatDt(row.last_updated),
                     cpn: row.cpn_no, name: row.customer_name, callStatus: row.call_status, prevStatus: row.previous_customer_status, newStatus: row.new_customer_status,
                     reason: reason, custRemark: row.customer_remark, tcRemark: row.telecaller_feedback, actionBy: row.action_taken_by, ts: new Date(row.last_updated).getTime()
@@ -91,7 +91,7 @@ window.crmReportMasterData = null;
                     payload.inactive.splits[reason] = (payload.inactive.splits[reason] || 0) + 1;
                     payload.inactive.rows.push(record);
                 }
-                
+
                 // 2. RETAINED / SAVED 
                 else if (prevStatus === "ACTIVE" && (newStatus === "ACTIVE" || newStatus === "ACTIVE RANDOM")) {
                     payload.retained.total++;
@@ -142,7 +142,7 @@ window.crmReportMasterData = null;
         document.getElementById('crm-split-inactive').innerHTML = formatClickableSplit(payload.inactive.splits, 'REASON');
 
         document.getElementById('crm-card-retained').innerText = payload.retained.total;
-        document.getElementById('crm-split-retained').innerHTML = formatClickableSplit(payload.retained.splits, 'STATUS'); 
+        document.getElementById('crm-split-retained').innerHTML = formatClickableSplit(payload.retained.splits, 'STATUS');
 
         document.getElementById('crm-card-wip').innerText = payload.wip.total;
         document.getElementById('crm-split-wip').innerHTML = formatClickableSplit(payload.wip.splits, 'STATUS');
@@ -162,15 +162,15 @@ window.crmReportMasterData = null;
     } finally {
         document.getElementById('crm-dash-loading').classList.add('hidden');
     }
-  };
+};
 
-  window.fetchDormantSummaryCards = async function () {
+window.fetchDormantSummaryCards = async function () {
     var c7 = document.getElementById('dormant-7');
     if (c7) c7.classList.add('animate-pulse');
 
     try {
-        // 1. Get Active Customers
-        const { data: customers, error: custErr } = await supabase1.from('ac_customers').select('cpn_no').eq('final_status', 'ACTIVE');
+        // FIX: Case-insensitive match using .ilike
+        const { data: customers, error: custErr } = await supabase1.from('ac_customers').select('cpn_no').ilike('final_status', 'ACTIVE');
         if (custErr) throw custErr;
         
         var activeCpns = {};
@@ -178,7 +178,6 @@ window.crmReportMasterData = null;
             customers.forEach(c => activeCpns[c.cpn_no.toUpperCase()] = 0);
         }
 
-        // 2. Scan Sales History for their last delivery
         const { data: salesData, error: salesErr } = await supabase1.from('sales').select('cpn_no, del_date');
         if (salesErr) throw salesErr;
 
@@ -186,18 +185,26 @@ window.crmReportMasterData = null;
             salesData.forEach(s => {
                 var rowCpn = (s.cpn_no || "").toUpperCase();
                 if (activeCpns.hasOwnProperty(rowCpn) && s.del_date) {
-                    var tstamp = new Date(s.del_date).getTime();
+                    var tstamp = new Date(s.del_date + "T00:00:00").getTime();
                     if (tstamp > activeCpns[rowCpn]) activeCpns[rowCpn] = tstamp;
                 }
             });
         }
 
-        // 3. Bucket them by days
         var counts = { exactly7: 0, days7to10: 0, days10to15: 0, days15to30: 0 };
-        var nowTS = new Date().getTime(), oneDay = 86400000;
+        
+        var today = new Date();
+        today.setHours(0,0,0,0);
+        var nowTS = today.getTime();
+        var oneDay = 86400000;
 
         for (var key in activeCpns) {
-            var days = (activeCpns[key] === 0) ? 999 : Math.floor((nowTS - activeCpns[key]) / oneDay);
+            var days = 999;
+            if (activeCpns[key] !== 0) {
+                var lastDt = new Date(activeCpns[key]);
+                lastDt.setHours(0,0,0,0);
+                days = Math.floor((nowTS - lastDt.getTime()) / oneDay);
+            }
             
             if (days === 7) counts.exactly7++;
             if (days >= 7 && days <= 10) counts.days7to10++;
@@ -215,34 +222,34 @@ window.crmReportMasterData = null;
     } finally {
         if (c7) c7.classList.remove('animate-pulse');
     }
-  };
+};
 
-  window.filterCRMByKeyword = function (filterTarget, keyword) {
+window.filterCRMByKeyword = function (filterTarget, keyword) {
     event.stopPropagation();
     document.getElementById('crm-flt-status').value = "";
     document.getElementById('crm-flt-reason').value = "";
     if (filterTarget === 'STATUS') document.getElementById('crm-flt-status').value = keyword;
     else document.getElementById('crm-flt-reason').value = keyword;
     window.renderCRMTable();
-  };
+};
 
-  window.loadCRMReportData = function (categoryType) {
+window.loadCRMReportData = function (categoryType) {
     if (!window.crmReportMasterData) return;
     window.crmActiveCategory = categoryType;
     document.getElementById('crm-detailed-report').classList.remove('hidden');
 
     var titles = {
-      'INACTIVE': 'Lost Customers (Active -> Inactive)',
-      'RETAINED': 'Retained / Saved (Active -> Active/Random)',
-      'WIP': 'Pending & WIP Queue',
-      'COMPLETED': 'Closed / Resolved Calls',
-      'ESCALATED': 'Admin Escalations Required'
+        'INACTIVE': 'Lost Customers (Active -> Inactive)',
+        'RETAINED': 'Retained / Saved (Active -> Active/Random)',
+        'WIP': 'Pending & WIP Queue',
+        'COMPLETED': 'Closed / Resolved Calls',
+        'ESCALATED': 'Admin Escalations Required'
     };
     document.getElementById('crm-report-title').innerText = titles[categoryType];
 
     var allCards = document.querySelectorAll('.crm-kpi-card');
     for (var c = 0; c < allCards.length; c++) allCards[c].classList.remove('ring-4', 'ring-indigo-600', 'ring-offset-2', 'scale-[1.02]');
-    
+
     var activeCard = document.getElementById('crm-card-container-' + categoryType);
     if (activeCard) activeCard.classList.add('ring-4', 'ring-indigo-600', 'ring-offset-2', 'scale-[1.02]');
 
@@ -253,9 +260,9 @@ window.crmReportMasterData = null;
 
     window.renderCRMTable();
     document.getElementById('crm-detailed-report').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+};
 
-  window.renderCRMTable = function () {
+window.renderCRMTable = function () {
     if (!window.crmActiveCategory || !window.crmReportMasterData) return;
 
     var keyMap = { 'INACTIVE': 'inactive', 'RETAINED': 'retained', 'WIP': 'wip', 'COMPLETED': 'completed', 'ESCALATED': 'escalated' };
@@ -268,38 +275,38 @@ window.crmReportMasterData = null;
 
     var filtered = [];
     for (var i = 0; i < sourceData.length; i++) {
-      var r = sourceData[i];
+        var r = sourceData[i];
 
-      var matchCpn = fCpn === "" || String(r.cpn).toUpperCase().indexOf(fCpn) > -1 || String(r.name).toUpperCase().indexOf(fCpn) > -1;
+        var matchCpn = fCpn === "" || String(r.cpn).toUpperCase().indexOf(fCpn) > -1 || String(r.name).toUpperCase().indexOf(fCpn) > -1;
 
-      var rCallStat = String(r.callStatus).trim().toUpperCase();
-      if (rCallStat === "") rCallStat = "PENDING";
-      var rNewStat = String(r.newStatus).trim().toUpperCase();
-      var matchStat = fStat === "" || rCallStat.indexOf(fStat) > -1 || rNewStat.indexOf(fStat) > -1;
+        var rCallStat = String(r.callStatus).trim().toUpperCase();
+        if (rCallStat === "") rCallStat = "PENDING";
+        var rNewStat = String(r.newStatus).trim().toUpperCase();
+        var matchStat = fStat === "" || rCallStat.indexOf(fStat) > -1 || rNewStat.indexOf(fStat) > -1;
 
-      var matchReas = fReas === "" || String(r.reason).toUpperCase().indexOf(fReas) > -1 || String(r.tcRemark).toUpperCase().indexOf(fReas) > -1 || String(r.actionBy).toUpperCase().indexOf(fReas) > -1;
+        var matchReas = fReas === "" || String(r.reason).toUpperCase().indexOf(fReas) > -1 || String(r.tcRemark).toUpperCase().indexOf(fReas) > -1 || String(r.actionBy).toUpperCase().indexOf(fReas) > -1;
 
-      var matchDate = true;
-      if (fDate) {
-        var fParts = fDate.split('-');
-        if (fParts.length === 3) {
-          var rowDateObj = new Date(r.ts);
-          var rowDateStr = rowDateObj.getFullYear() + "-" + String(rowDateObj.getMonth() + 1).padStart(2, '0') + "-" + String(rowDateObj.getDate()).padStart(2, '0');
-          if (rowDateStr !== fDate) matchDate = false;
+        var matchDate = true;
+        if (fDate) {
+            var fParts = fDate.split('-');
+            if (fParts.length === 3) {
+                var rowDateObj = new Date(r.ts);
+                var rowDateStr = rowDateObj.getFullYear() + "-" + String(rowDateObj.getMonth() + 1).padStart(2, '0') + "-" + String(rowDateObj.getDate()).padStart(2, '0');
+                if (rowDateStr !== fDate) matchDate = false;
+            }
         }
-      }
 
-      if (matchCpn && matchStat && matchReas && matchDate) filtered.push(r);
+        if (matchCpn && matchStat && matchReas && matchDate) filtered.push(r);
     }
 
     var tb = document.getElementById('crm-detailed-tbody');
     var countBadge = document.getElementById('crm-table-count');
 
     if (filtered.length === 0) {
-      countBadge.innerText = "0 Records";
-      countBadge.className = "bg-rose-100 border border-rose-300 text-rose-800 px-3 py-1 rounded-lg text-sm font-black tracking-widest hidden sm:inline-block";
-      tb.innerHTML = "<tr><td colspan='6' class='text-center p-8 font-bold text-slate-400'>No records match the current filters.</td></tr>";
-      return;
+        countBadge.innerText = "0 Records";
+        countBadge.className = "bg-rose-100 border border-rose-300 text-rose-800 px-3 py-1 rounded-lg text-sm font-black tracking-widest hidden sm:inline-block";
+        tb.innerHTML = "<tr><td colspan='6' class='text-center p-8 font-bold text-slate-400'>No records match the current filters.</td></tr>";
+        return;
     }
 
     countBadge.innerText = filtered.length + " Record" + (filtered.length > 1 ? "s" : "");
@@ -307,18 +314,18 @@ window.crmReportMasterData = null;
 
     var h = "";
     for (var j = 0; j < filtered.length; j++) {
-      var r = filtered[j];
-      var escalateBadge = r.tcRemark.indexOf("⚠️") > -1 ? "bg-rose-100 border-rose-300" : "bg-white";
-      var dispCallStatus = String(r.callStatus).trim() === "" ? "PENDING" : r.callStatus;
+        var r = filtered[j];
+        var escalateBadge = r.tcRemark.indexOf("⚠️") > -1 ? "bg-rose-100 border-rose-300" : "bg-white";
+        var dispCallStatus = String(r.callStatus).trim() === "" ? "PENDING" : r.callStatus;
 
-      h += "<tr class='hover:bg-slate-50 border-b border-slate-100 " + escalateBadge + "'>" +
-        "<td class='px-4 py-3 whitespace-normal'><span class='font-bold text-slate-800 block'>" + r.enterDate + "</span><span class='text-xs text-slate-400'>" + r.logId + "</span></td>" +
-        "<td class='px-4 py-3 whitespace-normal'><span class='font-black text-indigo-600 block'>" + r.cpn + "</span><span class='text-sm text-slate-600 font-bold'>" + r.name + "</span></td>" +
-        "<td class='px-4 py-3 whitespace-normal'><span class='line-through text-slate-400 text-xs'>" + r.prevStatus + "</span><br/><span class='font-bold text-emerald-600'>" + r.newStatus + "</span></td>" +
-        "<td class='px-4 py-3'><span class='bg-slate-100 px-3 py-1 rounded-full text-xs font-black uppercase border border-slate-200'>" + dispCallStatus + "</span></td>" +
-        "<td class='px-4 py-3 whitespace-normal min-w-[200px]'><p class='text-sm font-bold text-indigo-600'>" + r.reason + "</p><p class='text-xs font-bold text-slate-700 mt-1'>" + r.tcRemark + "</p></td>" +
-        "<td class='px-4 py-3 whitespace-normal'><span class='text-sm font-black text-slate-800 block'>" + r.actionBy + "</span><span class='text-xs font-bold text-emerald-600'>" + r.lastUpdateDate + "</span></td>" +
-        "</tr>";
+        h += "<tr class='hover:bg-slate-50 border-b border-slate-100 " + escalateBadge + "'>" +
+            "<td class='px-4 py-3 whitespace-normal'><span class='font-bold text-slate-800 block'>" + r.enterDate + "</span><span class='text-xs text-slate-400'>" + r.logId + "</span></td>" +
+            "<td class='px-4 py-3 whitespace-normal'><span class='font-black text-indigo-600 block'>" + r.cpn + "</span><span class='text-sm text-slate-600 font-bold'>" + r.name + "</span></td>" +
+            "<td class='px-4 py-3 whitespace-normal'><span class='line-through text-slate-400 text-xs'>" + r.prevStatus + "</span><br/><span class='font-bold text-emerald-600'>" + r.newStatus + "</span></td>" +
+            "<td class='px-4 py-3'><span class='bg-slate-100 px-3 py-1 rounded-full text-xs font-black uppercase border border-slate-200'>" + dispCallStatus + "</span></td>" +
+            "<td class='px-4 py-3 whitespace-normal min-w-[200px]'><p class='text-sm font-bold text-indigo-600'>" + r.reason + "</p><p class='text-xs font-bold text-slate-700 mt-1'>" + r.tcRemark + "</p></td>" +
+            "<td class='px-4 py-3 whitespace-normal'><span class='text-sm font-black text-slate-800 block'>" + r.actionBy + "</span><span class='text-xs font-bold text-emerald-600'>" + r.lastUpdateDate + "</span></td>" +
+            "</tr>";
     }
     tb.innerHTML = h;
-  };
+};

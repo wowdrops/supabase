@@ -567,8 +567,6 @@
         window.showLoader('Verifying Handshake...');
 
         try {
-            const todayStr = new Date().toISOString().split('T')[0];
-
             // 1. Verify Admin PIN
             const { data: adminData, error: adminErr } = await window.supabase1
                 .from('users')
@@ -582,18 +580,20 @@
             // Clear the PIN to ensure it's single-use
             await window.supabase1.from('users').update({ pin: null }).eq('username', adminData.username);
 
-            // 2. Find active trip for this driver today
-            const { data: activeTrip, error: tripErr } = await window.supabase1
+            // 2. Find the OLDEST active trip for this driver (Removed Date Restriction)
+            const { data: activeTrips, error: tripErr } = await window.supabase1
                 .from('eod_log')
-                .select('id')
+                .select('id, created_at')
                 .eq('driver_mail_id', window.currentUser.username)
                 .eq('status', 'Active')
-                .gte('created_at', todayStr)
-                .maybeSingle();
+                .order('created_at', { ascending: true })
+                .limit(1);
 
-            if (!activeTrip || tripErr) throw new Error("No active trip found for this driver today.");
+            if (!activeTrips || activeTrips.length === 0 || tripErr) throw new Error("No active trip found for this driver.");
+            
+            const activeTrip = activeTrips[0];
 
-            // 3. Update EOD Log
+            // 3. Update EOD Log to Completed
             const { error: updateErr } = await window.supabase1
                 .from('eod_log')
                 .update({

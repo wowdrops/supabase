@@ -30,14 +30,43 @@
             }
         };
 
-        // --- 2. SUPABASE ROUTE FETCHING ---
         window.fetchOrdersFromServer = async function () {
             if (!navigator.onLine) { window.showToast("Offline mode.", false); return; }
-            window.showLoader('Downloading Route...');
+            window.showLoader('Checking Shift Status...');
             
             try {
                 const supa = window.supabase1;
                 const todayStr = new Date().toISOString().split('T')[0];
+
+                // --- NEW: THE GATEKEEPER BLOCK ---
+                if (window.currentUser && window.currentUser.username) {
+                    const { data: activeTrips } = await supa
+                        .from('eod_log')
+                        .select('id, created_at')
+                        .eq('driver_mail_id', window.currentUser.username)
+                        .eq('status', 'Active')
+                        .order('created_at', { ascending: true });
+
+                    if (activeTrips && activeTrips.length > 0) {
+                        let oldestTripDate = activeTrips[0].created_at.split('T')[0];
+                        
+                        // If the active trip is from a previous day, hard-stop the app.
+                        if (oldestTripDate < todayStr) {
+                            window.hideLoader();
+                            alert("⛔ GATEKEEPER ACTIVE\n\nYou have an open trip from a previous shift (" + oldestTripDate + ").\n\nA Manager must complete your EOD Handshake before you can load a new route.");
+                            return; 
+                        }
+                    } else {
+                        // Create today's new active trip since none exist
+                        await supa.from('eod_log').insert([{
+                            driver_mail_id: window.currentUser.username,
+                            status: 'Active'
+                        }]);
+                    }
+                }
+                // ---------------------------------
+
+                window.showLoader('Downloading Route...');
 
                 // Fetch Setup for VJ_PRICE
                 const { data: setupData } = await supa.from('setup').select('value').eq('key', 'VJ_PRICE').maybeSingle();
@@ -45,7 +74,7 @@
                 window.APP_CONFIG.VJ_PRICE = vjPrice;
                 localStorage.setItem('wd_sys_config', JSON.stringify({ vjPrice: vjPrice }));
 
-                // Fetch ALL records from 'deliveries' table (Master Route)
+                // Fetch ALL records from 'deliveries' table
                 const { data: routeData, error: routeErr } = await supa
                     .from('deliveries')
                     .select('*')
@@ -176,26 +205,8 @@
 
                 window.loadLocalData();
 
-                // ENSURE ACTIVE TRIP IN EOD_LOG
-                if (window.currentUser && window.currentUser.username) {
-                    const { data: tripData } = await supa
-                        .from('eod_log')
-                        .select('id')
-                        .eq('driver_mail_id', window.currentUser.username)
-                        .eq('status', 'Active')
-                        .gte('created_at', todayStr)
-                        .maybeSingle();
-
-                    if (!tripData) {
-                        await supa.from('eod_log').insert([{
-                            driver_mail_id: window.currentUser.username,
-                            status: 'Active'
-                        }]);
-                    }
-                }
-
                 window.hideLoader();
-                window.showToast("Route Synced & Trip Started!", true);
+                window.showToast("Route Synced & Trip Verified!", true);
             } catch (err) {
                 window.hideLoader(); 
                 alert("Failed to fetch route: " + err.message);

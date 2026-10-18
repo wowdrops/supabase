@@ -40,9 +40,10 @@
     }, 50);
 
     try {
-      // 1. Fetch concurrently from Supabase (Profile, Sales, Pays, CRM Logs)
-      const [profRes, salesRes, paysRes, logsRes] = await Promise.all([
+      // 1. Fetch concurrently from Supabase including v_customer_outstanding
+      const [profRes, outRes, salesRes, paysRes, logsRes] = await Promise.all([
         supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle(),
+        supabase1.from('v_customer_outstanding').select('current_balance').eq('cpn_no', cpn).maybeSingle(),
         supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5),
         supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5),
         supabase1.from('ac_automation_logs').select('*').eq('triggered_by', cpn).order('created_at', {ascending: false}).limit(5)
@@ -58,9 +59,12 @@
           canDeposit: pData.can_deposit || 0
       } : null;
 
-      const liveData = { outstanding: pData ? (Number(pData.os) || 0) : 0 };
+      // 3. Extract exact Outstanding Balance from the Database View
+      const liveData = { 
+          outstanding: outRes.data ? (Number(outRes.data.current_balance) || 0) : 0 
+      };
       
-      // 3. Format Lists
+      // 4. Format Lists
       const salesArr = (salesRes.data || []).map(s => ({
           date: window.format360Date(s.del_date), actD: s.act_d, actE: s.act_e, amt: s.amount
       }));
@@ -69,7 +73,6 @@
           date: window.format360Date(p.payment_date), mode: p.mode, amt: p.amount
       }));
 
-      // NOTE: Adjust 'logsArr' mapping depending on how you store CRM logs in `ac_automation_logs`
       const logsArr = (logsRes.data || []).map(l => ({
           date: window.format360Date(l.created_at), status: l.date_range || 'Update', actionBy: l.staff_generated || 'System',
           prevStatus: "-", newStatus: "-", reason: l.supplier_generated || "-", remark: "-", lastUpdated: window.format360Date(l.created_at)
@@ -131,7 +134,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
           <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">Recent Deliveries (Sales)</h5>
           <div class="space-y-2">`;

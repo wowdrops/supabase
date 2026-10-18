@@ -1,7 +1,30 @@
+// =====================================
+  // ADVANCED SALES HISTORY ENGINE (Supabase Native)
+  // =====================================
 
   window.masterSalesData = [];
   window.filteredSalesData = [];
   window.salesDisplayCount = 50;
+
+  // Date Formatting Helpers
+  window.formatSalesDate = function(dateStr) {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+  };
+
+  window.formatSalesDateTime = function(isoStr) {
+    if (!isoStr) return "-";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    let hours = d.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12; 
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return window.formatSalesDate(isoStr) + " " + String(hours).padStart(2, '0') + ":" + mins + " " + ampm;
+  };
 
   // Initialize Dates Safely
   var startEl = document.getElementById('sales-start');
@@ -46,7 +69,7 @@
     else { col.classList.add('hidden'); icon.classList.remove('rotate-180'); }
   };
 
-  window.loadSalesData = function () {
+  window.loadSalesData = async function () {
     var startEl = document.getElementById('sales-start');
     var endEl = document.getElementById('sales-end');
     var targetCpnEl = document.getElementById('target-cpn');
@@ -60,48 +83,109 @@
     // --- SMART DATE AUTO-CORRECTION ---
     var dStart = new Date(start);
     var dEnd = new Date(end);
-    
-    // Calculate difference in days
-    var diffTime = dEnd.getTime() - dStart.getTime();
-    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // Define limits based on whether a CPN is targeted
+    var diffDays = Math.ceil((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24));
     var limitDays = targetCpn ? 185 : 35; 
 
     if (diffDays > limitDays) {
-      // Auto-correct the start date based on the end date
       var correctedStart = new Date(dEnd);
       correctedStart.setDate(correctedStart.getDate() - limitDays);
       start = correctedStart.toISOString().split('T')[0];
-      startEl.value = start; // Update the UI instantly
+      startEl.value = start; 
       
       var msg = targetCpn 
         ? "CPN specific searches are optimized for 6 months (185 days). Your start date was auto-adjusted." 
         : "Global searches are optimized for 1 month (35 days). Your start date was auto-adjusted.";
-      alert(msg);
+      if (window.showToast) window.showToast(msg, "warning"); else alert(msg);
     }
-    // ----------------------------------
 
     var tb = document.getElementById('sales-tbody');
     window.startShTimer('Fetching');
-    tb.innerHTML = "<tr><td colspan='9' class='px-6 py-12 text-center text-indigo-500 font-bold text-xl animate-pulse'>Fetching sales history...</td></tr>";
+    tb.innerHTML = "<tr><td colspan='15' class='px-6 py-12 text-center text-indigo-500 font-bold text-xl animate-pulse'>Fetching sales history...</td></tr>";
     window.salesDisplayCount = 50;
 
-    // Pass the new targetCpn parameter to the backend
-    google.script.run.withSuccessHandler(function (res) {
-      window.stopShTimer('Fetched', !res.success);
-      if (!res.success || res.data.length === 0) {
-         tb.innerHTML = "<tr><td colspan='9' class='px-6 py-12 text-center font-bold text-slate-400 text-xl'>No sales found for this criteria.</td></tr>";
-         document.getElementById('rep-sales-d').innerText = "0"; 
-         document.getElementById('rep-sales-e').innerText = "0"; 
-         document.getElementById('rep-sales-amt').innerText = "₹0"; 
-         document.getElementById('sh-tot-count').innerText = "0";
+    try {
+      // 1. Fetch Sales Data
+      let query = supabase1.from('sales').select('*').gte('del_date', start).lte('del_date', end).order('del_date', { ascending: false });
+      if (targetCpn) query = query.eq('cpn_no', targetCpn);
+      const { data: salesData, error: salesErr } = await query;
+      if (salesErr) throw salesErr;
+
+      if (!salesData || salesData.length === 0) {
+         window.stopShTimer('Fetched', false);
+         tb.innerHTML = "<tr><td colspan='15' class='px-6 py-12 text-center font-bold text-slate-400 text-xl'>No sales found for this criteria.</td></tr>";
+         ['rep-sales-d','rep-sales-e','rep-sales-rep','sh-tot-count'].forEach(id => document.getElementById(id).innerText = "0");
+         document.getElementById('rep-sales-amt').innerText = "₹0";
          return;
       }
-      window.masterSalesData = res.data;
+
+      // 2. Fetch Customer Data for unique CPNs
+      const uniqueCpns = [...new Set(salesData.map(r => r.cpn_no))].filter(Boolean);
+      const { data: custData, error: custErr } = await supabase1.from('ac_customers')
+        .select('cpn_no, apartment, block, door, poc1, con1, final_status')
+        .in('cpn_no', uniqueCpns);
+      if (custErr) throw custErr;
+
+      let custMap = {};
+      (custData || []).forEach(c => custMap[c.cpn_no] = c);
+
+      // 3. Map Data to UI format
+      window.masterSalesData = salesData.map(row => {
+        let prof = custMap[row.cpn_no] || {};
+        return {
+          uniqueNo: row.unique_no || String(row.id),
+          cpn: (row.cpn_no || "-").toUpperCase(),
+          delDate: window.formatSalesDate(row.del_date),
+          apt: prof.apartment || "-",
+          blk: prof.block || "-",
+          door: prof.door || "-",
+          name: prof.poc1 || "Unknown",
+          contact: prof.con1 || "-",
+          status: prof.final_status || "UNKNOWN",
+          ordD: Number(row.ord_d) || 0,
+          ordE: Number(row.ord_e) || 0,
+          actD: Number(row.act_d) || 0,
+          actE: Number(row.act_e) || 0,
+          actDVJ: Number(row.act_d_vj) || 0,
+          actDNVJ: Number(row.act_d_nvj) || 0,
+          actEVJ: Number(row.act_e_vj) || 0,
+          actENVJ: Number(row.act_e_nvj) || 0,
+          repQty: Number(row.rep_qty) || 0,
+          repVj: Number(row.rep_act_vj) || 0,
+          repNvj: Number(row.rep_act_nvj) || 0,
+          rate: Number(row.rate) || 0,
+          amt: Number(row.amount) || 0,
+          ordCmt: row.ord_comment || "",
+          delCmt: row.delivery_comment || "",
+          ordBy: row.order_entered_by || "-",
+          ordOn: window.formatSalesDateTime(row.order_entered_at),
+          delBy: row.delivery_entered_by || "-",
+          delOn: window.formatSalesDateTime(row.delivery_entered_at),
+          doorLink: row.door_delivery_link || "-",
+          colFull: Number(row.collected_full) || 0,
+          varFull: Number(row.variance_full) || 0,
+          varEmp: Number(row.variance_empty) || 0,
+          varRes: row.variance_reason || "",
+          v2bLink: row.v2b_link || "-",
+          b2vLink: row.b2v_link || "-",
+          v2bFull: Number(row.v2b_full) || 0,
+          b2vFull: Number(row.b2v_full) || 0,
+          b2vEmp: Number(row.b2v_emp) || 0,
+          unloadBy: row.unload_by || "-",
+          unloadOn: window.formatSalesDateTime(row.unload_on),
+          loadBy: row.load_by || "-",
+          loadOn: window.formatSalesDateTime(row.load_on)
+        };
+      });
+
+      window.stopShTimer('Fetched', false);
       window.populateSalesHistoryFilters();
       window.filterSalesHistoryData();
-    }).fetchSalesDetailedReport(start, end, targetCpn);
+
+    } catch (err) {
+      console.error(err);
+      window.stopShTimer('Failed', true);
+      tb.innerHTML = "<tr><td colspan='15' class='px-6 py-12 text-center font-bold text-rose-400 text-xl'>Database Error: " + err.message + "</td></tr>";
+    }
   };
 
   window.populateSalesHistoryFilters = function() {
@@ -133,21 +217,14 @@
       var matchApt = (selApt === "ALL" || r.apt === selApt);
       var matchBlk = (selBlk === "ALL" || r.blk === selBlk);
       
-      // --- UPDATED: STRICT EXCEPTION FILTER LOGIC ---
       var matchExc = true;
       if (selExc === "EXCEPTIONS") {
-        var actD = r.actD; 
-        var actE = r.actE; 
-        var actRep = (r.repVj || 0) + (r.repNvj || 0);
-        
+        var actD = r.actD; var actE = r.actE; var actRep = (r.repVj || 0) + (r.repNvj || 0);
         var hasVariance = (r.ordD !== actD) || (r.ordE !== actE) || (r.repQty !== actRep);
         var isZeroActual = (actD === 0 && actE === 0 && actRep === 0);
         var hasExceptionNote = (r.delCmt && (r.delCmt.includes("[DEFERRED") || r.delCmt.includes("[CANCELLED")));
-        
         if (!hasVariance && !isZeroActual && !hasExceptionNote) matchExc = false;
       }
-      // ----------------------------------------------
-
       return matchQ && matchApt && matchBlk && matchExc;
     });
     window.salesDisplayCount = 50; 
@@ -187,13 +264,14 @@
         }
 
         h += "<tr class='hover:bg-slate-50 transition border-b border-slate-100'>" +
-             "<td class='p-4 font-black text-indigo-600 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-lg'><span class='hover:underline cursor-pointer' onclick=\"window.openSh360('"+r.cpn+"')\">" + r.cpn + "</span></td>" +
+             "<td class='p-4 font-black text-indigo-600 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-lg'>" + 
+             "<span class='hover:underline cursor-pointer' onclick=\"window.openCustomer360('" + r.cpn + "')\">" + r.cpn + "</span></td>" +
              "<td class='p-4 font-bold text-slate-600 text-xs'>" + r.delDate + "</td>" +
              "<td class='p-4'><p class='text-[10px] text-slate-400 font-bold uppercase tracking-widest'>" + r.apt + "</p><p class='text-slate-800 font-black text-sm'>" + r.blk + " / " + r.door + "</p></td>" +
              "<td class='p-4'><p class='font-black text-indigo-700 text-sm max-w-[150px] truncate'>" + r.name + "</p><p class='text-[10px] text-slate-500 tracking-widest'>" + r.contact + "</p></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded text-sm font-bold text-slate-500'>" + r.ordD + "</span></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded text-sm font-bold text-slate-500'>" + r.ordE + "</span></td>" +
-             "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded text-sm font-bold text-slate-500'>" + (r.repQty || 0) + "</span></td>" +
+             "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded text-sm font-bold text-slate-500'>" + r.repQty + "</span></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-base font-black text-indigo-600'>" + r.actD + "</span></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-base font-black text-amber-600'>" + r.actE + "</span></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-base font-black text-rose-500'>" + actRepTotal + "</span></td>" +
@@ -218,20 +296,17 @@
     document.getElementById('rep-sales-amt').innerText = "₹" + sumAmt.toLocaleString('en-IN');
   };
 
-  // --- DETAILS MODAL ---
   window.openSalesHistoryDetails = function(uniqueNo) {
     var r = window.masterSalesData.find(x => x.uniqueNo === uniqueNo);
     if(!r) return alert("Record not found.");
 
     document.getElementById('sh-modal-subtitle').innerText = r.cpn + " - " + r.delDate;
 
-    // --- NEW: LIGHTNING FAST LIGHTBOX INTEGRATION ---
     function buildPhoto(link) {
        if(!link || link === "-") return '<div class="h-20 w-20 bg-slate-100 border-2 border-slate-200 border-dashed rounded-xl flex items-center justify-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">N/A</div>';
        var imgUrl = typeof window.parseImgUrl === 'function' ? window.parseImgUrl(link) : link;
        return `<img src="${imgUrl}" onclick="if(typeof window.openLightbox === 'function') { window.openLightbox('${link}'); } else { window.open('${link}', '_blank'); }" class="h-20 w-20 object-cover rounded-xl border-2 border-slate-200 cursor-pointer hover:border-indigo-400 hover:scale-105 transition shadow-sm" title="Click to view full photo">`;
     }
-    // ------------------------------------------------
 
     var html = `
       <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -256,7 +331,7 @@
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mt-4">
         <h4 class="text-sm font-black text-rose-500 uppercase tracking-widest border-b border-rose-100 pb-2 mb-4">Section 2: QC Variance</h4>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Collected Full</p><p class="text-2xl font-black text-slate-800">${r.colFull}</p></div>
@@ -266,7 +341,7 @@
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mt-4">
         <h4 class="text-sm font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-2 mb-4">Section 3: Block & Fleet Tracking</h4>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
            <div class="col-span-1 md:col-span-4 flex justify-around bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -290,9 +365,9 @@
     document.getElementById('sales-details-modal').classList.remove('hidden');
   };
 
-  // --- 360 CPN NATIVE INTEGRATION ---
+  // --- 360 CPN NATIVE SUPABASE INTEGRATION ---
   window.activeSh360Timer = null;
-  window.openSh360 = function(cpn) {
+  window.openSh360 = async function(cpn) {
     document.getElementById('sh-360-modal').classList.remove('hidden');
     var container = document.getElementById('sh-360-content');
 
@@ -312,21 +387,43 @@
       if(badge) badge.innerText = ((performance.now() - stTime) / 1000).toFixed(2) + "s";
     }, 50);
 
-    var jobsCompleted = 0;
-    var profileData = null, salesPaysData = null, historyData = null;
+    try {
+      // Fetch concurrently from Supabase
+      const [profRes, salesRes, paysRes] = await Promise.all([
+        supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle(),
+        supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5),
+        supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5)
+      ]);
 
-    function checkComplete() {
-      jobsCompleted++;
-      if (jobsCompleted === 3) {
-        clearInterval(window.activeSh360Timer);
-        document.getElementById('sh-360-timer').innerText = ((performance.now() - stTime) / 1000).toFixed(2) + "s";
-        renderSh360UI(cpn, profileData, salesPaysData, historyData);
-      }
+      if (profRes.error) throw profRes.error;
+
+      // Ensure formatting matches UI expectations
+      const pData = profRes.data || null;
+      const profile = pData ? {
+          name: pData.poc1, apt: pData.apartment, blk: pData.block, door: pData.door, 
+          phone: pData.con1, status: pData.final_status, rate: pData.default_rate
+      } : null;
+
+      const liveData = pData ? { outstanding: Number(pData.os) || 0 } : { outstanding: 0 };
+      
+      const salesArr = (salesRes.data || []).map(s => ({
+          date: window.formatSalesDate(s.del_date), actD: s.act_d, actE: s.act_e, amt: s.amount
+      }));
+      
+      const paysArr = (paysRes.data || []).map(p => ({
+          date: window.formatSalesDate(p.payment_date), mode: p.mode, amt: p.amount
+      }));
+
+      // Render instantly
+      clearInterval(window.activeSh360Timer);
+      document.getElementById('sh-360-timer').innerText = ((performance.now() - stTime) / 1000).toFixed(2) + "s";
+      renderSh360UI(cpn, {profile, liveData}, {sales: salesArr, pays: paysArr}, []);
+
+    } catch(err) {
+      console.error(err);
+      clearInterval(window.activeSh360Timer);
+      container.innerHTML = '<p class="text-center text-rose-400 font-bold py-12">Error loading 360 view: ' + err.message + '</p>';
     }
-
-    google.script.run.withSuccessHandler(function(res) { profileData = res; checkComplete(); }).getProfileAndAlerts(cpn);
-    google.script.run.withSuccessHandler(function(res) { salesPaysData = res; checkComplete(); }).getSalesAndPays(cpn);
-    google.script.run.withSuccessHandler(function(res) { historyData = res; checkComplete(); }).getCRMHistory(cpn);
   };
 
   window.closeSh360 = function() {
@@ -362,7 +459,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
           <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">Recent Deliveries (Sales)</h5>
           <div class="space-y-2">`;
@@ -379,15 +476,6 @@
       resSalesPays.pays.forEach(pay => { html += `<div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80 text-xs"><div><span class="font-black text-slate-200">${pay.date}</span> <span class="bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-indigo-300 uppercase ml-2">${pay.mode}</span></div><span class="font-black text-emerald-400">₹${pay.amt}</span></div>`; });
     }
 
-    html += `</div></div></div>
-      <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
-          <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">CRM Interaction Logs</h5>
-          <div class="space-y-2 max-h-40 overflow-y-auto hide-scrollbar">`;
-
-    if (historyLogs.length === 0) html += '<p class="text-xs text-slate-500 italic">No interactions logged.</p>';
-    else {
-      historyLogs.forEach(log => { html += `<div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 text-xs mb-2"><div class="flex justify-between border-b border-slate-800 pb-2 mb-2"><span class="font-black text-slate-300">${log.date} - ${log.status}</span><span class="font-bold text-slate-500">${log.lastUpdated} by ${log.actionBy}</span></div><div class="grid grid-cols-2 gap-3 mb-2"><p><span class="text-slate-500 font-bold uppercase text-[9px] tracking-widest">Change</span> <br><span class="font-black text-indigo-400">${log.prevStatus} &rarr; ${log.newStatus}</span></p><p><span class="text-slate-500 font-bold uppercase text-[9px] tracking-widest">Reason</span> <br><span class="font-bold text-slate-300">${log.reason}</span></p></div><div class="bg-slate-950 p-2 rounded-lg border border-slate-800/50"><p class="font-medium text-slate-400">${log.remark}</p></div></div>`; });
-    }
-    html += `</div></div>`;
+    html += `</div></div></div>`;
     container.innerHTML = html;
   }

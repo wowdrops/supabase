@@ -1,50 +1,99 @@
-
+// =====================================
+  // GLOBAL CUSTOMER 360 MODAL ENGINE
+  // =====================================
   window.active360TimerInterval = null;
 
-  window.openCustomer360 = function(cpn) {
+  window.format360Date = function(isoStr) {
+    if (!isoStr) return "-";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+  };
+
+  window.openCustomer360 = async function(cpn) {
+    if (!cpn) return;
+    cpn = cpn.trim().toUpperCase();
+
     var modal = document.getElementById('admin-360-modal');
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
     var container = document.getElementById('modal-360-content');
 
-    // Skeletons UI
-    container.innerHTML = `
-      <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-32"></div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
-        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
-      </div>
-      <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-48"></div>
-    `;
+    // Skeletons UI while fetching
+    if (container) {
+      container.innerHTML = `
+        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-32"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
+          <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
+        </div>
+        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-48"></div>
+      `;
+    }
 
     var startTime = performance.now();
-    if(window.active360TimerInterval) clearInterval(window.active360TimerInterval);
+    if (window.active360TimerInterval) clearInterval(window.active360TimerInterval);
     window.active360TimerInterval = setInterval(function() {
       var curr = ((performance.now() - startTime) / 1000).toFixed(2);
       var badge = document.getElementById('modal-360-timer');
-      if(badge) badge.innerText = curr + "s";
+      if (badge) badge.innerText = curr + "s";
     }, 50);
 
-    var jobsCompleted = 0;
-    var profileData = null, salesPaysData = null, historyData = null;
+    try {
+      // 1. Fetch concurrently from Supabase (Profile, Sales, Pays, CRM Logs)
+      const [profRes, salesRes, paysRes, logsRes] = await Promise.all([
+        supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle(),
+        supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5),
+        supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5),
+        supabase1.from('ac_automation_logs').select('*').eq('triggered_by', cpn).order('created_at', {ascending: false}).limit(5)
+      ]);
 
-    function checkComplete() {
-      jobsCompleted++;
-      if (jobsCompleted === 3) {
-        clearInterval(window.active360TimerInterval);
-        var finalTime = ((performance.now() - startTime) / 1000).toFixed(2);
-        document.getElementById('modal-360-timer').innerText = finalTime + "s";
-        renderCustomer360UI(cpn, profileData, salesPaysData, historyData);
+      if (profRes.error) throw profRes.error;
+
+      // 2. Format Profile
+      const pData = profRes.data;
+      const profile = pData ? {
+          name: pData.poc1 || "Unknown", apt: pData.apartment || "-", blk: pData.block || "-", door: pData.door || "-", 
+          phone: pData.con1 || "-", status: pData.final_status || "UNKNOWN", rate: pData.default_rate || 0,
+          canDeposit: pData.can_deposit || 0
+      } : null;
+
+      const liveData = { outstanding: pData ? (Number(pData.os) || 0) : 0 };
+      
+      // 3. Format Lists
+      const salesArr = (salesRes.data || []).map(s => ({
+          date: window.format360Date(s.del_date), actD: s.act_d, actE: s.act_e, amt: s.amount
+      }));
+      
+      const paysArr = (paysRes.data || []).map(p => ({
+          date: window.format360Date(p.payment_date), mode: p.mode, amt: p.amount
+      }));
+
+      // NOTE: Adjust 'logsArr' mapping depending on how you store CRM logs in `ac_automation_logs`
+      const logsArr = (logsRes.data || []).map(l => ({
+          date: window.format360Date(l.created_at), status: l.date_range || 'Update', actionBy: l.staff_generated || 'System',
+          prevStatus: "-", newStatus: "-", reason: l.supplier_generated || "-", remark: "-", lastUpdated: window.format360Date(l.created_at)
+      }));
+
+      // Render View
+      clearInterval(window.active360TimerInterval);
+      if (document.getElementById('modal-360-timer')) {
+          document.getElementById('modal-360-timer').innerText = ((performance.now() - startTime) / 1000).toFixed(2) + "s";
       }
-    }
+      
+      renderCustomer360UI(cpn, {profile, liveData}, {sales: salesArr, pays: paysArr}, logsArr);
 
-    google.script.run.withSuccessHandler(function(res) { profileData = res; checkComplete(); }).getProfileAndAlerts(cpn);
-    google.script.run.withSuccessHandler(function(res) { salesPaysData = res; checkComplete(); }).getSalesAndPays(cpn);
-    google.script.run.withSuccessHandler(function(res) { historyData = res; checkComplete(); }).getCRMHistory(cpn);
+    } catch (err) {
+      console.error(err);
+      clearInterval(window.active360TimerInterval);
+      if (container) container.innerHTML = '<p class="text-center text-rose-400 font-bold py-12">Error loading 360 view: ' + err.message + '</p>';
+    }
   };
 
   window.closeCustomer360 = function() {
     if(window.active360TimerInterval) clearInterval(window.active360TimerInterval);
-    document.getElementById('admin-360-modal').classList.add('hidden');
+    var modal = document.getElementById('admin-360-modal');
+    if (modal) modal.classList.add('hidden');
   };
 
   function renderCustomer360UI(cpn, resProfile, resSalesPays, historyLogs) {

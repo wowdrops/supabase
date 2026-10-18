@@ -1,6 +1,5 @@
-
 // =====================================
-  // ADVANCED PAYS ENGINE
+  // ADVANCED PAYS ENGINE (Supabase Native)
   // =====================================
   
   window.masterPaysData = [];
@@ -8,6 +7,27 @@
   window.paysDisplayCount = 50;
   window.paysSortCol = 'timestamp';
   window.paysSortAsc = false;
+
+  // Date Formatting Helper ("2026-10-18" -> "18-Oct-2026")
+  window.formatPaysDate = function(dateStr) {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+  };
+
+  window.formatPaysDateTime = function(isoStr) {
+    if (!isoStr) return "-";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    let hours = d.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return window.formatPaysDate(isoStr) + " " + String(hours).padStart(2, '0') + ":" + mins + " " + ampm;
+  };
 
   // Timer Engine
   window.activePaysTimerInterval = null;
@@ -43,7 +63,7 @@
     else { col.classList.add('hidden'); icon.classList.remove('rotate-180'); }
   };
 
-  window.loadPaysData = function () {
+  window.loadPaysData = async function () {
     var startEl = document.getElementById('pays-start');
     var endEl = document.getElementById('pays-end');
     var targetCpnEl = document.getElementById('target-pays-cpn');
@@ -64,12 +84,12 @@
       var correctedStart = new Date(dEnd);
       correctedStart.setDate(correctedStart.getDate() - limitDays);
       start = correctedStart.toISOString().split('T')[0];
-      startEl.value = start; // Auto-update UI
+      startEl.value = start; 
       
       var msg = targetCpn 
         ? "CPN specific searches are optimized for 6 months (185 days). Your start date was auto-adjusted." 
         : "Global searches are optimized for 1 month (35 days). Your start date was auto-adjusted.";
-      alert(msg);
+      if (window.showToast) window.showToast(msg, "warning"); else alert(msg);
     }
     // ----------------------------------
 
@@ -78,17 +98,47 @@
     tb.innerHTML = "<tr><td colspan='7' class='px-6 py-12 text-center text-emerald-500 font-bold text-xl animate-pulse'>Fetching payment history...</td></tr>";
     window.paysDisplayCount = 50;
 
-    google.script.run.withSuccessHandler(function (res) {
-      window.stopPaysTimer('Fetched', !res.success);
-      if (!res.success || res.data.length === 0) {
+    try {
+      // 1. Supabase Native Query
+      let query = supabase1.from('pays').select('*').gte('payment_date', start).lte('payment_date', end);
+      if (targetCpn) { query = query.eq('cpn_no', targetCpn); }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+         window.stopPaysTimer('Fetched', false);
          tb.innerHTML = "<tr><td colspan='7' class='px-6 py-12 text-center font-bold text-slate-400 text-xl'>No payments found for this criteria.</td></tr>";
          document.getElementById('rep-pays-amt').innerText = "₹0"; 
          document.getElementById('pays-tot-count').innerText = "0";
          return;
       }
-      window.masterPaysData = res.data;
+
+      // 2. Map Supabase payload exactly to what your UI expects
+      window.masterPaysData = data.map(row => ({
+          cpn: (row.cpn_no || "-").toUpperCase(),
+          date: window.formatPaysDate(row.payment_date),
+          time: row.time_24hr || "-",
+          timestamp: new Date(row.created_at || row.payment_date).getTime(),
+          amt: Number(row.amount) || 0,
+          mode: (row.mode || "ONLINE").toUpperCase(),
+          refNo: row.ref_no || "-",
+          bank: row.upi_bank || "-",
+          comment: row.comment || "-",
+          uniqueNo: row.unique_no || String(row.id),
+          enterOn: window.formatPaysDateTime(row.created_at),
+          enterBy: row.created_by || "Admin",
+          entryFrom: "Supabase App"
+      }));
+
+      window.stopPaysTimer('Fetched', false);
       window.filterPaysData();
-    }).fetchPaysDetailedReport(start, end, targetCpn);
+
+    } catch (err) {
+      console.error(err);
+      window.stopPaysTimer('Failed', true);
+      tb.innerHTML = "<tr><td colspan='7' class='px-6 py-12 text-center font-bold text-rose-400 text-xl'>Database Error: " + err.message + "</td></tr>";
+    }
   };
 
   window.filterPaysData = function() {
@@ -104,7 +154,7 @@
     });
     
     window.paysDisplayCount = 50; 
-    window.sortPays(window.paysSortCol, true); // Retain active sort and render
+    window.sortPays(window.paysSortCol, true);
   };
 
   window.sortPays = function(key, keepDirection) {
@@ -143,16 +193,16 @@
       for (var i = 0; i < limit; i++) {
         var r = window.filteredPaysData[i]; 
         
-        // Sleek Eye Icon for deep dive
         var detailBtn = `<button onclick="window.openPaysDetails('${r.uniqueNo}')" class="text-emerald-500 hover:text-emerald-400 hover:bg-slate-800 p-2 rounded-full transition" title="View Details">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
         </button>`;
 
-        var bankDisplay = r.bank ? `<br><span class='text-[10px] text-slate-400 tracking-widest'>${r.bank}</span>` : '';
+        var bankDisplay = (r.bank && r.bank !== "-") ? `<br><span class='text-[10px] text-slate-400 tracking-widest'>${r.bank}</span>` : '';
         var refDisplay = r.refNo || '-';
 
         h += "<tr class='hover:bg-slate-50 transition border-b border-slate-100'>" +
-             "<td class='p-4 font-black text-emerald-600 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-lg'><span class='hover:underline cursor-pointer' onclick=\"window.openPays360('"+r.cpn+"')\">" + r.cpn + "</span></td>" +
+             "<td class='p-4 font-black text-emerald-600 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-lg'>" + 
+             "<span class='hover:underline cursor-pointer' onclick=\"window.openCustomer360('" + r.cpn + "')\">" + r.cpn + "</span></td>" +
              "<td class='p-4 font-bold text-slate-600'>" + r.date + "<br><span class='text-[10px] font-black text-slate-400'>" + r.time + "</span></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black text-slate-600 uppercase tracking-widest'>" + r.mode + "</span></td>" +
              "<td class='p-4 text-right font-black text-emerald-600 text-lg'>₹" + r.amt.toLocaleString('en-IN') + "</td>" +
@@ -177,11 +227,8 @@
     var r = window.masterPaysData.find(x => x.uniqueNo === uniqueNo);
     if(!r) return alert("Record not found.");
 
-    // FIX: Break modal out of the tab container to prevent top navbar overlap
     var modalEl = document.getElementById('pays-details-modal');
-    if (modalEl) {
-        document.body.appendChild(modalEl);
-    }
+    if (modalEl) { document.body.appendChild(modalEl); }
 
     document.getElementById('pays-modal-subtitle').innerText = r.cpn + " - " + r.date;
 
@@ -220,20 +267,12 @@
   };
 
   window.openPays360 = function(cpn) {
-    // Break the 360 modal out of the hidden Sales tab so it becomes globally visible
     var sh360 = document.getElementById('sh-360-modal');
     if (sh360) {
         document.body.appendChild(sh360);
-        // Force the modal's z-index high enough to cover the navbar
         sh360.classList.remove('z-[300]');
         sh360.classList.add('z-[9999]'); 
     }
     
-    // Call your existing Sales 360 function
-    if (typeof window.openSh360 === 'function') {
-      window.openSh360(cpn);
-    } else {
-      alert("System Error: 360 View engine not loaded.");
-    }
+    
   };
-  

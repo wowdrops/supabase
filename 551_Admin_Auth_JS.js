@@ -129,8 +129,8 @@ window.applyRolePermissions = function () {
 // Single Source of Truth for Routing
 window.tabActions = {
     'dashboard': function () { 
-        if (typeof window.switchDashTab === 'function') window.switchDashTab(1);
-        if (typeof window.loadDashboardData === 'function') window.loadDashboardData(); // <-- ADD THIS LINE
+        if (typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
+        //if (typeof window.loadDashboardData === 'function') window.loadDashboardData(); // <-- ADD THIS LINE
     },
     'dormant-crm': function() { 
         if(typeof window.switchCRMDashTab === 'function') window.switchCRMDashTab(1); 
@@ -158,7 +158,7 @@ window.tabActions = {
     'orders': function () { if (typeof window.loadOrdersData === 'function') window.loadOrdersData(); },
     'delivery': function (arg) { if (typeof window.loadDeliveryData === 'function') window.loadDeliveryData(arg); },
     'crm-reports': function () { if (typeof window.generateDormantConversionReport === 'function') window.generateDormantConversionReport(); },
-    'reports-customer': function () { if (typeof window.loadCustomerAnalyticsData === 'function') window.loadCustomerAnalyticsData(); },
+    'reports-customer': function (arg) { if (typeof window.loadCustomerAnalyticsData === 'function') window.loadCustomerAnalyticsData(arg); },
     'sales-cal': function () { if (typeof window.loadSalesCalendar === 'function') window.loadSalesCalendar(); },
     'user-access': function () { if (typeof window.loadSystemAccessMap === 'function') window.loadSystemAccessMap(); },
     'current-stock': function () { if (typeof window.loadCurrentStock === 'function') window.loadCurrentStock(); },
@@ -224,19 +224,43 @@ window.showNotif = function (el, msg, success) {
 
 
 window.goToReport = function (tabName, filterArg) {
+    // 1. Ensure the Logo is visible and Back Button is hidden for normal navigation
     var brand = document.getElementById('header-brand-area');
-    if (brand) brand.innerHTML = "<a href='https://wowdrops.github.io/supabase' target='_blank' rel='noopener noreferrer' class='shrink-0 flex items-center'><img src='wowLogo.jpg' class='h-16 w-auto' alt='Logo'></a>";
+    var backBtn = document.getElementById('btn-back-dashboard');
+    
+    if (brand) brand.classList.remove('hidden');
+    if (backBtn) backBtn.classList.add('hidden');
+    
+    // 2. If navigating to Dashboard directly from the sidebar, reset to Tab 1 and refresh data
+    if (tabName === 'dashboard' && !filterArg) {
+        window.dashboardReturnState = 1;
+        if (typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
+    }
+    
+    // 3. Execute standard routing
     window._executeRouting(tabName, filterArg);
 };
 
 window.navigateFromDashboard = function (reportId, filterArg) {
+    // 1. Remember which dashboard tab they were on (Ops, Ledger, or Customer)
+    var dash1 = document.getElementById('dash-content-1');
     var dash2 = document.getElementById('dash-content-2');
-    window.dashboardReturnState = (dash2 && dash2.classList.contains('hidden')) ? 1 : 2;
+    var dash3 = document.getElementById('dash-content-3');
+    
+    if (dash1 && !dash1.classList.contains('hidden')) window.dashboardReturnState = 1;
+    else if (dash2 && !dash2.classList.contains('hidden')) window.dashboardReturnState = 2;
+    else if (dash3 && !dash3.classList.contains('hidden')) window.dashboardReturnState = 3;
+    else window.dashboardReturnState = 1;
+
     window.dashboardLeaveTime = new Date().getTime();
     
+    // 2. Hide Logo, Show Back Button cleanly
     var brand = document.getElementById('header-brand-area');
-    if(brand) brand.innerHTML = "<button onclick='window.returnToDashboard()' class='text-lg md:text-xl font-black text-indigo-700 hover:text-indigo-900 flex items-center gap-2'><svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M10 19l-7-7m0 0l7-7m-7 7h18'></path></svg> Back to Dashboard</button>";
+    var backBtn = document.getElementById('btn-back-dashboard');
+    if (brand) brand.classList.add('hidden');
+    if (backBtn) backBtn.classList.remove('hidden');
     
+    // 3. Execute Routing with the filter argument
     window._executeRouting(reportId, filterArg);
     
     if (reportId === 'sales' || reportId === 'pays') {
@@ -251,8 +275,12 @@ window.navigateFromDashboard = function (reportId, filterArg) {
 };
 
 window.returnToDashboard = function () {
+    // 1. Restore Logo, Hide Back Button
     var brand = document.getElementById('header-brand-area');
-    if(brand) brand.innerHTML = "<a href='https://wowdrops.github.io/supabase' target='_blank' rel='noopener noreferrer' class='shrink-0 flex items-center'><img src='wowLogo.jpg' class='h-16 w-auto' alt='Logo'></a>";
+    var backBtn = document.getElementById('btn-back-dashboard');
+    if (brand) brand.classList.remove('hidden');
+    if (backBtn) backBtn.classList.add('hidden');
+    
     window._executeRouting('dashboard');
     if(typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
     if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.loadDashboardData === 'function') window.loadDashboardData(true);

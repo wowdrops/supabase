@@ -3,31 +3,25 @@
 // ==========================================
 
 window.switchDashTab = function (tabNum) {
-  var contentEl = document.getElementById('dash-content-' + tabNum);
-  var btnEl = document.getElementById('btn-dash-tab-' + tabNum);
-  if (!contentEl || !btnEl) return;
+  for (let i = 1; i <= 3; i++) {
+    let contentEl = document.getElementById('dash-content-' + i);
+    let btnEl = document.getElementById('btn-dash-tab-' + i);
+    if (contentEl) contentEl.classList.add('hidden');
+    if (btnEl) btnEl.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap";
+  }
 
-  var content1 = document.getElementById('dash-content-1');
-  var content2 = document.getElementById('dash-content-2');
-  var btn1 = document.getElementById('btn-dash-tab-1');
-  var btn2 = document.getElementById('btn-dash-tab-2');
-
-  if (content1) content1.classList.add('hidden');
-  if (content2) content2.classList.add('hidden');
-
-  var defaultBtnClass = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap";
-  if (btn1) btn1.className = defaultBtnClass;
-  if (btn2) btn2.className = defaultBtnClass;
-
-  contentEl.classList.remove('hidden');
-  btnEl.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap";
+  let activeContent = document.getElementById('dash-content-' + tabNum);
+  let activeBtn = document.getElementById('btn-dash-tab-' + tabNum);
+  if (activeContent) activeContent.classList.remove('hidden');
+  if (activeBtn) activeBtn.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap";
 };
 
-window.navigateFromDashboard = function (targetTab, filterArg) {
+/*window.navigateFromDashboard = function (targetTab, filterArg) {
   if (typeof window.goToReport === 'function') {
     window.goToReport(targetTab, filterArg);
   }
 };
+*/
 
 window.formatDateForInput = function (dateStr) {
   if (!dateStr) return "";
@@ -82,7 +76,7 @@ window.switchDefaulterView = function (viewType) {
 };
 
 // ==========================================
-// 2. SUPABASE METRICS ENGINE (Replicating GAS 505)
+// 2. SUPABASE METRICS ENGINE
 // ==========================================
 window.loadDashboardData = async function (forceRefresh) {
   var startTime = performance.now();
@@ -97,8 +91,10 @@ window.loadDashboardData = async function (forceRefresh) {
 
   var content1 = document.getElementById('dash-content-1');
   var content2 = document.getElementById('dash-content-2');
+  var content3 = document.getElementById('dash-content-3');
   if (content1) content1.classList.add('hidden');
   if (content2) content2.classList.add('hidden');
+  if (content3) content3.classList.add('hidden');
 
   try {
     const supa = window.supabase1;
@@ -107,55 +103,39 @@ window.loadDashboardData = async function (forceRefresh) {
     var now = new Date();
     var todayStartStr = now.toISOString().split('T')[0];
 
-    // Parallel fetch from all required tables and views
+    // Calculate strict 30-day window string for PostgreSQL comparison
+    var thirtyDaysAgoDate = new Date();
+    thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+    var thirtyDaysAgoStr = thirtyDaysAgoDate.toISOString();
+
     const [
       ordersRes,
       setupRes,
       deliveryRes,
       salesRes,
       paysRes,
-      outstandingRes
+      outstandingRes,
+      customersRes, // 7. For Customer Overview Dashboard
+      logsRes       // 8. For 30-Day Churn Log
     ] = await Promise.all([
-      // 1. Orders (ORD2 equivalent)
-      supa.from('orders')
-        .select('cpn_no, ord_d, ord_e, rate, amount, pending_qty, replace_qty'),
-
-      // 2. Setup (Capacity)
-      supa.from('setup')
-        .select('key, value')
-        .in('key', ['PER_DAY_COUNT', 'RESTRICT_QTY', 'MIN_ENTRY_QTY', 'SUPPLY_STATUS']),
-
-      // 3. Deliveries (DEL2 equivalent)
-      supa.from('deliveries')
-        .select('cpn_no, act_d, act_e, ord_d, rate, amount, delivery_entered_at, door_delivery_link, status, door_qc'),
-
-      // 4. Sales history
-      supa.from('sales')
-        .select('cpn_no, del_date, act_d, act_e, amount')
-        .lte('del_date', todayStartStr)
-        .order('del_date', { ascending: false })
-        .limit(1000),
-
-      // 5. Payment history
-      supa.from('pays')
-        .select('cpn_no, payment_date, amount')
-        .lte('payment_date', todayStartStr)
-        .order('payment_date', { ascending: false })
-        .limit(1000),
-
-      // 6. Outstanding View (Single source of truth for balances)
-      supa.from('v_customer_outstanding')
-        .select('*')
+      supa.from('orders').select('cpn_no, ord_d, ord_e, rate, amount, pending_qty, replace_qty'),
+      supa.from('setup').select('key, value').in('key', ['PER_DAY_COUNT', 'RESTRICT_QTY', 'MIN_ENTRY_QTY', 'SUPPLY_STATUS']),
+      supa.from('deliveries').select('cpn_no, act_d, act_e, ord_d, rate, amount, delivery_entered_at, door_delivery_link, status, door_qc'),
+      supa.from('sales').select('cpn_no, del_date, act_d, act_e, amount').lte('del_date', todayStartStr).order('del_date', { ascending: false }).limit(1000),
+      supa.from('pays').select('cpn_no, payment_date, amount').lte('payment_date', todayStartStr).order('payment_date', { ascending: false }).limit(1000),
+      supa.from('v_customer_outstanding').select('*'),
+      // NEW QUERIES
+      supa.from('ac_customers').select('final_status, pay_type, can_deposit, default_rate, created_at, inactive_reason, waiver_request, overdue_waiver'),
+      supa.from('crm_dormant_call_logs').select('previous_customer_status, new_customer_status, reason_for_dormancy').gte('created_at', thirtyDaysAgoStr)
     ]);
 
     if (ordersRes.error) console.warn("Orders Query Warning:", ordersRes.error);
-    if (deliveryRes.error) console.warn("Delivery Query Warning:", deliveryRes.error);
-    if (salesRes.error) console.warn("Sales Query Warning:", salesRes.error);
-    if (paysRes.error) console.warn("Pays Query Warning:", paysRes.error);
     if (outstandingRes.error) console.warn("Outstanding Query Warning:", outstandingRes.error);
+    if (customersRes && customersRes.error) console.warn("Customers Query Warning:", customersRes.error);
+    if (logsRes && logsRes.error) console.warn("Logs Query Warning:", logsRes.error);
 
     // ----------------------------------------------------
-    // A. CAPACITY & LIVE ORDERS (Replicating GAS Section 1)
+    // A. CAPACITY & LIVE ORDERS
     // ----------------------------------------------------
     var ordList = ordersRes.data || [];
     var ordCount = 0, ordCans = 0, ordEmpties = 0, ordAmt = 0, ordPend = 0, ordRep = 0;
@@ -193,7 +173,7 @@ window.loadDashboardData = async function (forceRefresh) {
     document.getElementById('dash-ord-rep').innerText = ordRep;
 
     // ----------------------------------------------------
-    // B. LIVE DELIVERY (Replicating GAS Section 2)
+    // B. LIVE DELIVERY
     // ----------------------------------------------------
     var delList = deliveryRes.data || [];
     var delCustCount = 0, delActD = 0, delActE = 0, delOrdD = 0, delSalesAmt = 0;
@@ -230,13 +210,13 @@ window.loadDashboardData = async function (forceRefresh) {
     document.getElementById('dash-del-doors-pend').innerText = doorsPending;
 
     // ----------------------------------------------------
-    // C. SALES BY DATE HASH-MAP (Replicating GAS Section 3)
+    // C. SALES BY DATE HASH-MAP
     // ----------------------------------------------------
     var salesByDate = {};
     (salesRes.data || []).forEach(function (s) {
       if (!s.del_date) return;
       var dKey = String(s.del_date).substring(0, 10);
-      if (dKey > todayStartStr) return; // Strict <= today filter
+      if (dKey > todayStartStr) return;
       if (!salesByDate[dKey]) salesByDate[dKey] = { cans: 0, empties: 0, amt: 0 };
       salesByDate[dKey].cans += Number(s.act_d || 0);
       salesByDate[dKey].empties += Number(s.act_e || 0);
@@ -246,7 +226,6 @@ window.loadDashboardData = async function (forceRefresh) {
     var sortedSalesDates = Object.keys(salesByDate).sort().reverse();
     var sLastDate = sortedSalesDates[0] || null;
     var sSecondLastDate = sortedSalesDates[1] || null;
-
     var sLast = sLastDate ? salesByDate[sLastDate] : { cans: 0, empties: 0, amt: 0 };
     var sSecondLast = sSecondLastDate ? salesByDate[sSecondLastDate] : { cans: 0, empties: 0, amt: 0 };
 
@@ -257,17 +236,14 @@ window.loadDashboardData = async function (forceRefresh) {
     document.getElementById('dash-label-sales-secondlast').innerText = sSecondLastDate ? formatDisplayDate(sSecondLastDate) : "Previous";
     document.getElementById('dash-sales-yday').innerText = "₹" + sSecondLast.amt.toLocaleString('en-IN');
 
-    window._latestActionDate1 = window.formatDateForInput(sLastDate);
-    window._latestActionDate2 = window.formatDateForInput(sSecondLastDate);
-
     // ----------------------------------------------------
-    // D. PAYS BY DATE HASH-MAP & ACTIVE PAYS (GAS Section 4)
+    // D. PAYS BY DATE HASH-MAP & ACTIVE PAYS
     // ----------------------------------------------------
     var paysByDate = {};
     (paysRes.data || []).forEach(function (p) {
       if (!p.payment_date) return;
       var pKey = String(p.payment_date).substring(0, 10);
-      if (pKey > todayStartStr) return; // Strict <= today filter
+      if (pKey > todayStartStr) return;
       if (!paysByDate[pKey]) paysByDate[pKey] = { total: 0, cpnMap: {} };
       var amt = Number(p.amount || 0);
       paysByDate[pKey].total += amt;
@@ -280,7 +256,6 @@ window.loadDashboardData = async function (forceRefresh) {
     var sortedPaysDates = Object.keys(paysByDate).sort().reverse();
     var pLastDate = sortedPaysDates[0] || null;
     var pSecondLastDate = sortedPaysDates[1] || null;
-
     var pLastTotal = pLastDate ? paysByDate[pLastDate].total : 0;
     var pSecondLastTotal = pSecondLastDate ? paysByDate[pSecondLastDate].total : 0;
     var activePays = pLastDate ? paysByDate[pLastDate].cpnMap : {};
@@ -291,12 +266,11 @@ window.loadDashboardData = async function (forceRefresh) {
     document.getElementById('dash-pays-yday').innerText = "₹" + pSecondLastTotal.toLocaleString('en-IN');
 
     // ----------------------------------------------------
-    // E. OUTSTANDING LEDGER & FIFO ALLOCATION (GAS Section 5)
+    // E. OUTSTANDING LEDGER & FIFO ALLOCATION
     // ----------------------------------------------------
     var outList = outstandingRes.data || [];
     var grandTotal = 0;
     var m1_total = 0, m2_total = 0, m3_total = 0, m4_total = 0;
-
     var netPay = { total: 0, currCleared: 0, prevCleared: 0, olderCleared: 0 };
     var customers = [];
 
@@ -314,8 +288,6 @@ window.loadDashboardData = async function (forceRefresh) {
       m3_total += cDue3;
       m4_total += cDue4;
 
-      // Exact FIFO Math from 505_AdminDashboard.js line 180-193:
-      // Oldest debt (cDue4 + cDue3) cleared first -> then prev (cDue2) -> then current (cDue1)
       if (cCpn && activePays[cCpn]) {
         var p = activePays[cCpn];
         netPay.total += p;
@@ -345,8 +317,6 @@ window.loadDashboardData = async function (forceRefresh) {
     });
 
     document.getElementById('dash-grand-out').innerText = "₹" + grandTotal.toLocaleString('en-IN');
-
-    // Month Labels & Pending
     var currMonthName = now.toLocaleString('default', { month: 'short', year: 'numeric' });
     var prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     var prevMonthName = prevMonthDate.toLocaleString('default', { month: 'short', year: 'numeric' });
@@ -356,33 +326,163 @@ window.loadDashboardData = async function (forceRefresh) {
     document.getElementById('lbl-prev-month').innerText = prevMonthName;
     document.getElementById('prev-pend').innerText = "₹" + m2_total.toLocaleString('en-IN');
 
-    // Payment Allocations
     document.getElementById('dash-clean-pay').innerText = "₹" + netPay.total.toLocaleString('en-IN');
     document.getElementById('dash-pay-curr').innerText = "₹" + netPay.currCleared.toLocaleString('en-IN');
     document.getElementById('dash-pay-prev').innerText = "₹" + netPay.prevCleared.toLocaleString('en-IN');
     document.getElementById('dash-pay-older').innerText = "₹" + netPay.olderCleared.toLocaleString('en-IN');
 
     // ----------------------------------------------------
-    // F. TOP 10 DEFAULTERS (Exact Sorting from 505)
+    // F. TOP 10 DEFAULTERS 
     // ----------------------------------------------------
-    var highestList = customers.slice().sort(function (a, b) {
-      return b.due - a.due;
-    }).slice(0, 10);
-
+    var highestList = customers.slice().sort(function (a, b) { return b.due - a.due; }).slice(0, 10);
     var oldestList = customers.slice().sort(function (a, b) {
       if (b.oldestDue === a.oldestDue) return b.due - a.due;
       return b.oldestDue - a.oldestDue;
     }).slice(0, 10);
 
-    window.defaultersData = {
-      highest: highestList,
-      oldest: oldestList
-    };
+    window.defaultersData = { highest: highestList, oldest: oldestList };
     window.switchDefaulterView('highest');
 
-    // Finish
+
+    // ----------------------------------------------------
+    // G. CUSTOMER OVERVIEW ENGINE (NEW TAB 3)
+    // ----------------------------------------------------
+    var custResData = customersRes ? (customersRes.data || []) : [];
+    var logsResData = logsRes ? (logsRes.data || []) : [];
+
+    var masterStatus = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var payCash = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var payOnline = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var payNone = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var advHolders = { 'ACTIVE': {c:0, s:0}, 'ACTIVE RANDOM': {c:0, s:0}, 'INACTIVE': {c:0, s:0} };
+    var noAdv = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var zeroRate = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var joined30 = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var waivers = { 'ACTIVE': 0, 'ACTIVE RANDOM': 0, 'INACTIVE': 0 };
+    var inactiveReasons = {};
+
+    custResData.forEach(function(c) {
+       var rawStat = String(c.final_status || '').toUpperCase().trim();
+       var stat = 'INACTIVE';
+       if (rawStat === 'ACTIVE') stat = 'ACTIVE';
+       else if (rawStat === 'ACTIVE RANDOM') stat = 'ACTIVE RANDOM';
+
+       masterStatus[stat]++;
+
+       var pType = String(c.pay_type || '').toUpperCase().trim();
+       if (pType === 'CASH') payCash[stat]++;
+       else if (pType === 'ONLINE') payOnline[stat]++;
+       else payNone[stat]++;
+
+       var dep = Number(c.can_deposit || 0);
+       if (dep > 0) {
+          advHolders[stat].c++;
+          advHolders[stat].s += dep;
+       } else {
+          noAdv[stat]++;
+       }
+
+       if (Number(c.default_rate || 0) === 0) zeroRate[stat]++;
+
+       if (c.created_at && new Date(c.created_at) >= thirtyDaysAgoDate) joined30[stat]++;
+
+       if (stat === 'INACTIVE') {
+          var rsn = String(c.inactive_reason || 'UNSPECIFIED').toUpperCase().trim();
+          if(!rsn) rsn = 'UNSPECIFIED';
+          inactiveReasons[rsn] = (inactiveReasons[rsn] || 0) + 1;
+       }
+
+       if (c.waiver_request === true || String(c.waiver_request).toUpperCase() === 'TRUE' ||
+           c.overdue_waiver === true || String(c.overdue_waiver).toUpperCase() === 'TRUE') {
+          waivers[stat]++;
+       }
+    });
+
+    var churnReasons = {};
+    var totalChurn = 0;
+    logsResData.forEach(function(log) {
+       var prev = String(log.previous_customer_status || '').toUpperCase().trim();
+       var curr = String(log.new_customer_status || '').toUpperCase().trim();
+       if (prev === 'ACTIVE' && curr === 'INACTIVE') {
+          totalChurn++;
+          var r = String(log.reason_for_dormancy || 'UNSPECIFIED').toUpperCase().trim();
+          if(!r) r = 'UNSPECIFIED';
+          churnReasons[r] = (churnReasons[r] || 0) + 1;
+       }
+    });
+
+    // Dashboard 3 Rendering Helpers (With Click Routing!)
+    function bRow(lbl, typeKey, act, rnd, ina) {
+       return '<div><p class="text-[11px] font-black text-slate-500 uppercase mb-1.5 tracking-wider">' + lbl + '</p>' +
+              '<div class="flex gap-2">' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|' + typeKey + '\')" class="bg-emerald-50 border border-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition active:scale-95">ACT: ' + act + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|' + typeKey + '\')" class="bg-blue-50 border border-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition active:scale-95">RND: ' + rnd + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|' + typeKey + '\')" class="bg-rose-50 border border-rose-100 hover:bg-rose-200 text-rose-700 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition active:scale-95">INA: ' + ina + '</button>' +
+              '</div></div>';
+    }
+
+    function bAdv(lbl, data) {
+       return '<div><p class="text-[11px] font-black text-slate-500 uppercase mb-1.5 tracking-wider">' + lbl + '</p>' +
+              '<div class="flex flex-col gap-1.5">' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|ADVANCE\')" class="flex justify-between items-center bg-emerald-50 hover:bg-emerald-200 border border-emerald-100 px-2 py-1 rounded shadow-sm text-[11px] font-black text-emerald-800 transition active:scale-95"><span>ACT (' + data['ACTIVE'].c + ')</span> <span>₹' + data['ACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|ADVANCE\')" class="flex justify-between items-center bg-blue-50 hover:bg-blue-200 border border-blue-100 px-2 py-1 rounded shadow-sm text-[11px] font-black text-blue-800 transition active:scale-95"><span>RND (' + data['ACTIVE RANDOM'].c + ')</span> <span>₹' + data['ACTIVE RANDOM'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|ADVANCE\')" class="flex justify-between items-center bg-rose-50 hover:bg-rose-200 border border-rose-100 px-2 py-1 rounded shadow-sm text-[11px] font-black text-rose-800 transition active:scale-95"><span>INA (' + data['INACTIVE'].c + ')</span> <span>₹' + data['INACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
+              '</div></div>';
+    }
+
+    // Injecting HTML for Overview Cards
+    var eMaster = document.getElementById('ui-dash-master-status');
+    if(eMaster) eMaster.innerHTML = 
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|CUSTOMER_LIST\')" class="w-full flex justify-between items-center p-3 bg-emerald-50 hover:bg-emerald-200 rounded-xl border border-emerald-200 shadow-sm transition active:scale-95"><span class="font-black text-emerald-700 uppercase tracking-widest text-sm">ACTIVE</span> <span class="text-2xl font-black text-emerald-900">' + masterStatus['ACTIVE'] + '</span></button>' +
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|CUSTOMER_LIST\')" class="w-full flex justify-between items-center p-3 bg-blue-50 hover:bg-blue-200 rounded-xl border border-blue-200 shadow-sm transition active:scale-95"><span class="font-black text-blue-700 uppercase tracking-widest text-sm">ACTIVE RANDOM</span> <span class="text-2xl font-black text-blue-900">' + masterStatus['ACTIVE RANDOM'] + '</span></button>' +
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|CUSTOMER_LIST\')" class="w-full flex justify-between items-center p-3 bg-rose-50 hover:bg-rose-200 rounded-xl border border-rose-200 shadow-sm transition active:scale-95"><span class="font-black text-rose-700 uppercase tracking-widest text-sm">INACTIVE</span> <span class="text-2xl font-black text-rose-900">' + masterStatus['INACTIVE'] + '</span></button>';
+
+    var eJoin = document.getElementById('ui-dash-joined');
+    if(eJoin) eJoin.innerHTML = bRow('New Onboarding (30 Days)', 'CUSTOMER_JOINED_LAST30DAYS', joined30['ACTIVE'], joined30['ACTIVE RANDOM'], joined30['INACTIVE']);
+
+    var ePay = document.getElementById('ui-dash-pay-types');
+    if(ePay) ePay.innerHTML = bRow('Cash Collection', 'PAY_CASH', payCash['ACTIVE'], payCash['ACTIVE RANDOM'], payCash['INACTIVE']) +
+                              bRow('Online Payment', 'PAY_ONLINE', payOnline['ACTIVE'], payOnline['ACTIVE RANDOM'], payOnline['INACTIVE']) +
+                              bRow('Not Configured', 'PAY_NODATA', payNone['ACTIVE'], payNone['ACTIVE RANDOM'], payNone['INACTIVE']);
+
+    var eAdv = document.getElementById('ui-dash-advance');
+    if(eAdv) eAdv.innerHTML = bAdv('With Security Deposit', advHolders) + bRow('Zero Deposit Taken', 'NO_ADVANCE', noAdv['ACTIVE'], noAdv['ACTIVE RANDOM'], noAdv['INACTIVE']);
+
+    var eRate = document.getElementById('ui-dash-zero-rate');
+    if(eRate) eRate.innerHTML = bRow('Assigned ₹0 Rate', 'ZERO_RATE', zeroRate['ACTIVE'], zeroRate['ACTIVE RANDOM'], zeroRate['INACTIVE']);
+
+    var eWaiver = document.getElementById('ui-dash-waivers');
+    if(eWaiver) eWaiver.innerHTML = bRow('Active M1 / M2 Override', 'WAIVERS', waivers['ACTIVE'], waivers['ACTIVE RANDOM'], waivers['INACTIVE']);
+
+    var eChurn = document.getElementById('ui-dash-churn');
+    if(eChurn) {
+       var cHtml = '<div class="flex justify-between items-center mb-3"><span class="text-[11px] font-black text-rose-600 uppercase tracking-widest">Total Churned</span> <button onclick="window.navigateFromDashboard(\'reports-customer\', \'ALL|CHURN_30_DAYS\')" class="bg-rose-600 hover:bg-rose-700 transition border border-rose-700 text-white px-2.5 py-1 rounded-md text-[11px] font-black shadow-inner active:scale-95">' + totalChurn + ' &rarr;</button></div>';
+       if(totalChurn === 0) cHtml += '<p class="text-sm font-bold text-slate-400">No churn detected in last 30 days.</p>';
+       else {
+          Object.keys(churnReasons).sort(function(a,b){return churnReasons[b]-churnReasons[a]}).forEach(function(rsn) {
+             cHtml += '<div class="flex justify-between items-center bg-rose-50 px-3 py-2.5 rounded-xl border border-rose-100 mb-2 shadow-sm"><span class="text-[11px] font-bold text-rose-700 truncate mr-2 uppercase tracking-wide">' + rsn + '</span><span class="text-sm font-black text-rose-900">' + churnReasons[rsn] + '</span></div>';
+          });
+       }
+       eChurn.innerHTML = cHtml;
+    }
+
+    var eIna = document.getElementById('ui-dash-ina-reasons');
+    if(eIna) {
+       var iHtml = '';
+       if(Object.keys(inactiveReasons).length === 0) iHtml = '<p class="text-sm font-bold text-slate-400">No inactive reasons logged.</p>';
+       else {
+          Object.keys(inactiveReasons).sort(function(a,b){return inactiveReasons[b]-inactiveReasons[a]}).forEach(function(rsn) {
+             iHtml += '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|INACTIVE_BY_REASON\')" class="w-full flex justify-between items-center bg-slate-50 hover:bg-slate-200 transition active:scale-95 px-3 py-2.5 rounded-xl border border-slate-200 shadow-sm"><span class="text-[10px] md:text-[11px] font-bold text-slate-600 truncate mr-2 uppercase tracking-wide" title="' + rsn + '">' + rsn + '</span><span class="text-sm font-black text-slate-800">' + inactiveReasons[rsn] + '</span></button>';
+          });
+       }
+       eIna.innerHTML = iHtml;
+    }
+
+    // ----------------------------------------------------
+    // WRAP UP
+    // ----------------------------------------------------
     if (loadingEl) loadingEl.classList.add('hidden');
-    window.switchDashTab(1);
+    window.switchDashTab(window.dashboardReturnState || 1); // Respect the saved tab state!
 
     var endTime = performance.now();
     var timeTaken = ((endTime - startTime) / 1000).toFixed(2);

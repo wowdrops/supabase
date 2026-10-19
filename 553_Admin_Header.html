@@ -8,16 +8,23 @@
                 </path>
             </svg>
         </button>
+        
+        <!-- The Logo -->
         <div id="header-brand-area" class="flex items-center fade-in">
-            <a href="https://wowdrops.github.io/supabase" target="_blank" rel="noopener noreferrer"
-                class="shrink-0 flex items-center">
-                <img src="wowLogo.jpg" class="h-16 w-auto"
-                    alt="Logo">
+            <a href="https://wowdrops.github.io/supabase" target="_blank" rel="noopener noreferrer" class="shrink-0 flex items-center">
+                <img src="wowLogo.jpg" class="h-16 w-auto" alt="Logo">
             </a>
         </div>
+
+        <!-- NEW: The clean Back Button (Hidden by Default) -->
+        <button id="btn-back-dashboard" onclick="window.returnToDashboard()" class="hidden text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 font-black text-sm md:text-lg flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-sm transition outline-none fade-in">
+            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span class="hidden sm:inline">Back to Dashboard</span>
+            <span class="sm:hidden">Back</span>
+        </button>
+
     </div>
     <div class="text-right hidden sm:flex items-center gap-4">
-        <!-- NEW: Global CPN Search Bar -->
         <div class="relative group">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <svg class="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none"
@@ -30,8 +37,6 @@
                 onkeypress="window.handleGlobalCpnSearch(event)"
                 class="w-56 pl-9 pr-3 py-1.5 text-sm font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all uppercase placeholder-slate-400 placeholder:normal-case shadow-inner">
         </div>
-
-        <!-- EXISTING: User Name Badge -->
         <p id="disp-admin-name"
             class="text-sm text-slate-600 font-bold bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">User:
             Pending</p>

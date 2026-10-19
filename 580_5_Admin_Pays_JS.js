@@ -202,7 +202,7 @@
 
         h += "<tr class='hover:bg-slate-50 transition border-b border-slate-100'>" +
              "<td class='p-4 font-black text-emerald-600 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-lg'>" + 
-             "<span class='hover:underline cursor-pointer' onclick=\"window.openCustomer360('" + r.cpn + "')\">" + r.cpn + "</span></td>" +
+             "<span class='inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group' onclick=\"window.openCustomer360('" + r.cpn + "')\">" + r.cpn + "<svg class='w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg></span></td>" +
              "<td class='p-4 font-bold text-slate-600'>" + r.date + "<br><span class='text-[10px] font-black text-slate-400'>" + r.time + "</span></td>" +
              "<td class='p-4 text-center'><span class='bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black text-slate-600 uppercase tracking-widest'>" + r.mode + "</span></td>" +
              "<td class='p-4 text-right font-black text-emerald-600 text-lg'>₹" + r.amt.toLocaleString('en-IN') + "</td>" +

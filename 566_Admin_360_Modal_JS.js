@@ -23,11 +23,11 @@
     if (container) {
       container.innerHTML = `
         <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-32"></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
           <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
         </div>
-        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-48"></div>
+        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-48 mt-4"></div>
       `;
     }
 
@@ -40,10 +40,12 @@
     }, 50);
 
     try {
-      // 1. Fetch concurrently from Supabase including v_customer_outstanding
-      const [profRes, outRes, salesRes, paysRes, logsRes] = await Promise.all([
+      // 1. Fetch concurrently from Supabase (Now fetching 'cans' from outstanding view)
+      const [profRes, outRes, ordRes, delRes, salesRes, paysRes, logsRes] = await Promise.all([
         supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle(),
-        supabase1.from('v_customer_outstanding').select('current_balance').eq('cpn_no', cpn).maybeSingle(),
+        supabase1.from('v_customer_outstanding').select('current_balance, cans').eq('cpn_no', cpn).maybeSingle(),
+        supabase1.from('orders').select('*').eq('cpn_no', cpn).maybeSingle(), 
+        supabase1.from('deliveries').select('*').eq('cpn_no', cpn).order('created_at', {ascending: false}).limit(1).maybeSingle(),
         supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5),
         supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5),
         supabase1.from('ac_automation_logs').select('*').eq('triggered_by', cpn).order('created_at', {ascending: false}).limit(5)
@@ -59,12 +61,34 @@
           canDeposit: pData.can_deposit || 0
       } : null;
 
-      // 3. Extract exact Outstanding Balance from the Database View
       const liveData = { 
-          outstanding: outRes.data ? (Number(outRes.data.current_balance) || 0) : 0 
+          outstanding: outRes.data ? (Number(outRes.data.current_balance) || 0) : 0,
+          cansHeld: outRes.data ? (Number(outRes.data.cans) || 0) : 0
       };
       
-      // 4. Format Lists
+      // 3. Format Active Order
+      const activeOrder = ordRes.data ? {
+          date: window.format360Date(ordRes.data.order_entered_at || ordRes.data.created_at || ordRes.data.order_date),
+          d: ordRes.data.ord_d || 0,
+          e: ordRes.data.ord_e || 0,
+          p: ordRes.data.pending_qty || 0,
+          r: ordRes.data.replace_qty || 0,
+          amt: ordRes.data.amount || 0,
+          cmt: ordRes.data.order_comment || ""
+      } : null;
+
+      // 4. Format Active Delivery
+      const activeDelivery = delRes.data ? {
+          date: window.format360Date(delRes.data.del_date || delRes.data.order_date),
+          d: delRes.data.ord_d || 0,
+          e: delRes.data.ord_e || 0,
+          p: delRes.data.pending_qty || 0,
+          r: delRes.data.replace_qty || 0,
+          amt: delRes.data.amount || 0,
+          cmt: delRes.data.delivery_comment || delRes.data.order_comment || ""
+      } : null;
+
+      // 5. Format Lists
       const salesArr = (salesRes.data || []).map(s => ({
           date: window.format360Date(s.del_date), actD: s.act_d, actE: s.act_e, amt: s.amount
       }));
@@ -84,7 +108,7 @@
           document.getElementById('modal-360-timer').innerText = ((performance.now() - startTime) / 1000).toFixed(2) + "s";
       }
       
-      renderCustomer360UI(cpn, {profile, liveData}, {sales: salesArr, pays: paysArr}, logsArr);
+      renderCustomer360UI(cpn, {profile, liveData}, activeOrder, activeDelivery, {sales: salesArr, pays: paysArr}, logsArr);
 
     } catch (err) {
       console.error(err);
@@ -99,7 +123,7 @@
     if (modal) modal.classList.add('hidden');
   };
 
-  function renderCustomer360UI(cpn, resProfile, resSalesPays, historyLogs) {
+  function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSalesPays, historyLogs) {
     var p = resProfile.profile;
     var container = document.getElementById('modal-360-content');
     
@@ -118,7 +142,11 @@
           <h4 class="text-2xl font-black text-white mt-2">${p.name}</h4>
           <p class="text-sm font-bold text-slate-400 mt-0.5">${p.apt} &bull; Block ${p.blk} &bull; Door ${p.door} &bull; Ph: ${p.phone}</p>
         </div>
-        <div class="flex gap-4">
+        <div class="flex flex-wrap gap-3 md:gap-4 justify-start md:justify-end">
+          <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-right">
+            <p class="text-[10px] uppercase font-black text-slate-500">Cans Held</p>
+            <p class="text-lg font-black text-sky-400">${resProfile.liveData.cansHeld}</p>
+          </div>
           <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-right">
             <p class="text-[10px] uppercase font-black text-slate-500">Can Deposit</p>
             <p class="text-lg font-black ${p.canDeposit > 0 ? 'text-rose-600' : 'text-emerald-600'}">₹${p.canDeposit.toLocaleString('en-IN')}</p>
@@ -133,7 +161,53 @@
           </div>
         </div>
       </div>
+    `;
 
+    // --- ACTIVE ORDER BANNER ---
+    if (activeOrder) {
+      let cmtHtml = activeOrder.cmt ? `<p class="mt-2 text-xs font-bold text-indigo-300 bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/20 w-full truncate" title="${activeOrder.cmt}">💬 ${activeOrder.cmt}</p>` : '';
+      
+      html += `
+      <div class="mt-4 bg-gradient-to-r from-indigo-900/60 to-slate-800/60 border border-indigo-500/40 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-inner">
+        <div class="w-full md:w-auto">
+           <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Pending Order</p>
+           <p class="text-sm font-bold text-slate-300">Placed: ${activeOrder.date}</p>
+           ${cmtHtml}
+        </div>
+        <div class="flex gap-3 md:gap-5 text-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/50 w-full md:w-auto overflow-x-auto">
+           <div class="px-2"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD D</p><p class="font-black text-xl text-indigo-300">${activeOrder.d}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD E</p><p class="font-black text-xl text-slate-300">${activeOrder.e}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">PEND</p><p class="font-black text-xl text-amber-500">${activeOrder.p}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">REP</p><p class="font-black text-xl text-rose-400">${activeOrder.r}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Est Amt</p><p class="font-black text-xl text-emerald-400">₹${activeOrder.amt}</p></div>
+        </div>
+      </div>
+      `;
+    }
+
+    // --- OUT FOR DELIVERY BANNER ---
+    if (activeDelivery) {
+      let cmtHtml = activeDelivery.cmt ? `<p class="mt-2 text-xs font-bold text-sky-300 bg-sky-950/50 p-2 rounded-lg border border-sky-500/20 w-full truncate" title="${activeDelivery.cmt}">💬 ${activeDelivery.cmt}</p>` : '';
+      
+      html += `
+      <div class="mt-4 bg-gradient-to-r from-sky-900/60 to-slate-800/60 border border-sky-500/40 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-inner">
+        <div class="w-full md:w-auto">
+           <p class="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> Out For Delivery</p>
+           <p class="text-sm font-bold text-slate-300">Scheduled: ${activeDelivery.date}</p>
+           ${cmtHtml}
+        </div>
+        <div class="flex gap-3 md:gap-5 text-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/50 w-full md:w-auto overflow-x-auto">
+           <div class="px-2"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD D</p><p class="font-black text-xl text-sky-300">${activeDelivery.d}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD E</p><p class="font-black text-xl text-slate-300">${activeDelivery.e}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">PEND</p><p class="font-black text-xl text-amber-500">${activeDelivery.p}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">REP</p><p class="font-black text-xl text-rose-400">${activeDelivery.r}</p></div>
+           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Est Amt</p><p class="font-black text-xl text-emerald-400">₹${activeDelivery.amt}</p></div>
+        </div>
+      </div>
+      `;
+    }
+
+    html += `
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
           <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">Recent Deliveries (Sales)</h5>
@@ -165,7 +239,7 @@
     }
 
     html += `</div></div></div>
-      <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
+      <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl mt-4">
           <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">CRM Interaction Logs</h5>
           <div class="space-y-2 max-h-40 overflow-y-auto hide-scrollbar">`;
 

@@ -186,7 +186,12 @@ function renderOrd2Table(data) {
     row.className = "hover:bg-slate-50 transition border-b border-slate-100";
     
     let locHtml = `<p class="font-bold text-slate-500 text-xs tracking-widest uppercase">${order.apt}</p><p class="text-slate-800 font-black">${order.blk} / ${order.door}</p>`;
-    let custHtml = `<p class="font-black text-indigo-700 text-base">${order.cpn}</p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;
+    //let custHtml = `<p class="font-black text-indigo-700 text-base">${order.cpn}</p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;
+    let custHtml = `<p class="font-black text-indigo-700 text-base"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${order.cpn}')">
+                      ${order.cpn}
+                      <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                      </span>
+                    </p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;  
     let reasonStr = order.repReason ? `<br><span class="text-[9px] text-rose-500 font-bold uppercase tracking-widest">${order.repReason}</span>` : '';
 
     row.innerHTML = `
@@ -417,9 +422,10 @@ window.resetOrd2Form = function() {
 };
 
 // --- SUBMIT / UPDATE LOGIC ---
+// --- SUBMIT / UPDATE LOGIC ---
 window.submitOrd2Order = async function() {
   const cpn = document.getElementById('ord2-inp-cpn').value.trim();
-  let ordD = Number(document.getElementById('ord2-inp-ordD').value) || 0;
+  let ordD = Number(document.getElementById('ord2-inp-ordD').value) || 0; // Uses let so we can mutate it
   const ordE = Number(document.getElementById('ord2-inp-ordE').value) || 0;
   const pendQty = Number(document.getElementById('ord2-inp-pend').value) || 0;
   const repQty = Number(document.getElementById('ord2-inp-rep').value) || 0;
@@ -442,21 +448,49 @@ window.submitOrd2Order = async function() {
 
   if (ord2CachedProfile.status === 'INACTIVE') return alert("Cannot place order. Customer is INACTIVE. Reason : " + ord2CachedProfile.statusReason);
 
+  // ==========================================
+  // BACKEND MATH PROTECTOR (From GAS)
+  // ==========================================
+  if (pendQty > ordD) { 
+    ordD = pendQty; 
+    document.getElementById('ord2-inp-ordD').value = ordD; // Update UI so admin sees the correction
+  }
+
   ord2CachedProfile.rate = Number(rateOverride) || 0;
-  
 
   btn.disabled = true;
   window.startOrd2Timer('Saving');
 
   try {
     const supa = window.supabase1;
+    const cleanCpn = cpn.toUpperCase();
+
+    // STRICT DATABASE-LEVEL DUPLICATE CHECK
+    if (!ord2CurrentEditId) {
+      const { data: duplicateCheck, error: dupErr } = await supa
+        .from('orders')
+        .select('id')
+        .eq('cpn_no', cleanCpn)
+        .maybeSingle();
+
+      if (dupErr) throw dupErr;
+
+      if (duplicateCheck) {
+        btn.disabled = false;
+        window.stopOrd2Timer('Declined', true);
+        return alert(`Order Error:\nAn active order already exists for ${cleanCpn}.\n\nTo prevent duplicate records, please locate the customer in the Live Orders table below and click the Edit (pencil) icon to modify their quantities.`);
+      }
+    }
+
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
     const uniqueID = "ORD2_" + now.getTime();
+    
+    // estAmt is calculated AFTER the Math Protector ensures ordD is valid
     const estAmt = ordD * ord2CachedProfile.rate;
 
     const payload = {
-      cpn_no: cpn.toUpperCase(),
+      cpn_no: cleanCpn,
       apartment: ord2CachedProfile.apt,
       block: ord2CachedProfile.blk,
       door: ord2CachedProfile.door,
@@ -544,6 +578,22 @@ window.executeBatchTransferToDel2 = async function() {
     try {
       const supa = window.supabase1;
       const adminName = (window.activeAdminSession && window.activeAdminSession.username) ? window.activeAdminSession.username : 'Admin';
+
+      // ==========================================
+      // CRITICAL PIPELINE BLOCKER: Check if Deliveries table is empty
+      // ==========================================
+      const { data: activeDeliveries, error: delCheckErr } = await supa
+        .from('deliveries')
+        .select('id')
+        .limit(1); // We only need to know if at least 1 exists
+
+      if (delCheckErr) throw delCheckErr;
+
+      if (activeDeliveries && activeDeliveries.length > 0) {
+        btn.disabled = false;
+        window.stopOrd2Timer('Declined', true);
+        return alert("CRITICAL ERROR: Deliveries queue is not empty.\n\nYou must complete 'Delivery QC' and transfer the existing records to Sales before transferring new orders into the delivery queue.");
+      }
 
       // 1. Fetch orders to be transferred
       const { data: ordersToTransfer, error: fetchErr } = await supa

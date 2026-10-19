@@ -1,33 +1,119 @@
-
 // =====================================
-  // OUTSTANDING LOGIC
+  // OUTSTANDING LOGIC (Supabase Native + Waivers)
   // =====================================
+  window.trimMonth = function(str) {
+    if(!str) return "";
+    return str.length > 5 ? str.substring(0, 3) : str;
+  };
+  
+  window.getUniqueArray = function(arr) {
+    return [...new Set(arr)];
+  };
+
   window.onGlobalPayTypeChange = function () {
     window.renderDashboardCards();
     window.renderDetailTable();
   };
 
-  window.loadOutstandingData = function () {
-    document.getElementById('outstanding-tbody').innerHTML = "<tr><td colspan='9' class='px-6 py-12 text-center text-slate-500 font-black text-2xl animate-pulse'>Syncing outstanding ledger...</td></tr>";
+  window.loadOutstandingData = async function () {
+    document.getElementById('outstanding-tbody').innerHTML = "<tr><td colspan='10' class='px-6 py-12 text-center text-slate-500 font-black text-2xl animate-pulse'>Syncing outstanding ledger & waivers...</td></tr>";
     document.getElementById('apartment-dashboard-grid').innerHTML = "<p class='text-slate-400 text-2xl font-bold animate-pulse'>Building visual dashboard...</p>";
-    google.script.run.withSuccessHandler(function (res) {
-      if (!res.success) { alert("Error: " + res.message); return; }
-      window.masterOutstandingData = res.data; window.monthHeadersConfig = res.headers;
-      document.getElementById('lbl-flt-m1').innerText = window.monthHeadersConfig.m1; document.getElementById('lbl-tgl-m1').innerText = window.trimMonth(window.monthHeadersConfig.m1); document.getElementById('lbl-kpi-m1').innerText = window.monthHeadersConfig.m1;
-      document.getElementById('lbl-flt-m2').innerText = window.monthHeadersConfig.m2; document.getElementById('lbl-tgl-m2').innerText = window.trimMonth(window.monthHeadersConfig.m2); document.getElementById('lbl-kpi-m2').innerText = window.monthHeadersConfig.m2;
-      document.getElementById('lbl-flt-m3').innerText = window.monthHeadersConfig.m3; document.getElementById('lbl-tgl-m3').innerText = window.trimMonth(window.monthHeadersConfig.m3); document.getElementById('lbl-kpi-m3').innerText = window.monthHeadersConfig.m3;
-      document.getElementById('lbl-tgl-m4').innerText = window.trimMonth(window.monthHeadersConfig.m4); document.getElementById('lbl-kpi-m4').innerText = window.monthHeadersConfig.m4;
-      window.populateFilters(); window.renderDashboardCards(); window.renderDetailTable();
-    }).getOutstandingReportData();
+    
+    try {
+      // Fetch dynamic dates/headers config
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const now = new Date();
+      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const olderMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      
+      const mHeaders = {
+        m1: olderMonth.toLocaleString('default', { month: 'long', year: 'numeric' }) + " (Older)", // pend1 / Very Old
+        m2: olderMonth.toLocaleString('default', { month: 'long', year: 'numeric' }), // pend2 / Older
+        m3: prevMonth.toLocaleString('default', { month: 'long', year: 'numeric' }),  // pend3 / Previous
+        m4: now.toLocaleString('default', { month: 'long', year: 'numeric' })         // pend4 / Current
+      };
+
+      // Concurrent fetch from Outanding View and Customers table
+      const [outRes, custRes] = await Promise.all([
+        supabase1.from('v_customer_outstanding').select('*'),
+        supabase1.from('ac_customers').select('cpn_no, waiver_request, waiver_date, overdue_waiver')
+      ]);
+
+      if (outRes.error) throw outRes.error;
+      if (custRes.error) throw custRes.error;
+
+      // Create a quick lookup map for customer waivers
+      const custWaiverMap = {};
+      (custRes.data || []).forEach(c => {
+         if (c.cpn_no) custWaiverMap[c.cpn_no.toUpperCase()] = c;
+      });
+
+      // Map Supabase data to old memory structure to preserve the exact UI math
+      const reportData = [];
+      (outRes.data || []).forEach(row => {
+          const p1 = Number(row.old_pending) || 0;
+          const p2 = Number(row.m2_pending) || 0;
+          const p3 = Number(row.m1_pending) || 0;
+          const p4 = Number(row.current_month_pending) || 0;
+          const depositAdv = Number(row.advance_amount) || 0;
+
+          const totalOutstanding = p1 + p2 + p3 + p4 + depositAdv;
+          if (totalOutstanding === 0) return; // Skip if completely zero
+
+          const cpn = String(row.cpn_no || "").trim().toUpperCase();
+          const cust = custWaiverMap[cpn];
+
+          reportData.push({
+            apartment: String(row.apartment || "").trim(),
+            block: String(row.block || "").trim(),
+            door: String(row.door || "").trim(),
+            name: String(row.customer_name || "").trim(),
+            cpn: cpn,
+            pend1: p1,
+            pend2: p2,
+            pend3: p3,
+            pend4: p4,
+            cans: Number(row.cans) || 0,
+            advance: depositAdv,
+            payType: String(row.pay_type || "").trim().toUpperCase(),
+            // Waiver fields from ac_customers
+            waiverReq: cust ? (cust.waiver_request === true || cust.waiver_request === 'TRUE') : false,
+            waiverDate: cust ? (Number(cust.waiver_date) || 15) : 15,
+            overdueWaiver: cust ? (cust.overdue_waiver === true || cust.overdue_waiver === 'TRUE') : false
+          });
+      });
+
+      window.masterOutstandingData = reportData;
+      window.monthHeadersConfig = mHeaders;
+
+      document.getElementById('lbl-flt-m1').innerText = window.monthHeadersConfig.m1; 
+      document.getElementById('lbl-tgl-m1').innerText = window.trimMonth(window.monthHeadersConfig.m1); 
+      document.getElementById('lbl-kpi-m1').innerText = window.monthHeadersConfig.m1;
+      
+      document.getElementById('lbl-flt-m2').innerText = window.monthHeadersConfig.m2; 
+      document.getElementById('lbl-tgl-m2').innerText = window.trimMonth(window.monthHeadersConfig.m2); 
+      document.getElementById('lbl-kpi-m2').innerText = window.monthHeadersConfig.m2;
+      
+      document.getElementById('lbl-flt-m3').innerText = window.monthHeadersConfig.m3; 
+      document.getElementById('lbl-tgl-m3').innerText = window.trimMonth(window.monthHeadersConfig.m3); 
+      document.getElementById('lbl-kpi-m3').innerText = window.monthHeadersConfig.m3;
+      
+      document.getElementById('lbl-tgl-m4').innerText = window.trimMonth(window.monthHeadersConfig.m4); 
+      document.getElementById('lbl-kpi-m4').innerText = window.monthHeadersConfig.m4;
+
+      window.populateFilters(); 
+      window.renderDashboardCards(); 
+      window.renderDetailTable();
+
+    } catch(err) {
+      alert("Database error syncing outstanding ledger: " + err.message);
+    }
   };
 
   window.kpiFilterClick = function (monthKey) {
-    // Force reset the dropdowns to "ALL" so they don't block the global KPI filter
     var aptDrop = document.getElementById('filter-apt');
     if (aptDrop) aptDrop.value = 'ALL';
     window.updateBlockDropdown();
-    
-    // Now apply the month filter
     window.setRowMonthFilter(monthKey);
   };
 
@@ -36,14 +122,12 @@
     var keys = ['ALL', 'm1', 'm2', 'm3'];
     
     for (var i = 0; i < keys.length; i++) {
-      // 1. Highlight Bottom Buttons
       var btn = document.getElementById("flt-row-" + keys[i]);
       if (btn) {
         if (keys[i] === filterKey) btn.className = "shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-slate-800 text-white border-slate-800";
         else btn.className = "shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-white text-slate-600 border-slate-300 hover:bg-slate-100";
       }
       
-      // 2. Highlight Top KPI Rows
       var kpiRow = document.getElementById("kpi-row-" + keys[i]);
       if (kpiRow) {
         if (keys[i] === filterKey) kpiRow.className = "flex justify-between items-center cursor-pointer transition p-2 -mx-2 rounded-lg bg-indigo-50 border-2 border-indigo-300 shadow-sm";
@@ -51,7 +135,6 @@
       }
     }
     
-    // Re-render dashboard to update black card highlights, then render table
     window.renderDashboardCards();
     window.renderDetailTable();
   };
@@ -62,6 +145,7 @@
     else { btn.classList.remove('bg-emerald-100', 'text-emerald-800', 'border-emerald-300'); btn.classList.add('bg-white', 'text-slate-400', 'border-slate-300', 'line-through'); }
     window.renderDetailTable();
   };
+  
   window.populateFilters = function () {
     var aptSelect = document.getElementById('filter-apt'), allAptsRaw = [];
     for (var i = 0; i < window.masterOutstandingData.length; i++) allAptsRaw.push(window.masterOutstandingData[i].apartment);
@@ -70,6 +154,7 @@
     for (var j = 0; j < apartments.length; j++) aptSelect.innerHTML += "<option value='" + apartments[j] + "'>" + apartments[j] + "</option>";
     window.updateBlockDropdown();
   };
+
   window.updateBlockDropdown = function () {
     var selectedApt = document.getElementById('filter-apt').value, blkSelect = document.getElementById('filter-blk'), filteredData = window.masterOutstandingData;
     if (selectedApt !== "ALL") { filteredData = []; for (var i = 0; i < window.masterOutstandingData.length; i++) { if (window.masterOutstandingData[i].apartment === selectedApt) filteredData.push(window.masterOutstandingData[i]); } }
@@ -81,34 +166,24 @@
 
  window.renderDashboardCards = function () {
     var aptGroups = {}, grandTotalPend = 0, grandTotalAdv = 0, grandM1 = 0, grandM2 = 0, grandM3 = 0, grandM4 = 0;
-
-    // Read Global Pay Filter
     var payFilter = document.getElementById('global-filter-pay') ? document.getElementById('global-filter-pay').value : 'ALL';
-    
-    // Check current active filters for highlighting
     var activeApt = document.getElementById('filter-apt') ? document.getElementById('filter-apt').value : 'ALL';
     var activeBlk = document.getElementById('filter-blk') ? document.getElementById('filter-blk').value : 'ALL';
 
-    // Save Open Accordion States before re-rendering
     var openAccordions = [];
     var existingAccordions = document.querySelectorAll('.accordion-content.open');
     for (var a = 0; a < existingAccordions.length; a++) openAccordions.push(existingAccordions[a].id);
 
-    // 1. Calculate Totals
     for (var i = 0; i < window.masterOutstandingData.length; i++) {
       var row = window.masterOutstandingData[i]; 
       
-      // APPLY GLOBAL PAY TYPE FILTER
       if (payFilter !== 'ALL' && row.payType !== payFilter) continue;
-      
       rowPend = row.pend1 + row.pend2 + row.pend3 + row.pend4;
       
-      // Global KPIs must always calculate total universe
       grandTotalPend += rowPend; grandTotalAdv += row.advance; grandM1 += row.pend1; grandM2 += row.pend2; grandM3 += row.pend3; grandM4 += row.pend4;
       
       if (!aptGroups[row.apartment]) aptGroups[row.apartment] = { totalPend: 0, blocks: {} };
       
-      // NEW: Calculate Apartment Total based ONLY on the clicked month filter
       var filteredPend = 0;
       if (window.activeRowMonthFilter === 'ALL') filteredPend = rowPend;
       else if (window.activeRowMonthFilter === 'm1') filteredPend = row.pend1;
@@ -125,7 +200,6 @@
       }
     }
 
-    // 2. Update KPI Cards Values
     document.getElementById('kpi-total-pend').innerText = "₹" + grandTotalPend.toLocaleString('en-IN');
     document.getElementById('val-kpi-m1').innerText = "₹" + grandM1.toLocaleString('en-IN');
     document.getElementById('val-kpi-m2').innerText = "₹" + grandM2.toLocaleString('en-IN');
@@ -133,7 +207,6 @@
     document.getElementById('val-kpi-m4').innerText = "₹" + grandM4.toLocaleString('en-IN');
     document.getElementById('val-kpi-adv').innerText = "₹" + grandTotalAdv.toLocaleString('en-IN');
 
-    // 3. Render Responsive Black Cards
     var grid = document.getElementById('apartment-dashboard-grid');
     var htmlOutput = '';
     var aptKeys = Object.keys(aptGroups).sort();
@@ -142,7 +215,6 @@
     var showM2 = window.activeRowMonthFilter === 'ALL' || window.activeRowMonthFilter === 'm2';
     var showM3 = window.activeRowMonthFilter === 'ALL' || window.activeRowMonthFilter === 'm3';
 
-    // NEW: Generate Dynamic Label based on Filter (e.g. "JAN DUE" vs "TOTAL DUE")
     var dueLabel = "TOTAL DUE";
     if (window.activeRowMonthFilter === 'm1') dueLabel = window.trimMonth(window.monthHeadersConfig.m1) + " DUE";
     else if (window.activeRowMonthFilter === 'm2') dueLabel = window.trimMonth(window.monthHeadersConfig.m2) + " DUE";
@@ -155,11 +227,8 @@
         blockHtml = "<div class='mt-3 pt-3 md:mt-4 md:pt-4 border-t-2 border-slate-700/50 space-y-2 md:space-y-3'>";
         for (var k = 0; k < blockKeys.length; k++) {
           var blk = blockKeys[k], bD = aptData.blocks[blk];
-          
-          // DYNAMIC HIGHLIGHT LOGIC
           var isActiveBlock = (apt === activeApt && blk === activeBlk);
           var blockBgClass = isActiveBlock ? "bg-slate-700 ring-2 ring-indigo-400" : "bg-slate-900 border-2 border-transparent hover:bg-slate-800";
-          
           var m1Bg = (isActiveBlock && window.activeRowMonthFilter === 'm1') ? "bg-indigo-900/80 shadow-inner ring-2 ring-indigo-400" : "hover:bg-slate-700/80";
           var m2Bg = (isActiveBlock && window.activeRowMonthFilter === 'm2') ? "bg-indigo-900/80 shadow-inner ring-2 ring-indigo-400" : "hover:bg-slate-700/80";
           var m3Bg = (isActiveBlock && window.activeRowMonthFilter === 'm3') ? "bg-indigo-900/80 shadow-inner ring-2 ring-indigo-400" : "hover:bg-slate-700/80";
@@ -177,7 +246,6 @@
         blockHtml += "</div>";
       }
 
-      // NEW: Injects the dynamic label into the card header
       htmlOutput += "<div class='bg-slate-800 border-4 border-slate-700 hover:border-slate-500 transition rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col shadow-lg'>" +
         "<div class='flex justify-between items-center cursor-pointer' onclick=\"window.toggleAccordion('" + uniqueId + "', 'icon-" + uniqueId + "')\">" +
         "<div><h4 class='text-xl md:text-2xl font-black text-white leading-tight'>" + apt + "</h4>" +
@@ -190,7 +258,6 @@
     
     grid.innerHTML = htmlOutput;
     
-    // Restore Open Accordion States so the UI doesn't snap shut on the user
     for (var b = 0; b < openAccordions.length; b++) {
        var acc = document.getElementById(openAccordions[b]);
        if (acc) { 
@@ -202,7 +269,6 @@
   };
 
   window.applyFilterFromCard = function (apt, blk, monthKey) { 
-    // Update the dropdowns to match the card click
     var aptDrop = document.getElementById('filter-apt');
     if (aptDrop) aptDrop.value = apt; 
     window.updateBlockDropdown(); 
@@ -210,9 +276,7 @@
     var blkDrop = document.getElementById('filter-blk');
     if (blkDrop) blkDrop.value = blk; 
     
-    // Let setRowMonthFilter handle the highlights and table rendering
     window.setRowMonthFilter(monthKey || 'ALL'); 
-    
     document.getElementById('outstanding-tbody').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
   };
   
@@ -223,7 +287,6 @@
     var thead = document.getElementById('outstanding-thead');
     var tbody = document.getElementById('outstanding-tbody');
 
-    // 1. Filter Data and Calculate Sums
     var filtered = [];
     var sumM1 = 0, sumM2 = 0, sumM3 = 0, sumM4 = 0, sumTotal = 0, sumAdv = 0, sumCans = 0;
 
@@ -250,11 +313,8 @@
         return tbody.innerHTML = "<tr><td colspan='10' class='px-6 py-12 text-center text-slate-400 font-bold text-2xl'>No records found.</td></tr>"; 
     }
 
-    // 2. Build the Dual-Row Header
-    var headHtml = "";
-
-    // ROW 1: The Sticky Totals
-    headHtml += "<tr class='bg-slate-800 text-white shadow-md'>";
+    // Header Building
+    var headHtml = "<tr class='bg-slate-800 text-white shadow-md'>";
     headHtml += "<th colspan='2' class='px-6 py-4 border-r border-slate-700'><div class='flex items-center gap-3'>";
     headHtml += "<div class='text-xs font-bold tracking-widest text-slate-400'>FILTERED: <span class='text-white bg-slate-700 px-2 py-1 rounded-md'>" + filtered.length + "</span></div>";
     headHtml += "<button onclick='window.exportOutstandingCSV()' class='px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded text-xs font-black tracking-widest transition'>CSV</button>";
@@ -268,9 +328,9 @@
     
     headHtml += "<th class='px-6 py-4 text-right text-white font-black text-2xl drop-shadow-md border-r border-slate-700'>₹" + sumTotal.toLocaleString('en-IN') + "</th>";
     if (window.visCols.adv) headHtml += "<th class='px-6 py-4 text-right text-emerald-400 font-black text-xl border-r border-slate-700'>₹" + sumAdv.toLocaleString('en-IN') + "</th>";
-    headHtml += "<th class='px-6 py-4 text-center text-blue-400 font-black text-xl'>" + sumCans + "</th></tr>";
+    headHtml += "<th class='px-6 py-4 text-center text-blue-400 font-black text-xl border-r border-slate-700'>" + sumCans + "</th>";
+    headHtml += "<th class='px-6 py-4'></th></tr>";
 
-    // ROW 2: The Column Titles
     headHtml += "<tr>";
     headHtml += "<th class='px-6 py-5 bg-slate-100 border-b-4 border-slate-200'>Apt / Blk / Door</th>";
     headHtml += "<th class='px-6 py-5 bg-slate-100 border-b-4 border-slate-200'>Customer Profile</th>";
@@ -280,29 +340,140 @@
     if (window.visCols.m4) headHtml += "<th class='px-6 py-5 text-right text-red-600 bg-slate-100 border-b-4 border-slate-200'>" + window.monthHeadersConfig.m4 + "</th>";
     headHtml += "<th class='px-6 py-5 text-right text-slate-900 bg-slate-200/90 border-b-4 border-slate-300'>Total Due</th>";
     if (window.visCols.adv) headHtml += "<th class='px-6 py-5 text-right text-emerald-600 bg-slate-100 border-b-4 border-slate-200'>Advance</th>";
-    headHtml += "<th class='px-6 py-5 text-center text-blue-600 bg-slate-100 border-b-4 border-slate-200'>Cans</th></tr>";
+    headHtml += "<th class='px-6 py-5 text-center text-blue-600 bg-slate-100 border-b-4 border-slate-200'>Cans</th>";
+    headHtml += "<th class='px-6 py-5 text-center text-slate-600 bg-slate-100 border-b-4 border-slate-200'>Waivers</th></tr>";
     
     thead.innerHTML = headHtml;
 
-    // 3. Render Table Rows
+    // Row Building
     var html = '';
     for (var j = 0; j < filtered.length; j++) {
       var r = filtered[j], totalDue = r.pend1 + r.pend2 + r.pend3 + r.pend4;
       var advBadge = r.advance > 0 ? "<span class='bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl border-2 border-emerald-300 text-xl font-black'>₹" + r.advance + "</span>" : "<span class='text-slate-300 font-bold'>-</span>";
       var totalDueHtml = totalDue > 0 ? "<span class='font-black text-red-600 text-2xl md:text-3xl'>₹" + totalDue.toLocaleString('en-IN') + "</span>" : "<span class='text-slate-400 font-bold text-xl'>₹0</span>";
+      
+      // Dynamic Waiver Badge
+      var waiverBadge = '';
+      if (r.overdueWaiver) waiverBadge += '<span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-black mr-1 uppercase shadow-sm">M2 ON</span>';
+      if (r.waiverReq) waiverBadge += '<span class="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[9px] font-black uppercase shadow-sm">M1 ON</span>';
+      if (!r.overdueWaiver && !r.waiverReq) waiverBadge = '<span class="text-slate-300 font-bold text-[10px] uppercase">None Active</span>';
+
       var rowHtml = "<tr class='hover:bg-slate-100 transition border-b-4 border-slate-50'>" +
         "<td class='px-6 py-5'><div class='text-lg font-bold text-slate-500 uppercase tracking-widest'>" + r.apartment + "</div><div class='font-black text-slate-800 text-2xl md:text-3xl'>" + (r.block || '-') + " / " + (r.door || '-') + "</div></td>" +
         "<td class='px-6 py-5'><div class='font-black text-slate-800 text-2xl md:text-3xl truncate max-w-[250px]'>" + r.name + "</div><div class='text-xl text-blue-600 font-black tracking-widest'>" + r.cpn + "</div></td>";
+      
       if (window.visCols.m1) rowHtml += "<td class='px-6 py-5 text-right bg-red-50/30 text-2xl md:text-3xl font-black " + (r.pend1 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend1 || '-') + "</td>";
       if (window.visCols.m2) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black " + (r.pend2 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend2 || '-') + "</td>";
       if (window.visCols.m3) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black " + (r.pend3 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend3 || '-') + "</td>";
       if (window.visCols.m4) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black " + (r.pend4 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend4 || '-') + "</td>";
+      
       rowHtml += "<td class='px-6 py-5 text-right bg-slate-50'>" + totalDueHtml + "</td>";
       if (window.visCols.adv) rowHtml += "<td class='px-6 py-5 text-right'>" + advBadge + "</td>";
-      rowHtml += "<td class='px-6 py-5 text-center'><span class='inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl " + (r.cans > 0 ? 'bg-blue-100 text-blue-800 font-black border-4 border-blue-200' : 'bg-slate-100 text-slate-400 font-bold') + "'>" + r.cans + "</span></td></tr>";
+      rowHtml += "<td class='px-6 py-5 text-center'><span class='inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl " + (r.cans > 0 ? 'bg-blue-100 text-blue-800 font-black border-4 border-blue-200' : 'bg-slate-100 text-slate-400 font-bold') + "'>" + r.cans + "</span></td>";
+      
+      // Action Cell
+      rowHtml += "<td class='px-6 py-5 text-center'>" +
+                 "<div class='mb-2 flex justify-center gap-1'>" + waiverBadge + "</div>" +
+                 "<button onclick='window.openWaiverModal(\"" + r.cpn + "\")' class='bg-white hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition border-2 border-slate-200 active:scale-95'>⚙️ Manage</button>" +
+                 "</td></tr>";
+      
       html += rowHtml;
     }
     tbody.innerHTML = html;
+  };
+
+  // =====================================
+  // WAIVER MODAL LOGIC
+  // =====================================
+  window.openWaiverModal = function(cpn) {
+    // FIX: Force modal to the absolute root of the browser so it stays in the viewport
+    var modal = document.getElementById('waiver-modal');
+    if (modal && modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+
+    const data = window.masterOutstandingData.find(d => d.cpn === cpn);
+    if (!data) return;
+
+    // Set Context
+    document.getElementById('waiver-cpn').innerText = data.cpn;
+    document.getElementById('waiver-name').innerText = data.name;
+    document.getElementById('waiver-loc').innerText = `${data.apartment} / ${data.block} / Door ${data.door}`;
+
+    // Debt Snapshot Math
+    const m1Debt = data.pend3; 
+    const m2PlusDebt = data.pend1 + data.pend2; 
+    const totDebt = m1Debt + m2PlusDebt + data.pend4;
+
+    document.getElementById('waiver-m1-debt').innerText = "₹" + m1Debt.toLocaleString('en-IN');
+    document.getElementById('waiver-m2-debt').innerText = "₹" + m2PlusDebt.toLocaleString('en-IN');
+    document.getElementById('waiver-tot-debt').innerText = "₹" + totDebt.toLocaleString('en-IN');
+
+    // Controls
+    const reqToggle = document.getElementById('inp-waiver-req');
+    const dateInp = document.getElementById('inp-waiver-date');
+    const overToggle = document.getElementById('inp-overdue-waiver');
+
+    reqToggle.checked = data.waiverReq;
+    dateInp.value = data.waiverDate || 15;
+    dateInp.disabled = !data.waiverReq;
+    overToggle.checked = data.overdueWaiver;
+
+    modal.classList.remove('hidden');
+  };
+
+  window.closeWaiverModal = function() {
+    document.getElementById('waiver-modal').classList.add('hidden');
+  };
+
+  window.toggleWaiverDate = function(checkbox) {
+    document.getElementById('inp-waiver-date').disabled = !checkbox.checked;
+  };
+
+  window.saveWaiverSettings = async function() {
+    const btn = document.getElementById('btn-save-waiver');
+    const cpn = document.getElementById('waiver-cpn').innerText;
+    const req = document.getElementById('inp-waiver-req').checked;
+    let date = parseInt(document.getElementById('inp-waiver-date').value) || 1;
+    const over = document.getElementById('inp-overdue-waiver').checked;
+
+    // Backend guardrail for dates
+    if (date < 1) date = 1;
+    if (date > 28) date = 28;
+
+    btn.disabled = true;
+    btn.innerText = "Saving...";
+
+    try {
+        const { error } = await supabase1
+            .from('ac_customers')
+            .update({
+                waiver_request: req,
+                waiver_date: date,
+                overdue_waiver: over
+            })
+            .eq('cpn_no', cpn);
+
+        if (error) throw error;
+
+        // Update active memory so we don't have to resync the whole ledger
+        const data = window.masterOutstandingData.find(d => d.cpn === cpn);
+        if (data) {
+            data.waiverReq = req;
+            data.waiverDate = date;
+            data.overdueWaiver = over;
+        }
+
+        window.renderDetailTable();
+        window.closeWaiverModal();
+        if(typeof window.showToast === 'function') window.showToast("Waiver updated securely.", "success");
+
+    } catch (err) {
+        alert("Error updating waivers: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Save Settings";
+    }
   };
 
   // =====================================
@@ -314,7 +485,6 @@
     var payFilter = document.getElementById('global-filter-pay') ? document.getElementById('global-filter-pay').value : 'ALL';
     var filtered = [];
     
-    // 1. Gather Currently Filtered Data
     for (var i = 0; i < window.masterOutstandingData.length; i++) {
       var d = window.masterOutstandingData[i]; 
       var matchApt = (apt === "ALL" || d.apartment === apt); 
@@ -329,7 +499,6 @@
     
     if (filtered.length === 0) return alert("No records to export.");
     
-    // 2. Build CSV Headers
     var csv = "Apartment,Block,Door,Name,CPN,";
     if (window.visCols.m1) csv += window.monthHeadersConfig.m1 + ",";
     if (window.visCols.m2) csv += window.monthHeadersConfig.m2 + ",";
@@ -337,13 +506,10 @@
     if (window.visCols.m4) csv += window.monthHeadersConfig.m4 + ",";
     csv += "Total Due,";
     if (window.visCols.adv) csv += "Advance,";
-    csv += "Cans With Customer\n";
+    csv += "Cans With Customer,Waiver M1,Waiver M2\n";
 
-    // 3. Build CSV Rows
     filtered.forEach(function (r) {
       var totalDue = (r.pend1 || 0) + (r.pend2 || 0) + (r.pend3 || 0) + (r.pend4 || 0);
-      
-      // Clean names/apts of commas so it doesn't break the CSV layout
       var cleanApt = String(r.apartment || "").replace(/,/g, ' ');
       var cleanName = String(r.name || "").replace(/,/g, ' ');
       
@@ -354,10 +520,11 @@
       if (window.visCols.m4) csv += (r.pend4 || 0) + ",";
       csv += totalDue + ",";
       if (window.visCols.adv) csv += (r.advance || 0) + ",";
-      csv += (r.cans || 0) + "\n";
+      csv += (r.cans || 0) + ",";
+      csv += (r.waiverReq ? "ON" : "OFF") + ",";
+      csv += (r.overdueWaiver ? "ON" : "OFF") + "\n";
     });
     
-    // 4. Download Trigger
     var blob = new Blob([csv], { type: 'text/csv' });
     var url = window.URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -370,12 +537,10 @@
     const tableContainer = document.querySelector('#outstanding-tbody').closest('.overflow-x-auto');
     const thead = document.getElementById('outstanding-thead');
     
-    // Save original styling
     const originalMaxHeight = tableContainer.style.maxHeight;
     const originalOverflowY = tableContainer.style.overflowY;
     const originalOverflowX = tableContainer.style.overflowX;
 
-    // Remove all scroll limitations and stickiness so html2pdf can map it
     tableContainer.style.maxHeight = 'none';
     tableContainer.style.overflowY = 'visible';
     tableContainer.style.overflowX = 'visible';
@@ -388,13 +553,12 @@
       html2canvas: { 
         scale: 2, 
         useCORS: true, 
-        windowWidth: tableContainer.scrollWidth // Crucial: forces canvas to see the full width
+        windowWidth: tableContainer.scrollWidth 
       },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     };
 
     html2pdf().set(opt).from(tableContainer).save().then(() => {
-       // Restore original scrolling and stickiness
        tableContainer.style.maxHeight = originalMaxHeight;
        tableContainer.style.overflowY = originalOverflowY;
        tableContainer.style.overflowX = originalOverflowX;

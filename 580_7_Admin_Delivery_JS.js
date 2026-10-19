@@ -1,6 +1,4 @@
-
-
- window.switchDelTab = function (id) {
+window.switchDelTab = function (id) {
     document.getElementById('del-ledger').classList.add('hidden'); 
     document.getElementById('del-visual').classList.add('hidden');
     document.getElementById('del-driver').classList.add('hidden');
@@ -14,7 +12,6 @@
     document.getElementById('btn-' + id).className = "flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm md:text-lg font-black bg-white shadow-sm text-cyan-700 transition";
   };
 
-
   window.toggleDelHeader = function() {
     var col = document.getElementById('del-header-collapsible');
     var icon = document.getElementById('del-header-icon');
@@ -25,6 +22,24 @@
   // --- DELIVERY SPECIFIC TIMER ---
   window.activeDelTimerInterval = null;
   window.delStartTime = 0;
+
+  window.formatDeliveryDateTime = function(isoStr) {
+    if (!isoStr) return "";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let hours = d.getHours();
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + " " + String(hours).padStart(2, '0') + ":" + mins;
+  };
+
+  window.formatDeliveryDateOnly = function(isoStr) {
+    if (!isoStr) return "";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+  };
 
   window.startDelTimer = function(actionLabel) {
     var timerBadge = document.getElementById('del-live-timer');
@@ -58,43 +73,141 @@
     }
   };
 
-  window.loadDeliveryData = function (filterArg) {
+  window.loadDeliveryData = async function (filterArg) {
     window.startDelTimer('Syncing');
 
     var tb = document.getElementById('delivery-tbody');
-    tb.innerHTML = "<tr><td colspan='38' class='px-6 py-12 text-center text-cyan-600 font-bold text-xl animate-pulse'>Scanning live routes...</td></tr>";
-    
+    tb.innerHTML = "<tr><td colspan='41' class='px-6 py-12 text-center text-cyan-600 font-bold text-xl animate-pulse'>Scanning live routes from Supabase...</td></tr>";
     document.getElementById('del-visual').innerHTML = "<p class='text-center py-12 font-black text-slate-400 text-3xl animate-pulse'>Generating Visual Map...</p>";
     
     var searchInput = document.getElementById('search-live-delivery');
     if (searchInput) searchInput.value = '';
     window.filteredDeliveryLedger = []; 
     
-    google.script.run.withSuccessHandler(function (res) {
-      window.stopDelTimer('Synced', !res.success);
+    try {
+      // 1. Fetch EVERYTHING in deliveries table
+      const { data: rawDelData, error: delErr } = await supabase1.from('deliveries').select('*');
+      if (delErr) throw delErr;
+
+      // 2. Fetch Customer Details
+      const uniqueCpns = [...new Set((rawDelData || []).map(r => r.cpn_no))].filter(Boolean);
+      const { data: custData, error: custErr } = await supabase1
+        .from('ac_customers')
+        .select('cpn_no, apartment, block, door, poc1, con1')
+        .in('cpn_no', uniqueCpns);
+      if (custErr) throw custErr;
+
+      let custMap = {};
+      (custData || []).forEach(c => custMap[c.cpn_no] = c);
+
+      // 3. Process the payload to exactly match the old GAS structure
+      var results = { ledger: [], unloadsPending: 0, loadsPending: 0, visualMap: {}, totalOrdD: 0 };
+
+      (rawDelData || []).forEach(row => {
+          let prof = custMap[row.cpn_no] || {};
+          let cpn = (row.cpn_no || "").toUpperCase();
+          if (!cpn) return;
+
+          let delEnterOn = row.delivery_entered_at ? window.formatDeliveryDateTime(row.delivery_entered_at) : "";
+          let isDelivered = (delEnterOn !== "");
+          
+          let rate = Number(row.rate) || 0;
+          let actD = Number(row.act_d) || 0;
+          let rowAmt = Number(row.amount) || 0;
+          if (!rowAmt && actD && rate) rowAmt = actD * rate;
+
+          let v2bLink = row.v2b_link || "";
+          let b2vLink = row.b2v_link || "";
+          let doorLink = row.door_delivery_link || "";
+          let apt = prof.apartment || "-";
+          let blk = prof.block || "-";
+
+          results.ledger.push({
+              apt: apt, 
+              blk: blk, 
+              door: prof.door || "-",
+              name: prof.poc1 || "Unknown",
+              contact: prof.con1 || "-",
+              cpn: cpn,
+              ordDate: window.formatDeliveryDateOnly(row.order_date),
+              ordD: Number(row.ord_d) || 0,
+              ordE: Number(row.ord_e) || 0,
+              pend: Number(row.pending_qty) || 0,
+              rep: Number(row.replace_qty) || 0,
+              repReason: row.replace_reason || "",
+              delDate: window.formatDeliveryDateOnly(row.del_date),
+              actD: actD,
+              actE: Number(row.act_e) || 0,
+              rate: rate,
+              ordComment: row.order_comment || "",
+              delComment: row.delivery_comment || "",
+              amt: rowAmt,
+              uniqueNo: row.unique_no || String(row.id),
+              ordEnterOn: window.formatDeliveryDateTime(row.order_entered_at),
+              ordEnterBy: row.order_entered_by || "",
+              delEnterOn: delEnterOn,
+              delEnterBy: row.delivery_entered_by || "",
+              doorQC: row.door_qc || "",
+              colFull: Number(row.collected_full) || 0,
+              varFull: Number(row.variance_full) || 0,
+              varEmpty: Number(row.variance_empty) || 0,
+              varReason: row.variance_reason || "",
+              unloadOn: window.formatDeliveryDateTime(row.unload_on),
+              unloadBy: row.unload_by || "",
+              loadOn: window.formatDeliveryDateTime(row.load_on),
+              loadBy: row.load_by || "",
+              advAmt: Number(row.advance_amount) || 0,
+              actDVJ: Number(row.act_d_vj) || 0,
+              actDNVJ: Number(row.act_d_nvj) || 0,
+              actEVJ: Number(row.act_e_vj) || 0,
+              actENVJ: Number(row.act_e_nvj) || 0,
+              v2bFull: Number(row.v2b_full) || 0,
+              b2vFull: Number(row.b2v_full) || 0,
+              b2vEmpty: Number(row.b2v_emp) || 0,
+              status: isDelivered ? 'DELIVERED' : 'PENDING'
+          });
+
+          if(!results.visualMap[apt]) results.visualMap[apt] = { blocks: {} };
+          if(!results.visualMap[apt].blocks[blk]) { results.visualMap[apt].blocks[blk] = { v2bLink: "", b2vLink: "", doors: [] }; }
+          if (v2bLink) results.visualMap[apt].blocks[blk].v2bLink = v2bLink;
+          if (b2vLink) results.visualMap[apt].blocks[blk].b2vLink = b2vLink;
+          results.totalOrdD += (Number(row.ord_d) || 0);
+          
+          results.visualMap[apt].blocks[blk].doors.push({ door: prof.door || "-", isDelivered: isDelivered, link: doorLink });
+      });
+
+      for (var a in results.visualMap) {
+        for (var b in results.visualMap[a].blocks) {
+          if (!results.visualMap[a].blocks[b].v2bLink) results.unloadsPending++;
+          if (!results.visualMap[a].blocks[b].b2vLink) results.loadsPending++;
+        }
+      }
+
+      window.stopDelTimer('Synced', false);
+      window.activeReportData.delivery = results.ledger;
       
-      if (!res.success) return alert("Delivery Sync Failed: " + res.message);
-      
-      window.activeReportData.delivery = res.data.ledger;
-      document.getElementById('rep-del-cust').innerText = res.data.ledger.length;
-      document.getElementById('rep-del-ord').innerText = res.data.totalOrdD || 0; 
+      document.getElementById('rep-del-cust').innerText = results.ledger.length;
+      document.getElementById('rep-del-ord').innerText = results.totalOrdD || 0; 
       
       var tAmt = 0; 
-      for (var i = 0; i < res.data.ledger.length; i++) tAmt += res.data.ledger[i].amt;
+      for (var i = 0; i < results.ledger.length; i++) tAmt += results.ledger[i].amt;
       document.getElementById('rep-del-amt').innerText = "₹" + tAmt.toLocaleString('en-IN');
       
-      document.getElementById('rep-del-unloads').innerText = res.data.unloadsPending; 
-      document.getElementById('rep-del-loads').innerText = res.data.loadsPending;
+      document.getElementById('rep-del-unloads').innerText = results.unloadsPending; 
+      document.getElementById('rep-del-loads').innerText = results.loadsPending;
+      
       window.filterDelLedger(filterArg || 'ALL'); 
-      window.buildVisualDeliveryMap(res.data.visualMap);
-      window.buildDriverView(res.data.ledger);
+      window.buildVisualDeliveryMap(results.visualMap);
+      window.buildDriverView(results.ledger);
 
-    }).withFailureHandler(function (err) {
-        alert("Network error: " + err.message); 
-    }).fetchDeliveryDetailedReport();
+    } catch (err) {
+      console.error(err);
+      window.stopDelTimer('Failed', true);
+      alert("Database error: " + err.message);
+    }
   };
 
-// Live Delivery State Variables
+  // Live Delivery State Variables
   window.filteredDeliveryLedger = []; 
   window.currentDeliveryFilterStatus = 'ALL';
   window.delSortCol = '';
@@ -115,13 +228,12 @@
                (r.contact.toLowerCase().indexOf(query) > -1);
       });
     }
-    // Re-apply the Pending/Delivered filter over the searched results
     window.filterDelLedger(window.currentDeliveryFilterStatus);
   };
 
   window.sortLiveDelivery = function(key) {
     if (window.delSortCol === key) {
-      window.delSortAsc = !window.delSortAsc; // Toggle direction
+      window.delSortAsc = !window.delSortAsc; 
     } else {
       window.delSortCol = key;
       window.delSortAsc = true;
@@ -129,7 +241,6 @@
 
     var allData = window.activeReportData.delivery || [];
     
-    // Sort the master array first
     allData.sort(function(a, b) {
       var valA = a[key] === undefined || a[key] === null ? "" : a[key];
       var valB = b[key] === undefined || b[key] === null ? "" : b[key];
@@ -142,11 +253,9 @@
       return 0;
     });
 
-    // Re-run the search flow which will automatically trigger the render
     window.searchLiveDelivery();
   };
 
-  // Overwriting your existing filterDelLedger function
   window.filterDelLedger = function (status) {
     window.currentDeliveryFilterStatus = status;
 
@@ -158,7 +267,6 @@
     }
     document.getElementById(idMap[status]).className = "shrink-0 px-6 py-3 rounded-xl text-sm font-black bg-slate-800 text-white shadow-md transition";
     
-    // Fallback if searched array is empty, load master
     var sourceData = window.filteredDeliveryLedger.length > 0 || document.getElementById('search-live-delivery').value.trim() !== "" 
       ? window.filteredDeliveryLedger 
       : (window.activeReportData.delivery || []);
@@ -169,12 +277,15 @@
     for (var i = 0; i < sourceData.length; i++) {
       var r = sourceData[i]; 
       if (status !== 'ALL' && r.status !== status) continue;
+
+      // CPN Interactive Badge
+      let cpnBadgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-cyan-50 border border-cyan-200 text-cyan-700 rounded-md hover:bg-cyan-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${r.cpn}')">
+        ${r.cpn}
+        <svg class="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+      </span>`;
       
       html += "<tr class='hover:bg-slate-50 transition group'>" +
-        
-        // STICKY CPNNO CELL MOVED TO FIRST POSITION
-        "<td class='px-4 py-3 font-black text-cyan-600 sticky left-0 z-10 bg-white group-hover:bg-slate-50 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'>" + r.cpn + "</td>" +
-        
+        "<td class='px-4 py-3 font-black sticky left-0 z-10 bg-white group-hover:bg-slate-50 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'>" + cpnBadgeHtml + "</td>" +
         "<td class='px-4 py-3 font-bold text-slate-800'>" + r.apt + "</td>" +
         "<td class='px-4 py-3 font-bold text-slate-800'>" + r.blk + "</td>" +
         "<td class='px-4 py-3 font-bold text-slate-800'>" + r.door + "</td>" +
@@ -183,13 +294,9 @@
         "<td class='px-4 py-3'>" + r.ordDate + "</td>" +
         "<td class='px-4 py-3 text-center bg-indigo-50 font-bold'>" + r.ordD + "</td>" +
         "<td class='px-4 py-3 text-center bg-amber-50 font-bold'>" + r.ordE + "</td>" +
-        
-        // NEW COLUMNS RENDERED HERE
         "<td class='px-4 py-3 text-center bg-amber-50 font-black text-amber-600'>" + r.pend + "</td>" +
         "<td class='px-4 py-3 text-center bg-rose-50 font-black text-rose-600'>" + r.rep + "</td>" +
         "<td class='px-4 py-3 text-xs text-rose-500 max-w-[100px] truncate' title='" + r.repReason + "'>" + r.repReason + "</td>" +
-        // END NEW COLUMNS
-        
         "<td class='px-4 py-3'>" + r.delDate + "</td>" +
         "<td class='px-4 py-3 text-center font-black bg-indigo-100 text-indigo-700'>" + r.actD + "</td>" +
         "<td class='px-4 py-3 text-center font-black bg-amber-100 text-amber-700'>" + r.actE + "</td>" +
@@ -253,7 +360,6 @@
         return;
     }
 
-    // Grouping structure and aggregations
     const grouped = {};
     let grandTotalD = 0;
     let grandTotalE = 0;
@@ -283,7 +389,6 @@
         grandTotalR += r;
     });
 
-    // Generate Table HTML
     let html = `
     <div class="max-w-4xl mx-auto flex justify-end gap-2 mb-4">
       <button onclick="window.exportDoorViewCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-400 text-white font-bold rounded-xl shadow transition text-sm tracking-widest uppercase">CSV DOOR</button>
@@ -309,7 +414,6 @@
         for (const block in grouped[apt]) {
             const blockData = grouped[apt][block];
             
-            // Apartment/Block Header
             html += `
             <tr class="bg-yellow-100 border-y border-slate-300">
                 <td colspan="3" class="py-2 px-4 font-black text-slate-800 uppercase tracking-wide text-xs">
@@ -318,7 +422,6 @@
             </tr>
             `;
 
-            // Sort and render doors
             blockData.items.sort((a, b) => (a.door || '').localeCompare(b.door || ''));
             blockData.items.forEach(item => {
                 html += `
@@ -332,7 +435,6 @@
                 `;
             });
 
-            // Subtotal Row
             html += `
             <tr class="bg-slate-100 border-t border-slate-300">
                 <td class="py-2 px-4 font-black text-right text-slate-500 text-xs uppercase tracking-wide">Subtotal (${block}):</td>
@@ -345,7 +447,6 @@
         }
     }
 
-    // Grand Total Footer
     html += `
         </tbody>
         <tfoot id="driver-table-tfoot" class="sticky bottom-0 bg-yellow-300 border-t-2 border-slate-400 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
@@ -369,7 +470,6 @@
 
     let csv = "Apartment,Block,Door,D,E,P,R\n";
 
-    // Sort to match the visual grouping: Apartment -> Block -> Door
     const sortedData = [...data].sort((a, b) => {
         const aptA = (a.apt || '').localeCompare(b.apt || '');
         if (aptA !== 0) return aptA;
@@ -382,12 +482,7 @@
         const cleanApt = String(c.apt || "Unknown").replace(/,/g, ' ');
         const cleanBlock = String(c.blk || "Unknown").replace(/,/g, ' ');
         const cleanDoor = String(c.door || "").replace(/,/g, ' ');
-        const d = c.ordD || 0;
-        const e = c.ordE || 0;
-        const p = c.pend || 0;
-        const r = c.rep || 0;
-        
-        csv += `${cleanApt},${cleanBlock},${cleanDoor},${d},${e},${p},${r}\n`;
+        csv += `${cleanApt},${cleanBlock},${cleanDoor},${c.ordD || 0},${c.ordE || 0},${c.pend || 0},${c.rep || 0}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -403,60 +498,38 @@
     if (data.length === 0) return alert("No data to export.");
 
     let csv = "Apartment,Block,D,E,P,R\n";
-
-    // 1. Group data to calculate subtotals (same logic as the UI)
     const grouped = {};
-    let grandTotalD = 0;
-    let grandTotalE = 0;
-    let grandTotalP = 0;
-    let grandTotalR = 0;
+    let grandTotalD = 0, grandTotalE = 0, grandTotalP = 0, grandTotalR = 0;
 
     data.forEach(item => {
         const apt = String(item.apt || "Unknown").replace(/,/g, ' ');
         const block = String(item.blk || "Unknown").replace(/,/g, ' ');
-        const d = Number(item.ordD) || 0;
-        const e = Number(item.ordE) || 0;
-        const p = Number(item.pend) || 0;
-        const r = Number(item.rep) || 0;
+        const d = Number(item.ordD) || 0, e = Number(item.ordE) || 0;
+        const p = Number(item.pend) || 0, r = Number(item.rep) || 0;
 
         if (!grouped[apt]) grouped[apt] = {};
-        if (!grouped[apt][block]) grouped[apt][block] = { items: [], subD: 0, subE: 0, subP: 0 , subR: 0};
+        if (!grouped[apt][block]) grouped[apt][block] = { subD: 0, subE: 0, subP: 0 , subR: 0};
         
-        //grouped[apt][block].items.push({ door: String(item.door || "").replace(/,/g, ' '), d, e });
-        grouped[apt][block].subD += d;
-        grouped[apt][block].subE += e;
-        grouped[apt][block].subP += p;
-        grouped[apt][block].subR += r;
+        grouped[apt][block].subD += d; grouped[apt][block].subE += e;
+        grouped[apt][block].subP += p; grouped[apt][block].subR += r;
         
-        grandTotalD += d;
-        grandTotalE += e;
-        grandTotalP += p;
-        grandTotalR += r;
+        grandTotalD += d; grandTotalE += e; grandTotalP += p; grandTotalR += r;
     });
 
-    // 2. Build the CSV string with subtotal rows
-    const sortedApts = Object.keys(grouped).sort();
-    
-    sortedApts.forEach(apt => {
-        const sortedBlocks = Object.keys(grouped[apt]).sort();
-        
-        sortedBlocks.forEach(block => {
-            const blockData = grouped[apt][block];
-
-            // INJECT APT-BLOCK SUBTOTAL ROW
-            csv += `${apt},${block},${blockData.subD},${blockData.subE},${blockData.subP},${blockData.subR}\n`;
+    Object.keys(grouped).sort().forEach(apt => {
+        Object.keys(grouped[apt]).sort().forEach(block => {
+            const bd = grouped[apt][block];
+            csv += `${apt},${block},${bd.subD},${bd.subE},${bd.subP},${bd.subR}\n`;
         });
     });
 
-    // INJECT GRAND TOTAL ROW
     csv += `GRAND TOTAL,,${grandTotalD},${grandTotalE},${grandTotalP},${grandTotalR}\n`;
 
-    // 3. Trigger Download
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Driver_Delivery_View_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.download = 'Driver_Block_View_' + new Date().toISOString().split('T')[0] + '.csv';
     a.click();
   };
 
@@ -467,7 +540,6 @@
     
     if (!tableContainer) return;
 
-    // Temporarily remove scrolling constraints and sticky headers to render the full table
     const originalMaxHeight = tableContainer.style.maxHeight;
     tableContainer.style.maxHeight = 'none';
     tableContainer.style.overflowY = 'visible';
@@ -480,11 +552,10 @@
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { avoid: 'tr' } // Ensures table rows are not cut in half
+        pagebreak: { avoid: 'tr' }
     };
 
     html2pdf().set(opt).from(tableContainer).save().then(() => {
-        // Restore scrolling limits and sticky headers after export finishes
         tableContainer.style.maxHeight = originalMaxHeight;
         tableContainer.style.overflowY = 'auto';
         thead.classList.add('sticky');

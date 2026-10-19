@@ -79,7 +79,7 @@ window.loadDeliveryQCData = async function () {
     document.getElementById('qc-select-all-chk').checked = false;
 
     try {
-        const { data: ordData, error: ordErr } = await supabase1.from('orders').select('cpn_no, ord_d, ord_e').eq('status', 'PENDING');
+        const { data: ordData, error: ordErr } = await supabase1.from('orders').select('cpn_no, ord_d, ord_e');
         if (ordErr) throw ordErr;
         
         window.existingOrd2Data = {};
@@ -371,7 +371,7 @@ window.executeTransferToSales = async function () {
         }
         // ---------------------------------------
 
-        const { data: ordData } = await supabase1.from('orders').select('cpn_no').eq('status', 'PENDING');
+        const { data: ordData } = await supabase1.from('orders').select('cpn_no');
         var currentOrders = ordData ? ordData.map(o => o.cpn_no.toUpperCase()) : [];
         var liveCollisions = false;
 
@@ -676,7 +676,7 @@ window.renderQCDashboard = function (blocksData) {
             }
 
             html += '<div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white border-b border-slate-100 p-4 md:px-6 md:py-3 qc-door-row hover:bg-slate-50 transition" data-row-idx="' + door.dbId + '" data-photo-url="' + doorPhotoRaw + '">' +
-                '<div class="col-span-1 md:col-span-3 flex justify-between md:block items-start"><span class="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Door</span><div><p class="font-black text-lg text-slate-800">Door ' + door.doorNo + '</p><p class="text-xs font-bold text-blue-500 tracking-widest uppercase">' + door.cpn + '</p>' + cmtUI + '</div></div>' +
+                '<div class="col-span-1 md:col-span-3 flex justify-between md:block items-start"><span class="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Door</span><div><p class="font-black text-lg text-slate-800">Door ' + door.doorNo + '</p><span class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360(\'' + door.cpn + '\')">' + door.cpn + '<svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></span>' + cmtUI + '</div></div>' +
                 '<div class="col-span-1 md:col-span-1 flex justify-between md:justify-center items-center gap-2"><span class="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordered</span><div class="flex flex-row gap-2"><div class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-center"><span class="font-black text-slate-700">' + door.ordD + '</span> <span class="text-[9px] font-bold text-slate-400">F</span></div><div class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-center"><span class="font-black text-slate-700">' + door.ordE + '</span> <span class="text-[9px] font-bold text-slate-400">E</span></div></div></div>' +
                 '<div class="col-span-1 md:col-span-4 flex flex-col justify-center items-center gap-2"><span class="md:hidden text-[10px] font-black text-slate-400 uppercase tracking-widest w-full text-left">Actuals</span>' +
                 '<div class="flex gap-2 w-full justify-center">' +
@@ -813,7 +813,7 @@ window.openExceptionReview = function() {
                 var rowClass = hasOrd2Collision ? 'bg-rose-100 hover:bg-rose-200 border-l-4 border-rose-600 transition' : 'hover:bg-amber-50/50 transition';
 
                 var rowHtml = '<tr id="exc-row-' + d.uniqueNo + '" class="' + rowClass + '">' +
-                        '<td class="p-4 border-b border-slate-200/50"><p class="font-black text-slate-800 text-sm">' + block.apartment + ' - ' + block.blockName + '</p><p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Door ' + d.doorNo + ' • <span class="text-blue-500">' + d.cpn + '</span></p>' + collisionBadge + '</td>' +
+                        '<td class="p-4 border-b border-slate-200/50"><p class="font-black text-slate-800 text-sm">' + block.apartment + ' - ' + block.blockName + '</p><p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Door ' + d.doorNo + ' • <span class="inline-flex items-center gap-1.5 px-1.5 py-0.5 ml-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360(\'' + d.cpn + '\')">' + d.cpn + '</span></p>' + collisionBadge + '</td>' +
                         '<td class="p-4 text-center border-b border-slate-200/50 bg-slate-50/50">' + ordStr + '</td>' +
                         '<td class="p-4 text-center border-b border-slate-200/50">' + actStr + '</td>' +
                         '<td class="p-4 text-center border-b border-slate-200/50 bg-rose-50/30">' + shortageStr + '</td>' +

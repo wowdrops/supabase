@@ -294,3 +294,5 @@ window.pushDormantListToCRM = async function() {
         btn.innerText = originalText; btn.disabled = false;
     }
 };
+
+window.tabActions['dormant'] = window.loadDormantData;

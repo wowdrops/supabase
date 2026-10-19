@@ -70,3 +70,5 @@ window.generateDormantConversionReport = async function () {
         document.getElementById('crm-rep-loading').classList.add('hidden');
     }
 };
+
+window.tabActions['crm-reports'] = window.generateDormantConversionReport;

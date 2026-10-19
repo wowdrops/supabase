@@ -669,3 +669,8 @@ setTimeout(() => {
     window.loadTranOrdersData();
   }
 }, 300);
+
+window.tabActions['tran-order'] = function() { 
+    if(typeof window.resetOrd2Form === 'function') window.resetOrd2Form();
+    if(typeof window.loadTranOrdersData === 'function') window.loadTranOrdersData(); 
+};

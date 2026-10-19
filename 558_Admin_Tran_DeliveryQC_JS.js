@@ -1198,3 +1198,5 @@ window.scrollAdminTo = function (pos) {
         el.scrollTo({ top: (pos === 'top') ? 0 : el.scrollHeight, behavior: 'smooth' });
     });
 };
+
+window.tabActions['tran-delivery'] = function(arg) { window.loadDeliveryQCData(arg); };

@@ -299,3 +299,5 @@ window.currentSalesRecords = [];
       window.loadSalesCrudData(); 
     }
   }, 100);
+
+  window.tabActions['tran-sales-crud'] = window.loadSalesCrudData;

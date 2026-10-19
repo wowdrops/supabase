@@ -211,3 +211,5 @@ setTimeout(() => {
     window.loadPaysCrudData();
   }
 }, 100);
+
+window.tabActions['tran-pays-crud'] = window.loadPaysCrudData;

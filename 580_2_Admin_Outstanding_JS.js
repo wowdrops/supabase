@@ -565,3 +565,5 @@
        thead.classList.add('sticky');
     });
   };
+
+  window.tabActions['outstanding'] = window.loadOutstandingData;

@@ -562,3 +562,5 @@ window.switchDelTab = function (id) {
         tfoot.classList.add('sticky');
     });
   };
+
+  window.tabActions['delivery'] = function(arg) { window.loadDeliveryData(arg); };

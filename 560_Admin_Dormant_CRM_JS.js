@@ -329,3 +329,12 @@ window.renderCRMTable = function () {
     }
     tb.innerHTML = h;
 };
+
+window.tabActions['dormant-crm'] = function() { 
+    if(typeof window.switchCRMDashTab === 'function') window.switchCRMDashTab(1); 
+    var d7 = document.getElementById('dormant-7');
+    if (d7 && d7.innerText === '0') { 
+        if (typeof window.fetchDormantSummaryCards === 'function') window.fetchDormantSummaryCards(); 
+        if (typeof window.fetchCRMDashboardStats === 'function') window.fetchCRMDashboardStats(); 
+    } 
+};

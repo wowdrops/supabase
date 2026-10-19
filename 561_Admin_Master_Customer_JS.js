@@ -494,3 +494,5 @@ window.executeDelete = async function () {
     btn.innerText = "Yes, Proceed"; btn.disabled = false; 
   }
 };
+
+window.tabActions['master-customer'] = window.loadMasterCustomers;

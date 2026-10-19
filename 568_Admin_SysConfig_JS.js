@@ -1,5 +1,4 @@
-
-  window.activeSysTimerInterval = null;
+window.activeSysTimerInterval = null;
   window.sysStartTime = 0;
 
   window.startSysTimer = function(actionLabel) {
@@ -38,66 +37,80 @@
      else loader.classList.add('hidden');
   };
 
-  // Called automatically when the user clicks the "System Configurations" tab
-  window.loadSysConfig = function() {
+  // 1. DYNAMIC LOAD FROM SUPABASE (SETUP TABLE)
+  window.loadSysConfig = async function() {
     window.setSysLoader(true);
     window.startSysTimer('Loading');
     
-    google.script.run
-      .withSuccessHandler(function(res) {
-        window.setSysLoader(false);
-        window.stopSysTimer('Loaded', !res.success);
+    try {
+        const supa = window.supabase1;
+        if (!supa) throw new Error("Supabase not initialized");
+
+        const { data, error } = await supa.from('setup').select('key, value');
+        if (error) throw error;
+
+        // Build a quick lookup map from the database rows
+        const configMap = {};
+        (data || []).forEach(row => {
+            configMap[row.key] = row.value;
+        });
+
+        // Map them to the UI inputs using the exact keys from the database
+        document.getElementById('cfg-per-day-can').value = configMap['per day can count'] || '';
+        document.getElementById('cfg-lookup-restrict').value = configMap['lookup restrict can qty'] || '';
+        document.getElementById('cfg-min-entry').value = configMap['minimum entry qty'] || '';
         
-        if (res.success) {
-          document.getElementById('cfg-per-day-can').value = res.config.perDayCanCount;
-          document.getElementById('cfg-lookup-restrict').value = res.config.lookupRestrictQty;
-          document.getElementById('cfg-min-entry').value = res.config.minEntryQty;
-          
-          var onOffVal = String(res.config.perDayOnOff).trim().toUpperCase();
-          document.getElementById('cfg-per-day-onoff').value = (onOffVal === 'ON') ? 'ON' : 'OFF';
-          
-          document.getElementById('cfg-vj-price').value = res.config.vjPrice;
-        } else {
-          alert("Database Error: " + res.message);
-        }
-      })
-      .withFailureHandler(function(err) {
+        var onOffVal = String(configMap['per day onoff'] || 'OFF').trim().toUpperCase();
+        document.getElementById('cfg-per-day-onoff').value = (onOffVal === 'ON') ? 'ON' : 'OFF';
+        
+        document.getElementById('cfg-vj-price').value = configMap['VJ_PRICE'] || '';
+
+        window.setSysLoader(false);
+        window.stopSysTimer('Loaded', false);
+
+    } catch (err) {
         window.setSysLoader(false);
         window.stopSysTimer('Failed', true);
-        alert("Connection Error: " + err);
-      })
-      .getSystemConfigurations();
+        alert("Database Error: " + err.message);
+        console.error(err);
+    }
   };
 
-  window.saveSysConfig = function() {
+  // 2. DYNAMIC UPSERT TO SUPABASE (SETUP TABLE)
+  window.saveSysConfig = async function() {
     if (!confirm("Are you sure you want to update these global configurations?")) return;
     
-    var payload = {
-      perDayCanCount: document.getElementById('cfg-per-day-can').value,
-      lookupRestrictQty: document.getElementById('cfg-lookup-restrict').value,
-      minEntryQty: document.getElementById('cfg-min-entry').value,
-      perDayOnOff: document.getElementById('cfg-per-day-onoff').value,
-      vjPrice: document.getElementById('cfg-vj-price').value
-    };
-
     window.setSysLoader(true);
     window.startSysTimer('Saving');
 
-    google.script.run
-      .withSuccessHandler(function(res) {
+    try {
+        const supa = window.supabase1;
+        if (!supa) throw new Error("Supabase not initialized");
+
+        // Format payload for bulk Upsert using exact table columns
+        const updatePayload = [
+            { key: 'per day can count', value: document.getElementById('cfg-per-day-can').value },
+            { key: 'lookup restrict can qty', value: document.getElementById('cfg-lookup-restrict').value },
+            { key: 'minimum entry qty', value: document.getElementById('cfg-min-entry').value },
+            { key: 'per day onoff', value: document.getElementById('cfg-per-day-onoff').value },
+            { key: 'VJ_PRICE', value: document.getElementById('cfg-vj-price').value }
+        ];
+
+        // Perform the Upsert, handling conflict on 'key' column
+        const { error } = await supa.from('setup').upsert(updatePayload, { onConflict: 'key' });
+        if (error) throw error;
+
         window.setSysLoader(false);
-        window.stopSysTimer('Saved', !res.success);
+        window.stopSysTimer('Saved', false);
         
-        if(res.success) {
-          alert("✅ Configurations successfully updated in the database!");
-        } else {
-          alert("Failed to save: " + res.message);
-        }
-      })
-      .withFailureHandler(function(err) {
-         window.setSysLoader(false);
-         window.stopSysTimer('Failed', true);
-         alert("Connection error: " + err);
-      })
-      .saveSystemConfigurations(payload);
+        setTimeout(() => alert("✅ Configurations successfully updated in the database!"), 100);
+
+    } catch (err) {
+        window.setSysLoader(false);
+        window.stopSysTimer('Failed', true);
+        alert("Connection error: " + err.message);
+        console.error(err);
+    }
   };
+
+  window.tabActions['sys-config'] = window.loadSysConfig;

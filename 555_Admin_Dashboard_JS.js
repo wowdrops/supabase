@@ -114,7 +114,7 @@ window.loadDashboardData = async function (forceRefresh) {
       supa.from('orders').select('cpn_no, ord_d, ord_e, rate, amount, pending_qty, replace_qty'),
       supa.from('setup').select('key, value').in('key', ['PER_DAY_COUNT', 'RESTRICT_QTY', 'MIN_ENTRY_QTY', 'SUPPLY_STATUS']),
       // NEW: Added raw fallback columns act_d_vj, act_d_nvj, default_rate, etc.
-      supa.from('deliveries').select('cpn_no, act_d, act_e, ord_d, rate, default_rate, amount, delivery_entered_at, door_delivery_link, status, door_qc, act_d_vj, act_d_nvj, act_e_vj, act_e_nvj'),
+      supa.from('deliveries').select('cpn_no,act_d,act_e,ord_d,rate,default_rate,delivery_entered_at,door_delivery_link,status,door_qc,act_d_vj,act_d_nvj,act_e_vj,act_e_nvj'),
       supa.from('sales').select('cpn_no, del_date, act_d, act_e, amount').lte('del_date', todayStartStr).order('del_date', { ascending: false }).limit(1000),
       supa.from('pays').select('cpn_no, payment_date, amount').lte('payment_date', todayStartStr).order('payment_date', { ascending: false }).limit(1000),
       supa.from('v_customer_outstanding').select('*'),
@@ -180,7 +180,7 @@ window.loadDashboardData = async function (forceRefresh) {
       var actD = Number(d.act_d) || (Number(d.act_d_vj || 0) + Number(d.act_d_nvj || 0));
       var actE = Number(d.act_e) || (Number(d.act_e_vj || 0) + Number(d.act_e_nvj || 0));
       var rate = Number(d.rate) || Number(d.default_rate) || 0;
-      var rowAmt = Number(d.amount || 0);
+      var rowAmt = (Number(d.act_d) || 0) * (Number(d.rate || d.default_rate) || 0);
       
       if (!rowAmt && actD > 0 && rate > 0) rowAmt = actD * rate;
 
@@ -493,4 +493,8 @@ window.loadDashboardData = async function (forceRefresh) {
     console.error("Dashboard Fatal Error:", err);
     if (loadingEl) loadingEl.innerText = "Error: " + err.message;
   }
+};
+
+window.tabActions['dashboard'] = function () { 
+    if (typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
 };

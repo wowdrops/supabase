@@ -276,3 +276,5 @@
     
     
   };
+
+  window.tabActions['pays'] = function(arg) { if (!arg) window.loadPaysData(); };

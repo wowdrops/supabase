@@ -278,4 +278,6 @@ window.crMasterData = [];
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return "N/A";
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); 
-  }
+  };
+
+  window.tabActions['reports-customer'] = function(arg) { window.loadCustomerAnalyticsData(arg); };

@@ -53,3 +53,5 @@ window.resolveEscalation = async function (logId, currentFeedback) {
         alert("Failed to resolve: " + err.message);
     }
 };
+
+window.tabActions['tran-escalations'] = window.loadEscalationsData;

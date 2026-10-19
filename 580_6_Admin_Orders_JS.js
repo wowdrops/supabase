@@ -147,3 +147,5 @@
       tb.innerHTML = `<tr><td colspan='7' class='px-6 py-12 text-center text-red-500 font-bold text-xl'>Database Error: ${err.message}</td></tr>`;
     }
   };
+
+  window.tabActions['orders'] = window.loadOrdersData;

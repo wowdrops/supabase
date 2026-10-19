@@ -1,4 +1,3 @@
-
 window.onerror = function (msg, url, line) { alert("App Error: " + msg + " (Line " + line + ")"); return false; };
 window.windowWidthBabu = 1024;
 window.activeAdminSession = null;
@@ -24,32 +23,8 @@ window.salesDisplayCount = 50;
 
 window._lastWindowWidth = window.innerWidth;
 
-// Role Permissions Mapping (Preserved from source)[cite: 5]
-const ROLE_PERMISSIONS = {
-    "Super Admin": ["ALL"],
-    "Admin": [
-        "dashboard", "dormant-crm", "update-can", "outstanding", "dormant", "reports",
-        "sales", "pays", "orders", "delivery", "tran-order", "tran-delivery",
-        "tran-escalations", "crm-reports", "master-customer", "reports-customer", "sales-cal", "user-access",
-        "tran-sales-crud", "tran-pays-crud", "phonepe-dash",
-        "current-stock", "sys-config", "users", "push-notifications", "handshake-log"
-    ],
-    "DRIVERDELIVERYADMIN": [
-        "orders", "delivery", "update-can", "dormant", "tran-order", "tran-delivery",
-        "sales", "pays", "outstanding", "crm-reports", "reports-customer",
-        "master-customer", "handshake-log"
-    ],
-    "Manager": [
-        "dashboard", "sales", "pays", "outstanding", "sales-cal", "dormant", "delivery",
-        "reports-customer", "master-customer:view"
-    ],
-    "Data Entry": [
-        "update-can", "tran-order", "tran-delivery"
-    ],
-    "CRM Agent": [
-        "dormant-crm", "tran-escalations", "crm-reports", "sys-config"
-    ]
-};
+// GLOBAL ROUTING REGISTRY (Modules will register themselves here)
+window.tabActions = {};
 
 // Utility Functions
 window.getUniqueArray = function (arr) { var res = []; for (var i = 0; i < arr.length; i++) { if (res.indexOf(arr[i]) === -1 && arr[i]) res.push(arr[i]); } return res; };
@@ -71,7 +46,7 @@ async function hashPassword(password) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-window.assertWorkspaceDeployment = function () {
+window.assertWorkspaceDeployment = async function () {
     var viewAuth = document.getElementById('view-auth');
     var viewWorkspace = document.getElementById('view-workspace');
     var dispAdmin = document.getElementById('disp-admin-name');
@@ -82,90 +57,88 @@ window.assertWorkspaceDeployment = function () {
         dispAdmin.innerText = "User: " + window.activeAdminSession.username;
     }
 
-    window.applyRolePermissions();
+    // Wait for the sidebar to finish building dynamically before routing
+    await window.applyRolePermissions();
+    
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
     var firstTab = (allowed.includes('ALL') || allowed.includes('dashboard')) ? 'dashboard' : allowed[0];
     firstTab = firstTab || 'password';
     window.goToReport(firstTab);
 };
 
-window.applyRolePermissions = function () {
+window.applyRolePermissions = async function () {
     if (!window.activeAdminSession) return;
     var allowed = window.activeAdminSession.allowedTabs || [];
     var isSuper = allowed.includes("ALL");
-    var allTabs = Object.keys(window.tabActions);
 
-    // 1. Hide individual buttons
-    for (var i = 0; i < allTabs.length; i++) {
-        var tab = allTabs[i];
-        var btn = document.getElementById('nav-tab-' + tab);
-        if (!btn) continue;
-        if (!isSuper && !allowed.includes(tab)) {
-            btn.classList.add('hidden');
-        } else {
-            btn.classList.remove('hidden');
-        }
-    }
+    // Fetch the architecture for the ADMIN module
+    const { data: menus } = await window.supabase1.from('sys_menus').select('*').eq('module_name', 'ADMIN').order('sort_order');
+    const { data: pages } = await window.supabase1.from('sys_pages').select('*').eq('module_name', 'ADMIN').eq('show_in_sidebar', true).order('page_title');
 
-    // 2. Hide empty accordions automatically (MISSING IN SUPABASE VERSION)
-    var accordions = ['dash', 'master', 'trans', 'reports', 'utilities'];
-    accordions.forEach(function (acc) {
-        var container = document.getElementById('acc-' + acc);
-        if (container) {
-            var visibleBtns = container.querySelectorAll('button:not(.hidden)');
-            var headerBtn = container.previousElementSibling;
-            if (visibleBtns.length === 0) {
-                if (headerBtn) headerBtn.classList.add('hidden');
-                container.classList.add('hidden');
-            } else {
-                if (headerBtn) headerBtn.classList.remove('hidden');
-                container.classList.remove('hidden');
+    var navContainer = document.querySelector('#app-sidebar nav');
+    if (!navContainer) return;
+
+    var html = "";
+    var mainMenus = (menus || []).filter(m => !m.parent_menu_id);
+
+    mainMenus.forEach(m => {
+        var directPages = (pages || []).filter(p => p.menu_id === m.id && (isSuper || allowed.includes(p.page_id)));
+        var subMenus = (menus || []).filter(sub => sub.parent_menu_id === m.id);
+        var subMenuHtml = "";
+        
+        subMenus.forEach(sub => {
+            var subPages = (pages || []).filter(p => p.menu_id === sub.id && (isSuper || allowed.includes(p.page_id)));
+            if (subPages.length > 0) {
+                var defaultSubIcon = '<svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
+                subMenuHtml += `
+                  <div onclick="window.toggleSubAccordion('sub-menu-${sub.id}', 'icon-sub-${sub.id}')" class="flex justify-between items-center px-2 py-1.5 mt-1 cursor-pointer rounded-lg hover:bg-slate-800/50 transition">
+                    <div class="flex items-center gap-1.5">
+                      ${sub.icon_svg || defaultSubIcon}
+                      <span class="text-[12px] font-bold text-emerald-400 uppercase tracking-wide">${sub.menu_label}</span>
+                    </div>
+                    <svg id="icon-sub-${sub.id}" class="w-3.5 h-3.5 shrink-0 transition-transform duration-200 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                  <div id="sub-menu-${sub.id}" class="hidden">
+                    <div class="flex flex-col pl-4 space-y-1">
+                      ${subPages.map(p => `
+                        <button onclick="window.goToReport('${p.page_id}')" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                          <span class="truncate">${p.page_title}</span>
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
             }
+        });
+
+        if (directPages.length > 0 || subMenuHtml !== "") {
+            var defaultMainIcon = '<svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM4 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>';
+            html += `
+            <div>
+              <button onclick="window.toggleAccordion('acc-main-${m.id}', 'icon-main-${m.id}')" class="w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                <div class="flex items-center gap-2">
+                  ${m.icon_svg || defaultMainIcon}
+                  <span class="truncate">${m.menu_label}</span>
+                </div>
+                <svg id="icon-main-${m.id}" class="w-4 h-4 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              <div id="acc-main-${m.id}" class="accordion-content">
+                <div class="overflow-hidden">
+                  <div class="flex flex-col pl-6 pr-2 py-1 space-y-1">
+                    ${directPages.map(p => `
+                        <button onclick="window.goToReport('${p.page_id}')" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                          <span class="truncate">${p.page_title}</span>
+                        </button>
+                    `).join('')}
+                    ${subMenuHtml}
+                  </div>
+                </div>
+              </div>
+            </div>`;
         }
     });
-};
 
-
-// Single Source of Truth for Routing
-window.tabActions = {
-    'dashboard': function () { 
-        if (typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
-        //if (typeof window.loadDashboardData === 'function') window.loadDashboardData(); // <-- ADD THIS LINE
-    },
-    'dormant-crm': function() { 
-        if(typeof window.switchCRMDashTab === 'function') window.switchCRMDashTab(1); 
-        var d7 = document.getElementById('dormant-7');
-        if (d7 && d7.innerText === '0') { 
-            if (typeof window.fetchDormantSummaryCards === 'function') window.fetchDormantSummaryCards(); 
-            if (typeof window.fetchCRMDashboardStats === 'function') window.fetchCRMDashboardStats(); 
-        } 
-    },
-    'master-customer': function () { if (typeof window.loadMasterCustomers === 'function') window.loadMasterCustomers(); },
-    'update-can': function () { },
-    'tran-order': function() { 
-        if(typeof window.resetOrd2Form === 'function') window.resetOrd2Form();
-        if(typeof window.loadTranOrdersData === 'function') window.loadTranOrdersData(); 
-    },
-    'tran-delivery': function (arg) { if (typeof window.loadDeliveryQCData === 'function') window.loadDeliveryQCData(arg); },
-    'tran-escalations': function () { if (typeof window.loadEscalationsData === 'function') window.loadEscalationsData(); },
-    'tran-sales-crud': function () { if (typeof window.loadSalesCrudData === 'function') window.loadSalesCrudData(); },
-    'tran-pays-crud': function () { if (typeof window.loadPaysCrudData === 'function') window.loadPaysCrudData(); },
-    'reports': function () { },
-    'outstanding': function () { if (typeof window.loadOutstandingData === 'function') window.loadOutstandingData(); },
-    'dormant': function () { if (typeof window.loadDormantData === 'function') window.loadDormantData(); },
-    'sales': function (arg) { if (!arg && typeof window.loadSalesData === 'function') window.loadSalesData(); },
-    'pays': function (arg) { if (!arg && typeof window.loadPaysData === 'function') window.loadPaysData(); },
-    'orders': function () { if (typeof window.loadOrdersData === 'function') window.loadOrdersData(); },
-    'delivery': function (arg) { if (typeof window.loadDeliveryData === 'function') window.loadDeliveryData(arg); },
-    'crm-reports': function () { if (typeof window.generateDormantConversionReport === 'function') window.generateDormantConversionReport(); },
-    'reports-customer': function (arg) { if (typeof window.loadCustomerAnalyticsData === 'function') window.loadCustomerAnalyticsData(arg); },
-    'sales-cal': function () { if (typeof window.loadSalesCalendar === 'function') window.loadSalesCalendar(); },
-    'user-access': function () { if (typeof window.loadSystemAccessMap === 'function') window.loadSystemAccessMap(); },
-    'current-stock': function () { if (typeof window.loadCurrentStock === 'function') window.loadCurrentStock(); },
-    'sys-config': function () { if (typeof window.loadSysConfig === 'function') window.loadSysConfig(); },
-    'users': function () { if (typeof window.loadUsersData === 'function') window.loadUsersData(); },
-    'push-notifications': function () { if (typeof window.loadNotificationLogs === 'function') window.loadNotificationLogs(); },
-    'handshake-log': function () { if (typeof window.loadHandshakeLog === 'function') window.loadHandshakeLog(); }
+    navContainer.innerHTML = html;
 };
 
 window.toggleSidebar = function () { window.isSidebarOpen = !window.isSidebarOpen; window.applySidebarState(); };
@@ -222,27 +195,22 @@ window.showNotif = function (el, msg, success) {
     el.className = "text-sm md:text-lg text-center font-bold mt-4 p-4 rounded-xl border-2 block " + (success ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200') + " fade-in";
 };
 
-
 window.goToReport = function (tabName, filterArg) {
-    // 1. Ensure the Logo is visible and Back Button is hidden for normal navigation
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
     
     if (brand) brand.classList.remove('hidden');
     if (backBtn) backBtn.classList.add('hidden');
     
-    // 2. If navigating to Dashboard directly from the sidebar, reset to Tab 1 and refresh data
     if (tabName === 'dashboard' && !filterArg) {
         window.dashboardReturnState = 1;
         if (typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
     }
     
-    // 3. Execute standard routing
     window._executeRouting(tabName, filterArg);
 };
 
 window.navigateFromDashboard = function (reportId, filterArg) {
-    // 1. Remember which dashboard tab they were on (Ops, Ledger, or Customer)
     var dash1 = document.getElementById('dash-content-1');
     var dash2 = document.getElementById('dash-content-2');
     var dash3 = document.getElementById('dash-content-3');
@@ -254,13 +222,11 @@ window.navigateFromDashboard = function (reportId, filterArg) {
 
     window.dashboardLeaveTime = new Date().getTime();
     
-    // 2. Hide Logo, Show Back Button cleanly
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
     if (brand) brand.classList.add('hidden');
     if (backBtn) backBtn.classList.remove('hidden');
     
-    // 3. Execute Routing with the filter argument
     window._executeRouting(reportId, filterArg);
     
     if (reportId === 'sales' || reportId === 'pays') {
@@ -275,7 +241,6 @@ window.navigateFromDashboard = function (reportId, filterArg) {
 };
 
 window.returnToDashboard = function () {
-    // 1. Restore Logo, Hide Back Button
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
     if (brand) brand.classList.remove('hidden');
@@ -286,26 +251,32 @@ window.returnToDashboard = function () {
     if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
 };
 
+// =====================================
+// THE NEW DYNAMIC ROUTER
+// =====================================
 window._executeRouting = function (tabName, filterArg) {
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
+    
     if (!allowed.includes('ALL') && !allowed.includes(tabName) && tabName !== 'password') {
         return alert("Access Denied: Your role does not have permission to view this module.");
     }
 
-    var tabs = Object.keys(window.tabActions).concat(['password']);
-    for (var i = 0; i < tabs.length; i++) {
-        var tabEl = document.getElementById('tab-' + tabs[i]);
-        if (tabEl) tabEl.classList.add('hidden');
-        var btn = document.getElementById('nav-tab-' + tabs[i]);
-        if (btn) {
-            btn.classList.remove('text-white', 'bg-slate-800/50');
-            btn.classList.add('text-slate-400');
-        }
-    }
+    // Hide all tabs dynamically
+    var allTabs = document.querySelectorAll('div[id^="tab-"]');
+    allTabs.forEach(t => t.classList.add('hidden'));
 
+    // Reset all sidebar buttons
+    var allNavBtns = document.querySelectorAll('button[id^="nav-tab-"]');
+    allNavBtns.forEach(btn => {
+        btn.classList.remove('text-white', 'bg-slate-800/50');
+        btn.classList.add('text-slate-400');
+    });
+
+    // Show active tab
     var activeTab = document.getElementById('tab-' + tabName);
     if (activeTab) activeTab.classList.remove('hidden');
 
+    // Highlight active button
     var aBtn = document.getElementById('nav-tab-' + tabName);
     if (aBtn) {
         aBtn.classList.remove('text-slate-400');
@@ -316,7 +287,10 @@ window._executeRouting = function (tabName, filterArg) {
         window.toggleSidebar();
     }
 
-    if (window.tabActions[tabName]) window.tabActions[tabName](filterArg);
+    // Execute Module Logic
+    if (window.tabActions && typeof window.tabActions[tabName] === 'function') {
+        window.tabActions[tabName](filterArg);
+    }
 };
 
 window.openForgotPasswordView = function () {
@@ -332,8 +306,6 @@ window.backToLoginState = function () {
     document.getElementById('login-err').classList.add('hidden');
 };
 
-
-
 window.logoutAdmin = function () {
     localStorage.removeItem('wowdrops_admin_session_payload'); window.activeAdminSession = null;
     document.getElementById('view-workspace').classList.add('hidden'); document.getElementById('view-auth').classList.remove('hidden');
@@ -342,7 +314,7 @@ window.logoutAdmin = function () {
     window.showNotif(document.getElementById('login-err'), "Successfully logged out.", true);
 };
 
-// --- SUPABASE AUTHENTICATION ---
+// --- SUPABASE AUTHENTICATION (JSONB Multi-Module Upgrade) ---
 window.handleAdminLogin = async function () {
     var id = document.getElementById('admin-id').value.trim().toLowerCase();
     var pass = document.getElementById('admin-pass').value;
@@ -358,14 +330,14 @@ window.handleAdminLogin = async function () {
             .or(`username.eq.${id},mail_id.eq.${id}`)
             .maybeSingle();
 
-        document.getElementById('btn-login').innerText = "Sign In";
-
         if (error || !userData) {
+            document.getElementById('btn-login').innerText = "Sign In";
             return window.showNotif(errBox, "User not found.", false);
         }
 
         var dbPassword = String(userData.password_hash || '').trim();
         if (dbPassword === "" || dbPassword === "undefined") {
+            document.getElementById('btn-login').innerText = "Sign In";
             window.openForgotPasswordView();
             document.getElementById('otp-step-1').classList.add('hidden');
             document.getElementById('otp-step-2').classList.remove('hidden');
@@ -376,36 +348,46 @@ window.handleAdminLogin = async function () {
         }
 
         if (dbPassword === inputHash) {
-            var rowRole = String(userData.role || '').trim();
-            var rawTabs = ROLE_PERMISSIONS[rowRole] || [];
+            var appRoles = userData.app_roles || {};
+            var adminRolesArray = appRoles['ADMIN'] || [];
+
+            if (adminRolesArray.length === 0) {
+                document.getElementById('btn-login').innerText = "Sign In";
+                return window.showNotif(errBox, "Access Denied: No Admin Portal roles assigned.", false);
+            }
+
+            const { data: perms } = await supabase1
+                .from('sys_role_permissions')
+                .select('page_id, can_edit')
+                .eq('module_name', 'ADMIN')
+                .in('role_name', adminRolesArray);
+
             var allowedTabs = [];
             var readOnlyTabs = [];
+            var isSuper = adminRolesArray.includes("Super Admin");
 
-            if (rawTabs.includes("ALL")) {
+            if (isSuper) {
                 allowedTabs = ["ALL"];
             } else {
-                for (var t = 0; t < rawTabs.length; t++) {
-                    var tabItem = rawTabs[t];
-                    if (tabItem.indexOf(":view") > -1) {
-                        var baseName = tabItem.split(":")[0];
-                        allowedTabs.push(baseName);
-                        readOnlyTabs.push(baseName);
-                    } else {
-                        allowedTabs.push(tabItem);
-                    }
-                }
+                (perms || []).forEach(p => {
+                    if (!allowedTabs.includes(p.page_id)) allowedTabs.push(p.page_id);
+                    if (!p.can_edit && !readOnlyTabs.includes(p.page_id)) readOnlyTabs.push(p.page_id);
+                    if (p.can_edit) readOnlyTabs = readOnlyTabs.filter(id => id !== p.page_id);
+                });
             }
 
             window.activeAdminSession = {
                 username: userData.username,
-                role: rowRole,
+                roles: adminRolesArray,
                 mailid: userData.mail_id,
                 allowedTabs: allowedTabs,
                 readOnlyTabs: readOnlyTabs
             };
+            
             localStorage.setItem('wowdrops_admin_session_payload', JSON.stringify(window.activeAdminSession));
             window.assertWorkspaceDeployment();
         } else {
+            document.getElementById('btn-login').innerText = "Sign In";
             window.showNotif(errBox, "Invalid Password.", false);
         }
     } catch (err) {
@@ -413,7 +395,6 @@ window.handleAdminLogin = async function () {
         window.showNotif(errBox, "Login error: " + err.message, false);
     }
 };
-
 
 window.requestOTP = async function () {
     var mail = document.getElementById('reset-email').value.trim();
@@ -425,7 +406,6 @@ window.requestOTP = async function () {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiry = new Date(new Date().getTime() + (10 * 60 * 1000)).toISOString();
 
-        // 1. Save the OTP to Supabase
         const { error } = await supabase1
             .from('users')
             .update({ otp: otp, otp_expiry: expiry })
@@ -433,11 +413,10 @@ window.requestOTP = async function () {
 
         if (error) throw error;
 
-        // 2. Ping the GAS Webhook to send the email
         await fetch(GAS_WEBHOOK_URL, {
             method: 'POST',
             body: JSON.stringify({ email: mail, otp: otp }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain prevents CORS preflight errors
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
 
         document.getElementById('btn-otp').innerText = "Send OTP Code";
@@ -493,7 +472,6 @@ window.confirmPasswordReset = async function () {
     }
 };
 
-// Replace "window.onload = function () {" with:
 window.initAdminAuth = function () {
     var storedSession = localStorage.getItem('wowdrops_admin_session_payload');
     if (storedSession) { 

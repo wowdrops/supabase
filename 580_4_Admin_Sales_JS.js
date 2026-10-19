@@ -479,3 +479,5 @@
     html += `</div></div></div>`;
     container.innerHTML = html;
   }
+
+  window.tabActions['sales'] = function(arg) { if (!arg) window.loadSalesData(); };

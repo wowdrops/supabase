@@ -72,7 +72,7 @@ window.parseImgUrl = function (url) {
 };
 
 // --- SUPABASE DATA FETCHING ---
-window.loadDeliveryQCData = async function () {
+window.loadDeliveryQCData = async function (filterArg) {
     window.startQCTimer('Loading');
     document.getElementById('qc-blocks-container').innerHTML = '<div class="text-center p-8 font-bold text-slate-500 animate-pulse">Loading Pending Deliveries...</div>';
     window.selectedBlocks = [];
@@ -171,6 +171,15 @@ window.loadDeliveryQCData = async function () {
 
         window.sortBlocks();
         window.checkTransferReady();
+        
+        // --- NEW: APPLY DASHBOARD PRE-FILTER IF CLICKED ---
+        if (filterArg && ['ALL', 'VERIFIED', 'PENDING'].includes(filterArg.toUpperCase())) {
+            window.setStatusFilter(filterArg.toUpperCase());
+        } else {
+            window.setStatusFilter('ALL'); // Default to showing all
+        }
+        // --------------------------------------------------
+
         window.stopQCTimer('Loaded', false);
 
     } catch (err) {

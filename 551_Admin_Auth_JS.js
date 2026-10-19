@@ -146,7 +146,7 @@ window.tabActions = {
         if(typeof window.resetOrd2Form === 'function') window.resetOrd2Form();
         if(typeof window.loadTranOrdersData === 'function') window.loadTranOrdersData(); 
     },
-    'tran-delivery': function () { if (typeof window.loadDeliveryQCData === 'function') window.loadDeliveryQCData(); },
+    'tran-delivery': function (arg) { if (typeof window.loadDeliveryQCData === 'function') window.loadDeliveryQCData(arg); },
     'tran-escalations': function () { if (typeof window.loadEscalationsData === 'function') window.loadEscalationsData(); },
     'tran-sales-crud': function () { if (typeof window.loadSalesCrudData === 'function') window.loadSalesCrudData(); },
     'tran-pays-crud': function () { if (typeof window.loadPaysCrudData === 'function') window.loadPaysCrudData(); },

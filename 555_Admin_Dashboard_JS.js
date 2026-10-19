@@ -109,22 +109,15 @@ window.loadDashboardData = async function (forceRefresh) {
     var thirtyDaysAgoStr = thirtyDaysAgoDate.toISOString();
 
     const [
-      ordersRes,
-      setupRes,
-      deliveryRes,
-      salesRes,
-      paysRes,
-      outstandingRes,
-      customersRes, // 7. For Customer Overview Dashboard
-      logsRes       // 8. For 30-Day Churn Log
+      ordersRes, setupRes, deliveryRes, salesRes, paysRes, outstandingRes, customersRes, logsRes       
     ] = await Promise.all([
       supa.from('orders').select('cpn_no, ord_d, ord_e, rate, amount, pending_qty, replace_qty'),
       supa.from('setup').select('key, value').in('key', ['PER_DAY_COUNT', 'RESTRICT_QTY', 'MIN_ENTRY_QTY', 'SUPPLY_STATUS']),
-      supa.from('deliveries').select('cpn_no, act_d, act_e, ord_d, rate, amount, delivery_entered_at, door_delivery_link, status, door_qc'),
+      // NEW: Added raw fallback columns act_d_vj, act_d_nvj, default_rate, etc.
+      supa.from('deliveries').select('cpn_no, act_d, act_e, ord_d, rate, default_rate, amount, delivery_entered_at, door_delivery_link, status, door_qc, act_d_vj, act_d_nvj, act_e_vj, act_e_nvj'),
       supa.from('sales').select('cpn_no, del_date, act_d, act_e, amount').lte('del_date', todayStartStr).order('del_date', { ascending: false }).limit(1000),
       supa.from('pays').select('cpn_no, payment_date, amount').lte('payment_date', todayStartStr).order('payment_date', { ascending: false }).limit(1000),
       supa.from('v_customer_outstanding').select('*'),
-      // NEW QUERIES
       supa.from('ac_customers').select('final_status, pay_type, can_deposit, default_rate, created_at, inactive_reason, waiver_request, overdue_waiver'),
       supa.from('crm_dormant_call_logs').select('previous_customer_status, new_customer_status, reason_for_dormancy').gte('created_at', thirtyDaysAgoStr)
     ]);
@@ -173,7 +166,7 @@ window.loadDashboardData = async function (forceRefresh) {
     document.getElementById('dash-ord-rep').innerText = ordRep;
 
     // ----------------------------------------------------
-    // B. LIVE DELIVERY
+    // B. LIVE DELIVERY (Upgraded Math Fallbacks)
     // ----------------------------------------------------
     var delList = deliveryRes.data || [];
     var delCustCount = 0, delActD = 0, delActE = 0, delOrdD = 0, delSalesAmt = 0;
@@ -182,10 +175,13 @@ window.loadDashboardData = async function (forceRefresh) {
     delList.forEach(function (d) {
       if (!d.cpn_no) return;
       delCustCount++;
-      var actD = Number(d.act_d || 0);
-      var actE = Number(d.act_e || 0);
-      var rate = Number(d.rate || 0);
+      
+      // Fallback: If act_d is null, sum the raw driver inputs!
+      var actD = Number(d.act_d) || (Number(d.act_d_vj || 0) + Number(d.act_d_nvj || 0));
+      var actE = Number(d.act_e) || (Number(d.act_e_vj || 0) + Number(d.act_e_nvj || 0));
+      var rate = Number(d.rate) || Number(d.default_rate) || 0;
       var rowAmt = Number(d.amount || 0);
+      
       if (!rowAmt && actD > 0 && rate > 0) rowAmt = actD * rate;
 
       delActD += actD;
@@ -193,7 +189,9 @@ window.loadDashboardData = async function (forceRefresh) {
       delOrdD += Number(d.ord_d || 0);
       delSalesAmt += rowAmt;
 
-      var isDone = !!d.delivery_entered_at || !!d.door_delivery_link || String(d.status || '').toUpperCase() === 'DELIVERED' || d.door_qc === 'PASS';
+      // Ensure robust boolean/string checks for door verification
+      var isDone = !!d.delivery_entered_at || !!d.door_delivery_link || String(d.status || '').toUpperCase() === 'DELIVERED' || String(d.door_qc || '').toUpperCase() === 'PASS' || String(d.door_qc || '').toUpperCase() === 'TRUE' || d.door_qc === true;
+      
       if (isDone) {
         doorsDelivered++;
       } else {

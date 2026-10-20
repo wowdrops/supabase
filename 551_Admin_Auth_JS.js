@@ -2,6 +2,7 @@ window.onerror = function (msg, url, line) { alert("App Error: " + msg + " (Line
 window.windowWidthBabu = 1024;
 window.activeAdminSession = null;
 window.isSidebarOpen = window.innerWidth >= window.windowWidthBabu;
+window._sessionHeartbeatTimer = null;
 
 // Global Data Caches
 window.activeReportData = { delivery: [] };
@@ -38,15 +39,55 @@ window.hasWriteAccess = function (tabName) {
 };
 
 // Browser Crypto SHA-256 Hashing for Supabase
-async function hashPassword(password) {
+window.hashPassword = async function (password) {
     if (!password) return "";
     const msgBuffer = new TextEncoder().encode(String(password).trim());
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+};
+
+// =========================================================
+// SESSION HEARTBEAT (Kicks out INACTIVE users automatically)
+// =========================================================
+window.verifyLiveUserStatus = async function () {
+    if (!window.activeAdminSession || !window.activeAdminSession.username) return true;
+    try {
+        const { data: userData, error } = await window.supabase1
+            .from('users')
+            .select('status, app_roles')
+            .eq('username', window.activeAdminSession.username)
+            .maybeSingle();
+
+        if (error || !userData) return true; // Ignore transient network hiccups
+
+        var currentStatus = String(userData.status || 'ACTIVE').toUpperCase();
+        var appRoles = userData.app_roles || {};
+        var adminRolesArray = appRoles['ADMIN'] || [];
+
+        if (currentStatus !== 'ACTIVE' || adminRolesArray.length === 0) {
+            window.logoutAdmin("Session terminated: Your account has been marked INACTIVE or permissions were revoked.");
+            return false;
+        }
+        return true;
+    } catch (e) {
+        return true;
+    }
+};
+
+window.startSessionHeartbeat = function () {
+    if (window._sessionHeartbeatTimer) clearInterval(window._sessionHeartbeatTimer);
+    // Check live user status every 60 seconds
+    window._sessionHeartbeatTimer = setInterval(function () {
+        window.verifyLiveUserStatus();
+    }, 60000);
+};
 
 window.assertWorkspaceDeployment = async function () {
+    // 1. Verify user is still ACTIVE in Supabase before deploying workspace
+    var isStillActive = await window.verifyLiveUserStatus();
+    if (!isStillActive) return;
+
     var viewAuth = document.getElementById('view-auth');
     var viewWorkspace = document.getElementById('view-workspace');
     var dispAdmin = document.getElementById('disp-admin-name');
@@ -57,7 +98,10 @@ window.assertWorkspaceDeployment = async function () {
         dispAdmin.innerText = "User: " + window.activeAdminSession.username;
     }
 
-    // Wait for the sidebar to finish building dynamically before routing
+    // Start background heartbeat for ghost-session protection
+    window.startSessionHeartbeat();
+
+    // 2. Wait for the sidebar to finish building dynamically before routing
     await window.applyRolePermissions();
     
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
@@ -72,22 +116,27 @@ window.applyRolePermissions = async function () {
     var isSuper = allowed.includes("ALL");
 
     // Fetch the architecture for the ADMIN module
-    const { data: menus } = await window.supabase1.from('sys_menus').select('*').eq('module_name', 'ADMIN').order('sort_order');
-    const { data: pages } = await window.supabase1.from('sys_pages').select('*').eq('module_name', 'ADMIN').eq('show_in_sidebar', true).order('page_title');
+    const [menusRes, pagesRes] = await Promise.all([
+        window.supabase1.from('sys_menus').select('*').eq('module_name', 'ADMIN'),
+        window.supabase1.from('sys_pages').select('*').eq('module_name', 'ADMIN').eq('show_in_sidebar', true)
+    ]);
+
+    var menus = (menusRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.id - b.id);
+    var pages = (pagesRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || (a.page_title || '').localeCompare(b.page_title || ''));
 
     var navContainer = document.querySelector('#app-sidebar nav');
     if (!navContainer) return;
 
     var html = "";
-    var mainMenus = (menus || []).filter(m => !m.parent_menu_id);
+    var mainMenus = menus.filter(m => !m.parent_menu_id);
 
-    mainMenus.forEach(m => {
-        var directPages = (pages || []).filter(p => p.menu_id === m.id && (isSuper || allowed.includes(p.page_id)));
-        var subMenus = (menus || []).filter(sub => sub.parent_menu_id === m.id);
+    mainMenus.forEach((m, index) => {
+        var directPages = pages.filter(p => String(p.menu_id) === String(m.id) && (isSuper || allowed.includes(p.page_id)));
+        var subMenus = menus.filter(sub => String(sub.parent_menu_id) === String(m.id));
         var subMenuHtml = "";
         
         subMenus.forEach(sub => {
-            var subPages = (pages || []).filter(p => p.menu_id === sub.id && (isSuper || allowed.includes(p.page_id)));
+            var subPages = pages.filter(p => String(p.menu_id) === String(sub.id) && (isSuper || allowed.includes(p.page_id)));
             if (subPages.length > 0) {
                 var defaultSubIcon = '<svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
                 subMenuHtml += `
@@ -100,11 +149,16 @@ window.applyRolePermissions = async function () {
                   </div>
                   <div id="sub-menu-${sub.id}" class="hidden">
                     <div class="flex flex-col pl-4 space-y-1">
-                      ${subPages.map(p => `
-                        <button onclick="window.goToReport('${p.page_id}')" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                      ${subPages.map(p => {
+                        var clickAction = p.page_id === 'phonepe-dash'
+                            ? `window.open('https://business.phonepe.com/dashboard', '_blank')`
+                            : `window.goToReport('${p.page_id}')`;
+                        return `
+                        <button onclick="${clickAction}" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                          ${p.icon_svg ? `<span class="shrink-0 flex items-center">${p.icon_svg}</span>` : ''}
                           <span class="truncate">${p.page_title}</span>
-                        </button>
-                      `).join('')}
+                        </button>`;
+                      }).join('')}
                     </div>
                   </div>
                 `;
@@ -112,7 +166,9 @@ window.applyRolePermissions = async function () {
         });
 
         if (directPages.length > 0 || subMenuHtml !== "") {
-            var defaultMainIcon = '<svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM4 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>';
+            var isFirstOpen = index === 0 ? "open" : "";
+            var isFirstRotate = index === 0 ? "rotate-180" : "";
+            var defaultMainIcon = '<svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>';
             html += `
             <div>
               <button onclick="window.toggleAccordion('acc-main-${m.id}', 'icon-main-${m.id}')" class="w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
@@ -120,16 +176,21 @@ window.applyRolePermissions = async function () {
                   ${m.icon_svg || defaultMainIcon}
                   <span class="truncate">${m.menu_label}</span>
                 </div>
-                <svg id="icon-main-${m.id}" class="w-4 h-4 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg id="icon-main-${m.id}" class="w-4 h-4 shrink-0 transition-transform duration-200 ${isFirstRotate}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               </button>
-              <div id="acc-main-${m.id}" class="accordion-content">
+              <div id="acc-main-${m.id}" class="accordion-content ${isFirstOpen}">
                 <div class="overflow-hidden">
                   <div class="flex flex-col pl-6 pr-2 py-1 space-y-1">
-                    ${directPages.map(p => `
-                        <button onclick="window.goToReport('${p.page_id}')" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                    ${directPages.map(p => {
+                        var clickAction = p.page_id === 'phonepe-dash'
+                            ? `window.open('https://business.phonepe.com/dashboard', '_blank')`
+                            : `window.goToReport('${p.page_id}')`;
+                        return `
+                        <button onclick="${clickAction}" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                          ${p.icon_svg ? `<span class="shrink-0 flex items-center">${p.icon_svg}</span>` : ''}
                           <span class="truncate">${p.page_title}</span>
-                        </button>
-                    `).join('')}
+                        </button>`;
+                    }).join('')}
                     ${subMenuHtml}
                   </div>
                 </div>
@@ -146,9 +207,10 @@ window.toggleSidebar = function () { window.isSidebarOpen = !window.isSidebarOpe
 window.toggleSubAccordion = function (contentId, iconId) {
     var content = document.getElementById(contentId);
     var icon = document.getElementById(iconId);
+    if (!content) return;
     var parentContent = content.closest('.accordion-content');
     content.classList.toggle('hidden');
-    icon.classList.toggle('rotate-180');
+    if (icon) icon.classList.toggle('rotate-180');
     if (parentContent) parentContent.style.maxHeight = "none";
 };
 
@@ -255,6 +317,9 @@ window.returnToDashboard = function () {
 // THE NEW DYNAMIC ROUTER
 // =====================================
 window._executeRouting = function (tabName, filterArg) {
+    // Silent background check on route switch to ensure user hasn't been deactivated
+    window.verifyLiveUserStatus();
+
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
     
     if (!allowed.includes('ALL') && !allowed.includes(tabName) && tabName !== 'password') {
@@ -306,15 +371,21 @@ window.backToLoginState = function () {
     document.getElementById('login-err').classList.add('hidden');
 };
 
-window.logoutAdmin = function () {
-    localStorage.removeItem('wowdrops_admin_session_payload'); window.activeAdminSession = null;
-    document.getElementById('view-workspace').classList.add('hidden'); document.getElementById('view-auth').classList.remove('hidden');
-    document.getElementById('auth-forgot').classList.add('hidden'); document.getElementById('auth-login').classList.remove('hidden');
-    document.getElementById('admin-id').value = ''; document.getElementById('admin-pass').value = '';
-    window.showNotif(document.getElementById('login-err'), "Successfully logged out.", true);
+window.logoutAdmin = function (customMsg) {
+    if (window._sessionHeartbeatTimer) clearInterval(window._sessionHeartbeatTimer);
+    localStorage.removeItem('wowdrops_admin_session_payload');
+    window.activeAdminSession = null;
+    document.getElementById('view-workspace').classList.add('hidden');
+    document.getElementById('view-auth').classList.remove('hidden');
+    document.getElementById('auth-forgot').classList.add('hidden');
+    document.getElementById('auth-login').classList.remove('hidden');
+    document.getElementById('admin-id').value = '';
+    document.getElementById('admin-pass').value = '';
+    var isSuccess = !customMsg;
+    window.showNotif(document.getElementById('login-err'), customMsg || "Successfully logged out.", isSuccess);
 };
 
-// --- SUPABASE AUTHENTICATION (JSONB Multi-Module Upgrade) ---
+// --- SUPABASE AUTHENTICATION (JSONB Multi-Module + Status Check) ---
 window.handleAdminLogin = async function () {
     var id = document.getElementById('admin-id').value.trim().toLowerCase();
     var pass = document.getElementById('admin-pass').value;
@@ -323,7 +394,7 @@ window.handleAdminLogin = async function () {
 
     document.getElementById('btn-login').innerText = "Verifying...";
     try {
-        const inputHash = await hashPassword(pass);
+        const inputHash = await window.hashPassword(pass);
         const { data: userData, error } = await supabase1
             .from('users')
             .select('*')
@@ -333,6 +404,12 @@ window.handleAdminLogin = async function () {
         if (error || !userData) {
             document.getElementById('btn-login').innerText = "Sign In";
             return window.showNotif(errBox, "User not found.", false);
+        }
+
+        // 1. Check if user status is ACTIVE
+        if (String(userData.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') {
+            document.getElementById('btn-login').innerText = "Sign In";
+            return window.showNotif(errBox, "Access Denied: Your account is currently INACTIVE.", false);
         }
 
         var dbPassword = String(userData.password_hash || '').trim();
@@ -377,6 +454,7 @@ window.handleAdminLogin = async function () {
             }
 
             window.activeAdminSession = {
+                id: userData.id,
                 username: userData.username,
                 roles: adminRolesArray,
                 mailid: userData.mail_id,
@@ -384,6 +462,7 @@ window.handleAdminLogin = async function () {
                 readOnlyTabs: readOnlyTabs
             };
             
+            document.getElementById('btn-login').innerText = "Sign In";
             localStorage.setItem('wowdrops_admin_session_payload', JSON.stringify(window.activeAdminSession));
             window.assertWorkspaceDeployment();
         } else {
@@ -455,7 +534,7 @@ window.confirmPasswordReset = async function () {
             return window.showOpenNotice ? window.showOpenNotice() : window.showNotif(msgBox, "Invalid OTP code entered.", false);
         }
 
-        const hashedPass = await hashPassword(pass);
+        const hashedPass = await window.hashPassword(pass);
         const { error: updateErr } = await supabase1
             .from('users')
             .update({ password_hash: hashedPass, otp: null, otp_expiry: null })

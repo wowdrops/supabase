@@ -6,8 +6,79 @@ window.rbacState = {
     pages: [],
     permissions: [],
     selectedRoleForMatrix: null,
-    editingUserId: null
+    editingUserId: null,
+    iconPickerTarget: 'menu' // 'menu' or 'page'
 };
+
+// ==========================================
+// BUILT-IN CURATED ICON LIBRARY (44 Icons)
+// ==========================================
+window.RBAC_ICON_LIBRARY = [
+    {
+        category: "Navigation & Layout",
+        icons: [
+            { name: "Dashboard Grid", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>` },
+            { name: "Database / Master", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>` },
+            { name: "Folder", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>` },
+            { name: "Layers / Stack", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>` },
+            { name: "Home", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>` },
+            { name: "Lightning / Quick", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>` },
+            { name: "Globe / Portal", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>` },
+            { name: "Bookmark", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>` }
+        ]
+    },
+    {
+        category: "Operations, Inventory & Delivery",
+        icons: [
+            { name: "Transactions Arrows", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>` },
+            { name: "3D Box / Inventory", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>` },
+            { name: "Delivery Truck", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>` },
+            { name: "Clipboard Check / QC", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>` },
+            { name: "Shopping Cart / Order", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>` },
+            { name: "Map Pin / Route", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>` },
+            { name: "Refresh / Sync", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>` },
+            { name: "Check Circle / Handshake", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>` }
+        ]
+    },
+    {
+        category: "Finance, Sales & Billing",
+        icons: [
+            { name: "Currency Circle", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>` },
+            { name: "Credit Card / PhonePe", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>` },
+            { name: "Cash / Banknotes", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>` },
+            { name: "Receipt / Invoice", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path>` },
+            { name: "Calculator / Ledger", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>` },
+            { name: "Trending Up / Sales", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>` },
+            { name: "Scale / Balance", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>` },
+            { name: "Tag / Pricing", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>` }
+        ]
+    },
+    {
+        category: "Customers, CRM & Support",
+        icons: [
+            { name: "User Group / CRM", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>` },
+            { name: "Users / Customers", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>` },
+            { name: "Phone Call", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>` },
+            { name: "Warning / Escalation", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>` },
+            { name: "Chat / Feedback", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>` },
+            { name: "Clock / Dormant", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>` }
+        ]
+    },
+    {
+        category: "Reports, MIS & Utilities",
+        icons: [
+            { name: "Bar Chart / Reports", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>` },
+            { name: "Pie Chart / Analytics", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>` },
+            { name: "Calendar / Weekly", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>` },
+            { name: "Document Report", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>` },
+            { name: "Cog / Utilities", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>` },
+            { name: "Sliders / Sys Config", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>` },
+            { name: "Bell / Notifications", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>` },
+            { name: "Shield / Security", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>` },
+            { name: "Key / Access", path: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3.25l7.75-7.75A6 6 0 0115 7z"></path>` }
+        ]
+    }
+];
 
 // ==========================================
 // CORE INITIALIZATION & NAVIGATION
@@ -15,7 +86,8 @@ window.rbacState = {
 window.rbacLoadCurrentContext = async function() {
     var moduleSelect = document.getElementById('rbac-module-select');
     window.rbacState.activeModule = moduleSelect ? moduleSelect.value : 'ADMIN';
-    document.getElementById('rbac-modal-module-label').innerText = window.rbacState.activeModule;
+    var modLabel = document.getElementById('rbac-modal-module-label');
+    if (modLabel) modLabel.innerText = window.rbacState.activeModule;
     
     document.getElementById('rbac-loading').classList.remove('hidden');
     
@@ -23,12 +95,11 @@ window.rbacLoadCurrentContext = async function() {
         const supa = window.supabase1;
         const mod = window.rbacState.activeModule;
 
-        // Fetch all architecture data concurrently
         const [usersRes, rolesRes, menusRes, pagesRes, permsRes] = await Promise.all([
             supa.from('users').select('id, username, mail_id, phone, status, app_roles').order('username'),
             supa.from('sys_roles').select('*').eq('module_name', mod).order('role_name'),
-            supa.from('sys_menus').select('*').eq('module_name', mod).order('sort_order'),
-            supa.from('sys_pages').select('*').eq('module_name', mod).order('page_title'),
+            supa.from('sys_menus').select('*').eq('module_name', mod),
+            supa.from('sys_pages').select('*').eq('module_name', mod),
             supa.from('sys_role_permissions').select('*').eq('module_name', mod)
         ]);
 
@@ -37,11 +108,10 @@ window.rbacLoadCurrentContext = async function() {
         
         window.rbacState.users = usersRes.data || [];
         window.rbacState.roles = rolesRes.data || [];
-        window.rbacState.menus = menusRes.data || [];
-        window.rbacState.pages = pagesRes.data || [];
+        window.rbacState.menus = (menusRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.id - b.id);
+        window.rbacState.pages = (pagesRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || (a.page_title || '').localeCompare(b.page_title || ''));
         window.rbacState.permissions = permsRes.data || [];
 
-        // Re-render active views
         window.rbacRenderUsers();
         window.rbacRenderRolesList();
         window.rbacRenderMenuTree();
@@ -67,17 +137,17 @@ window.rbacSwitchTab = function(tabName) {
     document.getElementById('btn-rbac-' + tabName).className = "flex-1 px-4 py-2.5 rounded-xl text-sm font-black bg-white text-indigo-700 shadow-sm transition";
 };
 
-// Auto-run when tab opens
 window.loadSystemAccessMap = function() {
     window.rbacSwitchTab('users');
     window.rbacLoadCurrentContext();
 };
 
 // ==========================================
-// TAB 1: USER MANAGEMENT
+// TAB 1: USER MANAGEMENT & STATUS TOGGLE
 // ==========================================
 window.rbacRenderUsers = function(searchTerm = "") {
     var tbody = document.getElementById('rbac-users-tbody');
+    if (!tbody) return;
     var html = "";
     var mod = window.rbacState.activeModule;
 
@@ -95,21 +165,48 @@ window.rbacRenderUsers = function(searchTerm = "") {
             ? modRoles.map(r => `<span class="bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-lg text-xs border border-indigo-200">${r}</span>`).join(' ')
             : `<span class="text-xs text-slate-400">No roles for ${mod}</span>`;
 
-        var statusBadge = u.status === 'ACTIVE' 
-            ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs border border-emerald-200">ACTIVE</span>`
-            : `<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs border border-red-200">INACTIVE</span>`;
+        var currentStatus = String(u.status || 'ACTIVE').toUpperCase();
+        var statusBadge = currentStatus === 'ACTIVE' 
+            ? `<button onclick="window.rbacToggleUserStatus('${u.id}', 'ACTIVE')" title="Click to mark INACTIVE" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-lg text-xs font-black border border-emerald-300 transition shadow-sm">● ACTIVE</button>`
+            : `<button onclick="window.rbacToggleUserStatus('${u.id}', 'INACTIVE')" title="Click to mark ACTIVE" class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-xs font-black border border-red-300 transition shadow-sm">○ INACTIVE</button>`;
 
         html += `<tr class="hover:bg-slate-50 border-b-4 border-slate-50">
             <td class="px-6 py-4 font-black text-slate-800">${u.username}</td>
             <td class="px-6 py-4"><div class="text-xs text-slate-500">${u.mail_id || '-'}</div><div class="text-xs">${u.phone || '-'}</div></td>
-            <td class="px-6 py-4 flex flex-wrap gap-1">${roleBadges}</td>
+            <td class="px-6 py-4"><div class="flex flex-wrap gap-1">${roleBadges}</div></td>
             <td class="px-6 py-4 text-center">${statusBadge}</td>
             <td class="px-6 py-4 text-right">
-                <button onclick="window.rbacOpenUserModal('${u.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-1.5 rounded-lg text-xs transition">Edit</button>
+                <button onclick="window.rbacOpenUserModal('${u.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-1.5 rounded-lg text-xs font-black transition">Edit</button>
             </td>
         </tr>`;
     }
     tbody.innerHTML = html;
+};
+
+window.rbacToggleUserStatus = async function(userId, currentStatus) {
+    var u = window.rbacState.users.find(x => String(x.id) === String(userId));
+    if (!u) return;
+
+    var nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    if (window.activeAdminSession && u.username === window.activeAdminSession.username && nextStatus === 'INACTIVE') {
+        return alert("Safety Block: You cannot deactivate your own currently logged-in account.");
+    }
+
+    if (!confirm(`Switch user "${u.username}" from ${currentStatus} to ${nextStatus}?`)) return;
+
+    try {
+        document.getElementById('rbac-loading').classList.remove('hidden');
+        const { error } = await window.supabase1
+            .from('users')
+            .update({ status: nextStatus })
+            .eq('id', userId);
+        if (error) throw error;
+
+        await window.rbacLoadCurrentContext();
+    } catch (err) {
+        document.getElementById('rbac-loading').classList.add('hidden');
+        alert("Failed to update user status: " + err.message);
+    }
 };
 
 window.rbacFilterUsers = function() {
@@ -123,11 +220,11 @@ window.rbacOpenUserModal = function(userId) {
     
     document.getElementById('rbac-modal-title').innerText = userId ? "Edit User" : "Create User";
     document.getElementById('rbac-modal-username').value = u.username || "";
+    document.getElementById('rbac-modal-status').value = String(u.status || "ACTIVE").toUpperCase();
     document.getElementById('rbac-modal-email').value = u.mail_id || "";
     document.getElementById('rbac-modal-phone').value = u.phone || "";
-    document.getElementById('rbac-modal-pass').value = ""; // Always blank for security
+    document.getElementById('rbac-modal-pass').value = "";
 
-    // Render Role Checkboxes dynamically based on sys_roles
     var rolesHtml = "";
     var currentModRoles = (u.app_roles || {})[window.rbacState.activeModule] || [];
     window.rbacState.roles.forEach(r => {
@@ -147,29 +244,33 @@ window.rbacSaveUser = async function() {
     var id = window.rbacState.editingUserId;
     var mod = window.rbacState.activeModule;
     var uName = document.getElementById('rbac-modal-username').value.trim();
+    var uStatus = document.getElementById('rbac-modal-status').value;
     var email = document.getElementById('rbac-modal-email').value.trim();
     var phone = document.getElementById('rbac-modal-phone').value.trim();
     var rawPass = document.getElementById('rbac-modal-pass').value.trim();
     
-    // Gather selected roles
     var selectedRoles = Array.from(document.querySelectorAll('.rbac-role-check:checked')).map(cb => cb.value);
 
     if (!uName) return alert("Username is required.");
     if (!id && !rawPass) return alert("Initial password is required for new users.");
 
+    if (window.activeAdminSession && uName === window.activeAdminSession.username && uStatus === 'INACTIVE') {
+        return alert("Safety Block: You cannot mark your own active account as INACTIVE.");
+    }
+
     try {
         document.getElementById('rbac-loading').classList.remove('hidden');
 
-        // Fetch existing app_roles if editing, else empty object
         var appRoles = {};
         if (id) {
             var existing = window.rbacState.users.find(x => String(x.id) === String(id));
-            appRoles = existing.app_roles || {};
+            appRoles = (existing && existing.app_roles) ? JSON.parse(JSON.stringify(existing.app_roles)) : {};
         }
-        appRoles[mod] = selectedRoles; // Update JSONB for active module
+        appRoles[mod] = selectedRoles;
 
         var payload = {
             username: uName,
+            status: uStatus,
             mail_id: email,
             phone: phone,
             app_roles: appRoles
@@ -183,32 +284,18 @@ window.rbacSaveUser = async function() {
             const { error } = await supa.from('users').update(payload).eq('id', id);
             if (error) throw error;
         } else {
-            payload.status = 'ACTIVE';
             const { error } = await supa.from('users').insert([payload]);
             if (error) throw error;
         }
 
         document.getElementById('rbac-user-modal').classList.add('hidden');
-        await window.rbacLoadCurrentContext(); // Reload to get fresh IDs and data
+        await window.rbacLoadCurrentContext();
         alert("User saved successfully!");
-
     } catch(err) {
         document.getElementById('rbac-loading').classList.add('hidden');
         alert("Error saving user: " + err.message);
     }
 };
-
-// Browser Natively Hash Passwords (fallback duplicate if not loaded yet)
-if (!window.hashPassword) {
-    window.hashPassword = async function(password) {
-        if (!password) return "";
-        const msgBuffer = new TextEncoder().encode(String(password).trim());
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    };
-}
-
 
 // ==========================================
 // TAB 2: ROLE & PERMISSION MATRIX
@@ -233,6 +320,7 @@ window.rbacPromptNewRole = async function() {
 
 window.rbacRenderRolesList = function() {
     var list = document.getElementById('rbac-roles-list');
+    if (!list) return;
     var html = "";
     window.rbacState.roles.forEach(r => {
         var isActive = window.rbacState.selectedRoleForMatrix === r.role_name ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-700 hover:bg-indigo-50";
@@ -244,7 +332,7 @@ window.rbacRenderRolesList = function() {
 window.rbacSelectRole = function(roleName) {
     window.rbacState.selectedRoleForMatrix = roleName;
     document.getElementById('rbac-active-role-title').innerText = roleName + " Permissions";
-    window.rbacRenderRolesList(); // update active state colors
+    window.rbacRenderRolesList();
     
     var container = document.getElementById('rbac-matrix-container');
     var modPages = window.rbacState.pages;
@@ -260,13 +348,14 @@ window.rbacSelectRole = function(roleName) {
         </thead>
         <tbody class="divide-y divide-slate-100 text-sm font-bold text-slate-700">`;
 
-    // Group by Menu for cleaner UI
     var noMenuPages = modPages.filter(p => !p.menu_id);
-    html += window._buildMatrixRows("Uncategorized Pages", noMenuPages, rolePerms);
+    if (noMenuPages.length > 0) {
+        html += window._buildMatrixRows("Uncategorized / Hidden Pages", noMenuPages, rolePerms);
+    }
 
     window.rbacState.menus.forEach(m => {
-        var pgs = modPages.filter(p => p.menu_id === m.id);
-        if(pgs.length > 0) html += window._buildMatrixRows(m.menu_label, pgs, rolePerms);
+        var pgs = modPages.filter(p => String(p.menu_id) === String(m.id));
+        if (pgs.length > 0) html += window._buildMatrixRows(m.menu_label, pgs, rolePerms);
     });
 
     html += `</tbody></table>`;
@@ -274,7 +363,7 @@ window.rbacSelectRole = function(roleName) {
 };
 
 window._buildMatrixRows = function(groupName, pagesArray, rolePerms) {
-    var html = `<tr class="bg-slate-100/50"><td colspan="3" class="p-2 pl-4 text-xs font-black text-indigo-400 uppercase tracking-widest">${groupName}</td></tr>`;
+    var html = `<tr class="bg-slate-100/50"><td colspan="3" class="p-2 pl-4 text-xs font-black text-indigo-500 uppercase tracking-widest">${groupName}</td></tr>`;
     pagesArray.forEach(p => {
         var perm = rolePerms.find(x => x.page_id === p.page_id);
         var hasAccess = perm ? "checked" : "";
@@ -296,7 +385,6 @@ window.rbacSavePermissions = async function() {
 
     document.getElementById('rbac-loading').classList.remove('hidden');
     
-    // Gather all checked rows
     var payload = [];
     var rows = document.querySelectorAll('.rbac-access-cb:checked');
     rows.forEach(cb => {
@@ -312,21 +400,20 @@ window.rbacSavePermissions = async function() {
 
     try {
         var supa = window.supabase1;
-        // 1. Wipe existing permissions for this role + module
         const { error: delErr } = await supa.from('sys_role_permissions')
             .delete()
             .eq('role_name', rName)
             .eq('module_name', mod);
         if (delErr) throw delErr;
 
-        // 2. Insert new ones
         if (payload.length > 0) {
             const { error: insErr } = await supa.from('sys_role_permissions').insert(payload);
             if (insErr) throw insErr;
         }
 
         await window.rbacLoadCurrentContext();
-        window.rbacSelectRole(rName); // Re-render matrix
+        window.rbacSelectRole(rName);
+        if (typeof window.applyRolePermissions === 'function') await window.applyRolePermissions();
         alert("Permissions saved successfully!");
     } catch(err) {
         document.getElementById('rbac-loading').classList.add('hidden');
@@ -335,41 +422,71 @@ window.rbacSavePermissions = async function() {
 };
 
 // ==========================================
-// TAB 3: MENU & PAGE BUILDER
+// TAB 3: MENU & PAGE BUILDER (FULL CRUD)
 // ==========================================
 window.rbacRenderMenuTree = function() {
     var container = document.getElementById('rbac-tree-container');
+    if (!container) return;
     var html = "";
-    var menus = window.rbacState.menus;
-    var pages = window.rbacState.pages;
+    var menus = window.rbacState.menus || [];
+    var pages = window.rbacState.pages || [];
 
     var mainMenus = menus.filter(m => !m.parent_menu_id);
-    
+    if (mainMenus.length === 0 && pages.length === 0) {
+        container.innerHTML = `<p class="text-sm font-bold text-slate-400 text-center py-6">No menus or pages registered for ${window.rbacState.activeModule} yet.</p>`;
+        return;
+    }
+
     mainMenus.forEach(m => {
-        html += `<div class="bg-white border-2 border-slate-200 rounded-xl p-4 shadow-sm mb-3">`;
-        html += `<div class="font-black text-slate-800 text-lg flex items-center gap-2"><svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg> ${m.menu_label}</div>`;
+        var defaultMainIcon = `<svg class="w-5 h-5 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`;
+        html += `<div class="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm mb-3">`;
         
-        // Find submenus
+        // Main Menu Header Row with Sort Badge + Edit/Delete
+        html += `<div class="flex items-center justify-between gap-2">
+            <div class="font-black text-slate-800 text-base flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center shrink-0">${m.icon_svg || defaultMainIcon}</span>
+                <span>${m.menu_label}</span>
+                <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-md border border-slate-200">Order: ${m.sort_order ?? 0}</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <button onclick="window.rbacEditMenu('${m.id}')" title="Edit Menu" class="p-1.5 text-xs bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700 rounded-lg transition">✏️</button>
+                <button onclick="window.rbacDeleteMenu('${m.id}')" title="Delete Empty Menu" class="p-1.5 text-xs bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-700 rounded-lg transition">🗑️</button>
+            </div>
+        </div>`;
+        
+        // Direct Pages under Main Menu
+        html += window._buildPageListForMenu(m.id, pages, "pl-4 mt-2 ml-3 border-l-2 border-slate-200");
+
+        // Submenus under Main Menu
         var subMenus = menus.filter(sub => String(sub.parent_menu_id) === String(m.id));
-        if(subMenus.length > 0) {
-            html += `<div class="pl-6 mt-2 space-y-2 border-l-2 border-indigo-100 ml-2">`;
+        if (subMenus.length > 0) {
+            html += `<div class="pl-5 mt-3 space-y-2 border-l-2 border-indigo-100 ml-3">`;
             subMenus.forEach(sub => {
-                html += `<div class="font-bold text-slate-600 text-sm flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg> ${sub.menu_label}</div>`;
-                html += window._buildPageListForMenu(sub.id, pages);
+                var defaultSubIcon = `<svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
+                html += `<div class="flex items-center justify-between gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <div class="font-bold text-slate-700 text-xs flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-md bg-slate-900 flex items-center justify-center shrink-0">${sub.icon_svg || defaultSubIcon}</span>
+                        <span class="uppercase tracking-wide">${sub.menu_label}</span>
+                        <span class="bg-white text-slate-400 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200">Order: ${sub.sort_order ?? 0}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="window.rbacEditMenu('${sub.id}')" title="Edit Sub-Menu" class="p-1 text-[11px] hover:bg-indigo-100 rounded transition">✏️</button>
+                        <button onclick="window.rbacDeleteMenu('${sub.id}')" title="Delete Empty Sub-Menu" class="p-1 text-[11px] hover:bg-red-100 rounded transition">🗑️</button>
+                    </div>
+                </div>`;
+                html += window._buildPageListForMenu(sub.id, pages, "pl-5 mt-1 ml-3 border-l-2 border-slate-200");
             });
             html += `</div>`;
         }
         
-        // Find direct pages
-        html += window._buildPageListForMenu(m.id, pages, "pl-6 mt-2 ml-2");
         html += `</div>`;
     });
 
     var orphanPages = pages.filter(p => !p.menu_id);
-    if(orphanPages.length > 0) {
-        html += `<div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 shadow-sm mb-3">`;
-        html += `<div class="font-black text-amber-800 text-lg">Hidden / Uncategorized Pages</div>`;
-        html += window._buildPageListForMenu(null, orphanPages, "pl-2 mt-2", true);
+    if (orphanPages.length > 0) {
+        html += `<div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 shadow-sm mb-3">`;
+        html += `<div class="font-black text-amber-800 text-sm uppercase tracking-wider mb-2">Hidden / Unassigned Pages</div>`;
+        html += window._buildPageListForMenu(null, orphanPages, "pl-2 mt-1", true);
         html += `</div>`;
     }
 
@@ -379,11 +496,24 @@ window.rbacRenderMenuTree = function() {
 window._buildPageListForMenu = function(menuId, pagesArray, extraClasses = "pl-6 mt-1 ml-2 border-l-2 border-slate-100", isOrphan = false) {
     var pgs = isOrphan ? pagesArray : pagesArray.filter(p => String(p.menu_id) === String(menuId));
     if (pgs.length === 0) return "";
-    var h = `<ul class="${extraClasses} space-y-1">`;
+    var h = `<ul class="${extraClasses} space-y-1.5">`;
     pgs.forEach(p => {
-        var vis = p.show_in_sidebar ? "" : `<span class="bg-slate-200 text-slate-500 text-[9px] px-1.5 rounded ml-2 uppercase tracking-widest">Hidden</span>`;
-        h += `<li class="text-xs font-bold text-slate-500 flex items-center gap-2 before:content-['-'] before:text-slate-300">
-            ${p.page_title} <span class="font-normal text-slate-400">(${p.page_id})</span> ${vis}
+        var vis = p.show_in_sidebar ? "" : `<span class="bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">Hidden</span>`;
+        var iconThumb = p.icon_svg 
+            ? `<span class="w-5 h-5 rounded bg-slate-900 flex items-center justify-center shrink-0">${p.icon_svg}</span>` 
+            : `<span class="text-slate-300 font-black">•</span>`;
+        h += `<li class="text-xs font-bold text-slate-600 flex items-center justify-between gap-2 bg-slate-50/70 hover:bg-indigo-50/50 px-2.5 py-1.5 rounded-lg border border-slate-100 transition">
+            <div class="flex items-center gap-2 truncate">
+                ${iconThumb}
+                <span class="truncate text-slate-800">${p.page_title}</span>
+                <span class="font-normal text-slate-400 text-[10px]">(${p.page_id})</span>
+                <span class="bg-white text-slate-400 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200">Order: ${p.sort_order ?? 0}</span>
+                ${vis}
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button onclick="window.rbacEditPage('${p.page_id}')" title="Edit / Reassign Page" class="p-1 text-[11px] hover:bg-indigo-100 rounded transition">✏️</button>
+                <button onclick="window.rbacDeletePage('${p.page_id}')" title="Delete Page" class="p-1 text-[11px] hover:bg-red-100 rounded transition">🗑️</button>
+            </div>
         </li>`;
     });
     h += `</ul>`;
@@ -391,79 +521,331 @@ window._buildPageListForMenu = function(menuId, pagesArray, extraClasses = "pl-6
 };
 
 window.rbacPopulateDropdowns = function() {
-    var menus = window.rbacState.menus;
+    var menus = window.rbacState.menus || [];
+    var editingMenuId = document.getElementById('rbac-edit-menu-id') ? document.getElementById('rbac-edit-menu-id').value : "";
     
-    // Parent Menu Dropdown (Only show main menus)
+    // Parent Menu Dropdown (Only top-level menus, excluding the menu currently being edited)
     var parentSelect = document.getElementById('rbac-new-menu-parent');
     var phtml = `<option value="">-- Main Folder (Top Level) --</option>`;
-    menus.filter(m => !m.parent_menu_id).forEach(m => {
+    menus.filter(m => !m.parent_menu_id && String(m.id) !== String(editingMenuId)).forEach(m => {
         phtml += `<option value="${m.id}">${m.menu_label}</option>`;
     });
-    if(parentSelect) parentSelect.innerHTML = phtml;
+    if (parentSelect) parentSelect.innerHTML = phtml;
 
-    // Page Assignment Menu Dropdown (Show all, indented)
+    // Page Assignment Menu Dropdown (Show all main menus and sub-menus)
     var pageSelect = document.getElementById('rbac-new-page-menu');
-    var mhtml = `<option value="">-- Do Not Assign (Hidden) --</option>`;
+    var mhtml = `<option value="">-- Do Not Assign (Hidden / Standalone) --</option>`;
     menus.filter(m => !m.parent_menu_id).forEach(m => {
-        mhtml += `<option value="${m.id}" class="font-bold">${m.menu_label}</option>`;
+        mhtml += `<option value="${m.id}" class="font-bold">📁 ${m.menu_label}</option>`;
         menus.filter(sub => String(sub.parent_menu_id) === String(m.id)).forEach(sub => {
             mhtml += `<option value="${sub.id}">&nbsp;&nbsp;&nbsp;↳ ${sub.menu_label}</option>`;
         });
     });
-    if(pageSelect) pageSelect.innerHTML = mhtml;
+    if (pageSelect) pageSelect.innerHTML = mhtml;
 };
 
-window.rbacCreateMenu = async function() {
+// --- MENU CREATE / EDIT / DELETE ---
+window.rbacEditMenu = function(menuId) {
+    var m = window.rbacState.menus.find(x => String(x.id) === String(menuId));
+    if (!m) return;
+
+    document.getElementById('rbac-edit-menu-id').value = m.id;
+    window.rbacPopulateDropdowns();
+
+    document.getElementById('rbac-new-menu-label').value = m.menu_label || "";
+    document.getElementById('rbac-new-menu-sort').value = m.sort_order ?? 10;
+    document.getElementById('rbac-new-menu-parent').value = m.parent_menu_id || "";
+    document.getElementById('rbac-new-menu-icon').value = m.icon_svg || "";
+    window.rbacUpdateIconPreview('menu');
+
+    document.getElementById('rbac-menu-form-title').innerText = "Edit Menu: " + m.menu_label;
+    document.getElementById('rbac-btn-save-menu').innerText = "Update Menu";
+    document.getElementById('rbac-btn-cancel-menu').classList.remove('hidden');
+    document.getElementById('rbac-menu-form-card').classList.add('ring-4', 'ring-amber-300');
+    document.getElementById('rbac-menu-form-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.rbacResetMenuForm = function() {
+    document.getElementById('rbac-edit-menu-id').value = "";
+    window.rbacPopulateDropdowns();
+    document.getElementById('rbac-new-menu-label').value = "";
+    document.getElementById('rbac-new-menu-sort').value = "10";
+    document.getElementById('rbac-new-menu-parent').value = "";
+    document.getElementById('rbac-new-menu-icon').value = "";
+    window.rbacUpdateIconPreview('menu');
+
+    document.getElementById('rbac-menu-form-title').innerText = "Add Sidebar Menu";
+    document.getElementById('rbac-btn-save-menu').innerText = "Create Menu";
+    document.getElementById('rbac-btn-cancel-menu').classList.add('hidden');
+    document.getElementById('rbac-menu-form-card').classList.remove('ring-4', 'ring-amber-300');
+};
+
+window.rbacSaveMenu = async function() {
+    var editId = document.getElementById('rbac-edit-menu-id').value;
     var label = document.getElementById('rbac-new-menu-label').value.trim();
+    var sortOrder = parseInt(document.getElementById('rbac-new-menu-sort').value, 10);
+    if (isNaN(sortOrder)) sortOrder = 10;
     var parent = document.getElementById('rbac-new-menu-parent').value || null;
+    var iconSvg = document.getElementById('rbac-new-menu-icon').value.trim() || null;
     var mod = window.rbacState.activeModule;
 
     if (!label) return alert("Menu label is required.");
 
+    var payload = {
+        module_name: mod,
+        menu_label: label,
+        sort_order: sortOrder,
+        parent_menu_id: parent ? Number(parent) : null,
+        icon_svg: iconSvg
+    };
+
     document.getElementById('rbac-loading').classList.remove('hidden');
     try {
-        const { error } = await window.supabase1.from('sys_menus').insert([{
-            module_name: mod,
-            menu_label: label,
-            parent_menu_id: parent
-        }]);
-        if (error) throw error;
+        if (editId) {
+            const { error } = await window.supabase1.from('sys_menus').update(payload).eq('id', editId);
+            if (error) throw error;
+        } else {
+            const { error } = await window.supabase1.from('sys_menus').insert([payload]);
+            if (error) throw error;
+        }
         
-        document.getElementById('rbac-new-menu-label').value = "";
+        window.rbacResetMenuForm();
         await window.rbacLoadCurrentContext();
+        if (typeof window.applyRolePermissions === 'function') await window.applyRolePermissions();
     } catch(err) {
         document.getElementById('rbac-loading').classList.add('hidden');
-        alert("Failed to create menu: " + err.message);
+        alert("Failed to save menu: " + err.message);
     }
 };
 
-window.rbacCreatePage = async function() {
-    var pId = document.getElementById('rbac-new-page-id').value.trim().toLowerCase();
-    var title = document.getElementById('rbac-new-page-title').value.trim();
-    var menuId = document.getElementById('rbac-new-page-menu').value || null;
-    var vis = document.getElementById('rbac-new-page-visible').checked;
-    var mod = window.rbacState.activeModule;
+window.rbacDeleteMenu = async function(menuId) {
+    var m = window.rbacState.menus.find(x => String(x.id) === String(menuId));
+    if (!m) return;
 
-    if (!pId || !title) return alert("Page ID and Title are required.");
+    var childMenus = window.rbacState.menus.filter(sub => String(sub.parent_menu_id) === String(menuId));
+    if (childMenus.length > 0) {
+        return alert(`Cannot delete "${m.menu_label}": It still contains ${childMenus.length} sub-menu(s). Please delete or move them first.`);
+    }
+
+    var attachedPages = window.rbacState.pages.filter(p => String(p.menu_id) === String(menuId));
+    if (attachedPages.length > 0) {
+        return alert(`Cannot delete "${m.menu_label}": It still has ${attachedPages.length} page(s) assigned to it. Please reassign or delete those pages first.`);
+    }
+
+    if (!confirm(`Are you sure you want to permanently delete the empty menu "${m.menu_label}"?`)) return;
 
     document.getElementById('rbac-loading').classList.remove('hidden');
     try {
-        const { error } = await window.supabase1.from('sys_pages').insert([{
-            page_id: pId,
-            module_name: mod,
-            page_title: title,
-            menu_id: menuId,
-            show_in_sidebar: vis
-        }]);
+        const { error } = await window.supabase1.from('sys_menus').delete().eq('id', menuId);
         if (error) throw error;
-        
-        document.getElementById('rbac-new-page-id').value = "";
-        document.getElementById('rbac-new-page-title').value = "";
+
+        if (String(document.getElementById('rbac-edit-menu-id').value) === String(menuId)) {
+            window.rbacResetMenuForm();
+        }
         await window.rbacLoadCurrentContext();
+        if (typeof window.applyRolePermissions === 'function') await window.applyRolePermissions();
     } catch(err) {
         document.getElementById('rbac-loading').classList.add('hidden');
-        alert("Failed to register page: " + err.message);
+        alert("Failed to delete menu: " + err.message);
     }
+};
+
+// --- PAGE CREATE / EDIT / REASSIGN / DELETE ---
+window.rbacEditPage = function(pageId) {
+    var p = window.rbacState.pages.find(x => x.page_id === pageId);
+    if (!p) return;
+
+    document.getElementById('rbac-edit-page-mode').value = p.page_id;
+    var idInput = document.getElementById('rbac-new-page-id');
+    idInput.value = p.page_id;
+    idInput.readOnly = true;
+    idInput.classList.add('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
+
+    document.getElementById('rbac-new-page-title').value = p.page_title || "";
+    document.getElementById('rbac-new-page-menu').value = p.menu_id || "";
+    document.getElementById('rbac-new-page-sort').value = p.sort_order ?? 10;
+    document.getElementById('rbac-new-page-icon').value = p.icon_svg || "";
+    document.getElementById('rbac-new-page-visible').checked = p.show_in_sidebar !== false;
+    window.rbacUpdateIconPreview('page');
+
+    document.getElementById('rbac-page-form-title').innerText = "Edit Page: " + p.page_title;
+    document.getElementById('rbac-btn-save-page').innerText = "Update Page";
+    document.getElementById('rbac-btn-cancel-page').classList.remove('hidden');
+    document.getElementById('rbac-page-form-card').classList.add('ring-4', 'ring-amber-300');
+    document.getElementById('rbac-page-form-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.rbacResetPageForm = function() {
+    document.getElementById('rbac-edit-page-mode').value = "";
+    var idInput = document.getElementById('rbac-new-page-id');
+    idInput.value = "";
+    idInput.readOnly = false;
+    idInput.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
+
+    document.getElementById('rbac-new-page-title').value = "";
+    document.getElementById('rbac-new-page-menu').value = "";
+    document.getElementById('rbac-new-page-sort').value = "10";
+    document.getElementById('rbac-new-page-icon').value = "";
+    document.getElementById('rbac-new-page-visible').checked = true;
+    window.rbacUpdateIconPreview('page');
+
+    document.getElementById('rbac-page-form-title').innerText = "Register App Page";
+    document.getElementById('rbac-btn-save-page').innerText = "Register Page";
+    document.getElementById('rbac-btn-cancel-page').classList.add('hidden');
+    document.getElementById('rbac-page-form-card').classList.remove('ring-4', 'ring-amber-300');
+};
+
+window.rbacSavePage = async function() {
+    var editPageId = document.getElementById('rbac-edit-page-mode').value;
+    var pId = document.getElementById('rbac-new-page-id').value.trim().toLowerCase();
+    var title = document.getElementById('rbac-new-page-title').value.trim();
+    var menuId = document.getElementById('rbac-new-page-menu').value || null;
+    var sortOrder = parseInt(document.getElementById('rbac-new-page-sort').value, 10);
+    if (isNaN(sortOrder)) sortOrder = 10;
+    var iconSvg = document.getElementById('rbac-new-page-icon').value.trim() || null;
+    var vis = document.getElementById('rbac-new-page-visible').checked;
+    var mod = window.rbacState.activeModule;
+
+    if (!pId || !title) return alert("Page ID and Display Title are required.");
+
+    var payload = {
+        page_title: title,
+        menu_id: menuId ? Number(menuId) : null,
+        sort_order: sortOrder,
+        icon_svg: iconSvg,
+        show_in_sidebar: vis
+    };
+
+    document.getElementById('rbac-loading').classList.remove('hidden');
+    try {
+        if (editPageId) {
+            const { error } = await window.supabase1
+                .from('sys_pages')
+                .update(payload)
+                .eq('page_id', editPageId)
+                .eq('module_name', mod);
+            if (error) throw error;
+        } else {
+            payload.page_id = pId;
+            payload.module_name = mod;
+            const { error } = await window.supabase1.from('sys_pages').insert([payload]);
+            if (error) throw error;
+        }
+        
+        window.rbacResetPageForm();
+        await window.rbacLoadCurrentContext();
+        if (typeof window.applyRolePermissions === 'function') await window.applyRolePermissions();
+    } catch(err) {
+        document.getElementById('rbac-loading').classList.add('hidden');
+        alert("Failed to save page: " + err.message);
+    }
+};
+
+window.rbacDeletePage = async function(pageId) {
+    var p = window.rbacState.pages.find(x => x.page_id === pageId);
+    if (!p) return;
+    var mod = window.rbacState.activeModule;
+
+    if (!confirm(`Delete page "${p.page_title}" (${p.page_id})? This will also remove its role permissions.`)) return;
+
+    document.getElementById('rbac-loading').classList.remove('hidden');
+    try {
+        await window.supabase1.from('sys_role_permissions').delete().eq('page_id', pageId).eq('module_name', mod);
+        const { error } = await window.supabase1.from('sys_pages').delete().eq('page_id', pageId).eq('module_name', mod);
+        if (error) throw error;
+
+        if (document.getElementById('rbac-edit-page-mode').value === pageId) {
+            window.rbacResetPageForm();
+        }
+        await window.rbacLoadCurrentContext();
+        if (typeof window.applyRolePermissions === 'function') await window.applyRolePermissions();
+    } catch(err) {
+        document.getElementById('rbac-loading').classList.add('hidden');
+        alert("Failed to delete page: " + err.message);
+    }
+};
+
+// ==========================================
+// BUILT-IN ICON PICKER & LIVE PREVIEW LOGIC
+// ==========================================
+window.rbacOpenIconPicker = function(targetType) {
+    window.rbacState.iconPickerTarget = targetType;
+    var sizeSelect = document.getElementById('rbac-icon-size-select');
+    if (sizeSelect) {
+        if (targetType === 'page') {
+            sizeSelect.value = 'w-4 h-4';
+        } else {
+            var hasParent = document.getElementById('rbac-new-menu-parent').value !== "";
+            sizeSelect.value = hasParent ? 'w-3.5 h-3.5' : 'w-5 h-5';
+        }
+    }
+    window.rbacRenderIconPickerGrid();
+    document.getElementById('rbac-icon-picker-modal').classList.remove('hidden');
+};
+
+window.rbacRenderIconPickerGrid = function() {
+    var grid = document.getElementById('rbac-icon-picker-grid');
+    if (!grid) return;
+    var colorClass = document.getElementById('rbac-icon-color-select').value || 'text-indigo-400';
+    var sizeClass = document.getElementById('rbac-icon-size-select').value || 'w-5 h-5';
+
+    var html = "";
+    window.RBAC_ICON_LIBRARY.forEach((group, cIdx) => {
+        html += `<div>
+            <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-200 pb-1">${group.category}</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">`;
+        group.icons.forEach((ic, iIdx) => {
+            var svgCode = `<svg class="${sizeClass} shrink-0 ${colorClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${ic.path}</svg>`;
+            html += `<button type="button" onclick="window.rbacSelectIconFromModal(${cIdx}, ${iIdx})" class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-800 hover:border-indigo-400 transition text-left group shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    ${svgCode}
+                </div>
+                <span class="text-xs font-bold text-slate-300 group-hover:text-white leading-tight">${ic.name}</span>
+            </button>`;
+        });
+        html += `</div></div>`;
+    });
+
+    grid.innerHTML = html;
+};
+
+window.rbacSelectIconFromModal = function(cIdx, iIdx) {
+    var group = window.RBAC_ICON_LIBRARY[cIdx];
+    if (!group || !group.icons[iIdx]) return;
+    var ic = group.icons[iIdx];
+
+    var colorClass = document.getElementById('rbac-icon-color-select').value || 'text-indigo-400';
+    var sizeClass = document.getElementById('rbac-icon-size-select').value || 'w-5 h-5';
+    var fullSvg = `<svg class="${sizeClass} shrink-0 ${colorClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${ic.path}</svg>`;
+
+    var target = window.rbacState.iconPickerTarget;
+    var inputId = target === 'page' ? 'rbac-new-page-icon' : 'rbac-new-menu-icon';
+    document.getElementById(inputId).value = fullSvg;
+    window.rbacUpdateIconPreview(target);
+
+    document.getElementById('rbac-icon-picker-modal').classList.add('hidden');
+};
+
+window.rbacUpdateIconPreview = function(targetType) {
+    var inputId = targetType === 'page' ? 'rbac-new-page-icon' : 'rbac-new-menu-icon';
+    var previewId = targetType === 'page' ? 'rbac-page-icon-preview' : 'rbac-menu-icon-preview';
+    var raw = (document.getElementById(inputId).value || "").trim();
+    var previewBox = document.getElementById(previewId);
+    if (!previewBox) return;
+
+    if (raw && raw.startsWith('<svg') && raw.endsWith('</svg>')) {
+        previewBox.innerHTML = raw;
+    } else if (!raw) {
+        previewBox.innerHTML = `<span class="text-[10px] font-bold text-slate-500">None</span>`;
+    } else {
+        previewBox.innerHTML = `<span class="text-[9px] font-bold text-amber-400">Invalid</span>`;
+    }
+};
+
+window.rbacClearIconField = function(targetType) {
+    var inputId = targetType === 'page' ? 'rbac-new-page-icon' : 'rbac-new-menu-icon';
+    document.getElementById(inputId).value = "";
+    window.rbacUpdateIconPreview(targetType);
 };
 
 window.tabActions['user-access'] = window.loadSystemAccessMap;

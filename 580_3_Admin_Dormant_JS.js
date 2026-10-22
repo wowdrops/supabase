@@ -295,4 +295,14 @@ window.pushDormantListToCRM = async function() {
     }
 };
 
-window.tabActions['dormant'] = window.loadDormantData;
+window.tabActions['dormant'] = function(filterArg) {
+    if (filterArg) {
+        var parts = filterArg.split(',');
+        if (parts.length === 2) {
+            window.loadDormantData(parseInt(parts[0]), parseInt(parts[1]));
+        }
+    } else {
+        // Default range if opened from the sidebar directly
+        window.loadDormantData(7, 10);
+    }
+};

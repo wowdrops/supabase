@@ -188,26 +188,6 @@ window.loadMoreCustomers = function() {
   window.renderCustomerCards();
 };
 
-document.getElementById('scroll-area').addEventListener('scroll', function() {
-  if (document.getElementById('tab-master-customer').classList.contains('hidden')) return;
-  if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
-    if (window.customerDisplayLimit < window.filteredCustomers.length) window.loadMoreCustomers();
-  }
-});
-
-window.toggleScrollLock = function (isLocked) {
-  var scrollArea = document.getElementById('scroll-area');
-  if (scrollArea) {
-    if (isLocked) scrollArea.classList.add('overflow-hidden');
-    else scrollArea.classList.remove('overflow-hidden');
-  }
-};
-
-window.closeModal = function (id) { 
-  document.getElementById(id).classList.add('hidden'); 
-  window.toggleScrollLock(false);
-};
-
 window.openAddCustomerWizard = function () {
   document.getElementById('add-apt').value = ''; document.getElementById('add-blk').value = ''; document.getElementById('add-door').value = '';
   document.getElementById('add-poc1').value = ''; document.getElementById('add-con1').value = '';

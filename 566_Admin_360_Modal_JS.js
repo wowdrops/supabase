@@ -1,259 +1,249 @@
-// =====================================
-  // GLOBAL CUSTOMER 360 MODAL ENGINE
-  // =====================================
-  window.active360TimerInterval = null;
+window.active360TimerInterval = null;
 
-  window.format360Date = function(isoStr) {
-    if (!isoStr) return "-";
-    const d = new Date(isoStr);
-    if (isNaN(d.getTime())) return isoStr;
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
-  };
+window.format360Date = function(isoStr) {
+  if (!isoStr) return "-";
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return isoStr;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return String(d.getDate()).padStart(2, '0') + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+};
 
-  window.openCustomer360 = async function(cpn) {
-    if (!cpn) return;
-    cpn = cpn.trim().toUpperCase();
+window.openCustomer360 = async function(cpn, isInline = false) {
+  if (!cpn) return;
+  cpn = cpn.trim().toUpperCase();
 
-    var modal = document.getElementById('admin-360-modal');
-    if (modal) modal.classList.remove('hidden');
-    var container = document.getElementById('modal-360-content');
+  var targetId = isInline ? 'crm-inline-profile' : 'modal-360-content';
+  var container = document.getElementById(targetId);
+  
+  if (!isInline) {
+      var modal = document.getElementById('admin-360-modal');
+      if (modal) modal.classList.remove('hidden');
+      if (typeof window.toggleScrollLock === 'function') window.toggleScrollLock(true);
+  }
 
-    // Skeletons UI while fetching
-    if (container) {
-      container.innerHTML = `
-        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-32"></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
-          <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-40"></div>
-        </div>
-        <div class="p-6 bg-slate-800/40 border border-slate-800 rounded-2xl animate-pulse h-48 mt-4"></div>
-      `;
-    }
-
-    var startTime = performance.now();
-    if (window.active360TimerInterval) clearInterval(window.active360TimerInterval);
-    window.active360TimerInterval = setInterval(function() {
-      var curr = ((performance.now() - startTime) / 1000).toFixed(2);
-      var badge = document.getElementById('modal-360-timer');
-      if (badge) badge.innerText = curr + "s";
-    }, 50);
-
-    try {
-      // 1. Fetch concurrently from Supabase (Now fetching 'cans' from outstanding view)
-      const [profRes, outRes, ordRes, delRes, salesRes, paysRes, logsRes] = await Promise.all([
-        supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle(),
-        supabase1.from('v_customer_outstanding').select('current_balance, cans').eq('cpn_no', cpn).maybeSingle(),
-        supabase1.from('orders').select('*').eq('cpn_no', cpn).maybeSingle(), 
-        supabase1.from('deliveries').select('*').eq('cpn_no', cpn).order('created_at', {ascending: false}).limit(1).maybeSingle(),
-        supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5),
-        supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5),
-        supabase1.from('ac_automation_logs').select('*').eq('triggered_by', cpn).order('created_at', {ascending: false}).limit(5)
-      ]);
-
-      if (profRes.error) throw profRes.error;
-
-      // 2. Format Profile
-      const pData = profRes.data;
-      const profile = pData ? {
-          name: pData.poc1 || "Unknown", apt: pData.apartment || "-", blk: pData.block || "-", door: pData.door || "-", 
-          phone: pData.con1 || "-", status: pData.final_status || "UNKNOWN", rate: pData.default_rate || 0,
-          canDeposit: pData.can_deposit || 0
-      } : null;
-
-      const liveData = { 
-          outstanding: outRes.data ? (Number(outRes.data.current_balance) || 0) : 0,
-          cansHeld: outRes.data ? (Number(outRes.data.cans) || 0) : 0
-      };
-      
-      // 3. Format Active Order
-      const activeOrder = ordRes.data ? {
-          date: window.format360Date(ordRes.data.order_entered_at || ordRes.data.created_at || ordRes.data.order_date),
-          d: ordRes.data.ord_d || 0,
-          e: ordRes.data.ord_e || 0,
-          p: ordRes.data.pending_qty || 0,
-          r: ordRes.data.replace_qty || 0,
-          amt: ordRes.data.amount || 0,
-          cmt: ordRes.data.order_comment || ""
-      } : null;
-
-      // 4. Format Active Delivery
-      const activeDelivery = delRes.data ? {
-          date: window.format360Date(delRes.data.del_date || delRes.data.order_date),
-          d: delRes.data.ord_d || 0,
-          e: delRes.data.ord_e || 0,
-          p: delRes.data.pending_qty || 0,
-          r: delRes.data.replace_qty || 0,
-          amt: delRes.data.amount || 0,
-          cmt: delRes.data.delivery_comment || delRes.data.order_comment || ""
-      } : null;
-
-      // 5. Format Lists
-      const salesArr = (salesRes.data || []).map(s => ({
-          date: window.format360Date(s.del_date), actD: s.act_d, actE: s.act_e, amt: s.amount
-      }));
-      
-      const paysArr = (paysRes.data || []).map(p => ({
-          date: window.format360Date(p.payment_date), mode: p.mode, amt: p.amount
-      }));
-
-      const logsArr = (logsRes.data || []).map(l => ({
-          date: window.format360Date(l.created_at), status: l.date_range || 'Update', actionBy: l.staff_generated || 'System',
-          prevStatus: "-", newStatus: "-", reason: l.supplier_generated || "-", remark: "-", lastUpdated: window.format360Date(l.created_at)
-      }));
-
-      // Render View
-      clearInterval(window.active360TimerInterval);
-      if (document.getElementById('modal-360-timer')) {
-          document.getElementById('modal-360-timer').innerText = ((performance.now() - startTime) / 1000).toFixed(2) + "s";
-      }
-      
-      renderCustomer360UI(cpn, {profile, liveData}, activeOrder, activeDelivery, {sales: salesArr, pays: paysArr}, logsArr);
-
-    } catch (err) {
-      console.error(err);
-      clearInterval(window.active360TimerInterval);
-      if (container) container.innerHTML = '<p class="text-center text-rose-400 font-bold py-12">Error loading 360 view: ' + err.message + '</p>';
-    }
-  };
-
-  window.closeCustomer360 = function() {
-    if(window.active360TimerInterval) clearInterval(window.active360TimerInterval);
-    var modal = document.getElementById('admin-360-modal');
-    if (modal) modal.classList.add('hidden');
-  };
-
-  function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSalesPays, historyLogs) {
-    var p = resProfile.profile;
-    var container = document.getElementById('modal-360-content');
-    
-    if (!p) {
-      container.innerHTML = '<p class="text-center text-rose-400 font-bold py-12">Customer profile missing for CPN: ' + cpn + '</p>';
-      return;
-    }
-
-    var html = `
-      <div class="bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div class="flex items-center gap-3">
-             <span class="bg-indigo-900 text-indigo-300 font-black px-2.5 py-1 rounded-md text-xs">${cpn}</span>
-             <span class="bg-slate-900 border border-slate-700 text-slate-300 font-black px-2.5 py-1 rounded-md text-xs uppercase tracking-widest">${p.status}</span>
-          </div>
-          <h4 class="text-2xl font-black text-white mt-2">${p.name}</h4>
-          <p class="text-sm font-bold text-slate-400 mt-0.5">${p.apt} &bull; Block ${p.blk} &bull; Door ${p.door} &bull; Ph: ${p.phone}</p>
-        </div>
-        <div class="flex flex-wrap gap-3 md:gap-4 justify-start md:justify-end">
-          <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-right">
-            <p class="text-[10px] uppercase font-black text-slate-500">Cans Held</p>
-            <p class="text-lg font-black text-sky-400">${resProfile.liveData.cansHeld}</p>
-          </div>
-          <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-right">
-            <p class="text-[10px] uppercase font-black text-slate-500">Can Deposit</p>
-            <p class="text-lg font-black ${p.canDeposit > 0 ? 'text-rose-600' : 'text-emerald-600'}">₹${p.canDeposit.toLocaleString('en-IN')}</p>
-          </div>
-          <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-right">
-            <p class="text-[10px] uppercase font-black text-slate-500">Outstanding</p>
-            <p class="text-lg font-black ${resProfile.liveData.outstanding > 0 ? 'text-rose-400' : 'text-emerald-400'}">₹${resProfile.liveData.outstanding.toLocaleString('en-IN')}</p>
-          </div>
-          <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-right">
-            <p class="text-[10px] uppercase font-black text-slate-500">Default Rate</p>
-            <p class="text-lg font-black text-indigo-300">₹${p.rate}</p>
-          </div>
-        </div>
+  if (container) {
+    container.innerHTML = `
+      <div class="p-6 bg-slate-800/20 border border-slate-200 dark:border-slate-800 rounded-2xl animate-pulse h-32"></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="p-6 bg-slate-800/20 border border-slate-200 dark:border-slate-800 rounded-2xl animate-pulse h-40"></div>
+        <div class="p-6 bg-slate-800/20 border border-slate-200 dark:border-slate-800 rounded-2xl animate-pulse h-40"></div>
       </div>
     `;
-
-    // --- ACTIVE ORDER BANNER ---
-    if (activeOrder) {
-      let cmtHtml = activeOrder.cmt ? `<p class="mt-2 text-xs font-bold text-indigo-300 bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/20 w-full truncate" title="${activeOrder.cmt}">💬 ${activeOrder.cmt}</p>` : '';
-      
-      html += `
-      <div class="mt-4 bg-gradient-to-r from-indigo-900/60 to-slate-800/60 border border-indigo-500/40 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-inner">
-        <div class="w-full md:w-auto">
-           <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Pending Order</p>
-           <p class="text-sm font-bold text-slate-300">Placed: ${activeOrder.date}</p>
-           ${cmtHtml}
-        </div>
-        <div class="flex gap-3 md:gap-5 text-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/50 w-full md:w-auto overflow-x-auto">
-           <div class="px-2"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD D</p><p class="font-black text-xl text-indigo-300">${activeOrder.d}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD E</p><p class="font-black text-xl text-slate-300">${activeOrder.e}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">PEND</p><p class="font-black text-xl text-amber-500">${activeOrder.p}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">REP</p><p class="font-black text-xl text-rose-400">${activeOrder.r}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Est Amt</p><p class="font-black text-xl text-emerald-400">₹${activeOrder.amt}</p></div>
-        </div>
-      </div>
-      `;
-    }
-
-    // --- OUT FOR DELIVERY BANNER ---
-    if (activeDelivery) {
-      let cmtHtml = activeDelivery.cmt ? `<p class="mt-2 text-xs font-bold text-sky-300 bg-sky-950/50 p-2 rounded-lg border border-sky-500/20 w-full truncate" title="${activeDelivery.cmt}">💬 ${activeDelivery.cmt}</p>` : '';
-      
-      html += `
-      <div class="mt-4 bg-gradient-to-r from-sky-900/60 to-slate-800/60 border border-sky-500/40 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-inner">
-        <div class="w-full md:w-auto">
-           <p class="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> Out For Delivery</p>
-           <p class="text-sm font-bold text-slate-300">Scheduled: ${activeDelivery.date}</p>
-           ${cmtHtml}
-        </div>
-        <div class="flex gap-3 md:gap-5 text-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/50 w-full md:w-auto overflow-x-auto">
-           <div class="px-2"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD D</p><p class="font-black text-xl text-sky-300">${activeDelivery.d}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ORD E</p><p class="font-black text-xl text-slate-300">${activeDelivery.e}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">PEND</p><p class="font-black text-xl text-amber-500">${activeDelivery.p}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">REP</p><p class="font-black text-xl text-rose-400">${activeDelivery.r}</p></div>
-           <div class="px-2 border-l border-slate-700"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Est Amt</p><p class="font-black text-xl text-emerald-400">₹${activeDelivery.amt}</p></div>
-        </div>
-      </div>
-      `;
-    }
-
-    html += `
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
-          <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">Recent Deliveries (Sales)</h5>
-          <div class="space-y-2">`;
-    
-    if (resSalesPays.sales.length === 0) html += '<p class="text-xs text-slate-500 italic">No recent sales records.</p>';
-    else {
-      resSalesPays.sales.forEach(s => {
-        html += `<div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80 text-xs">
-          <div><span class="font-black text-slate-200">${s.date}</span> <span class="text-slate-400 ml-2">(${s.actD} Full / ${s.actE} Emp)</span></div>
-          <span class="font-black text-emerald-400">₹${s.amt}</span>
-        </div>`;
-      });
-    }
-
-    html += `</div></div>
-        <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl">
-          <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">Payment History</h5>
-          <div class="space-y-2">`;
-
-    if (resSalesPays.pays.length === 0) html += '<p class="text-xs text-slate-500 italic">No recent payments recorded.</p>';
-    else {
-      resSalesPays.pays.forEach(pay => {
-        html += `<div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80 text-xs">
-          <div><span class="font-black text-slate-200">${pay.date}</span> <span class="bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-indigo-300 uppercase ml-2">${pay.mode}</span></div>
-          <span class="font-black text-emerald-400">₹${pay.amt}</span>
-        </div>`;
-      });
-    }
-
-    html += `</div></div></div>
-      <div class="bg-slate-800/40 border border-slate-800 p-4 rounded-2xl mt-4">
-          <h5 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-800 pb-2">CRM Interaction Logs</h5>
-          <div class="space-y-2 max-h-40 overflow-y-auto hide-scrollbar">`;
-
-    if (historyLogs.length === 0) html += '<p class="text-xs text-slate-500 italic">No CRM interactions logged.</p>';
-    else {
-      historyLogs.forEach(log => {
-        html += `<div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 text-xs mb-2">
-            <div class="flex justify-between border-b border-slate-800 pb-2 mb-2"><span class="font-black text-slate-300">${log.date} - ${log.status}</span><span class="font-bold text-slate-500">${log.lastUpdated} by ${log.actionBy}</span></div>
-            <div class="grid grid-cols-2 gap-3 mb-2"><p><span class="text-slate-500 font-bold uppercase text-[9px] tracking-widest">Change</span> <br><span class="font-black text-indigo-400">${log.prevStatus} &rarr; ${log.newStatus}</span></p><p><span class="text-slate-500 font-bold uppercase text-[9px] tracking-widest">Reason</span> <br><span class="font-bold text-slate-300">${log.reason}</span></p></div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/50"><p class="font-medium text-slate-400">${log.remark}</p></div>
-        </div>`;
-      });
-    }
-
-    html += `</div></div>`;
-    container.innerHTML = html;
   }
+
+  var startTime = performance.now();
+  if (!isInline) {
+      if (window.active360TimerInterval) clearInterval(window.active360TimerInterval);
+      window.active360TimerInterval = setInterval(function() {
+        var badge = document.getElementById('modal-360-timer');
+        if (badge) badge.innerText = ((performance.now() - startTime) / 1000).toFixed(2) + "s";
+      }, 50);
+  }
+
+  try {
+    let profRes = await supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle();
+    if (profRes.error || !profRes.data) throw new Error("Customer not found in Master DB");
+    
+    let outRes = await supabase1.from('v_customer_outstanding').select('current_balance, cans').eq('cpn_no', cpn).maybeSingle();
+    let ordRes = await supabase1.from('orders').select('*').eq('cpn_no', cpn).maybeSingle();
+    let delRes = await supabase1.from('deliveries').select('*').eq('cpn_no', cpn).order('created_at', {ascending: false}).limit(1).maybeSingle();
+    let salesRes = await supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5);
+    let paysRes = await supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5);
+    let logsRes = await supabase1.from('crm_dormant_call_logs').select('*').eq('cpn_no', cpn).order('last_updated', {ascending: false}).limit(5);
+
+    const pData = profRes.data;
+    const profile = {
+        name: pData.poc1 || "Unknown", apt: pData.apartment || "-", blk: pData.block || "-", door: pData.door || "-", 
+        phone: pData.con1 || "-", status: pData.final_status || "UNKNOWN", rate: pData.default_rate || 0, canDeposit: pData.can_deposit || 0
+    };
+
+    if (isInline) {
+        var hiddenCpn = document.getElementById('crm-hidden-cpn');
+        var hiddenStatus = document.getElementById('crm-hidden-prev-status');
+        var dropdownStatus = document.getElementById('crm-cust-status');
+        if (hiddenCpn) hiddenCpn.value = cpn;
+        if (hiddenStatus) hiddenStatus.value = profile.status;
+        if (dropdownStatus) dropdownStatus.value = profile.status;
+    }
+
+    const liveData = { 
+        outstanding: outRes.data ? (Number(outRes.data.current_balance) || 0) : 0, 
+        cansHeld: outRes.data ? (Number(outRes.data.cans) || 0) : 0 
+    };
+    
+    const activeOrder = (ordRes && ordRes.data) ? {
+        date: window.format360Date(ordRes.data.order_entered_at || ordRes.data.created_at),
+        d: ordRes.data.ord_d || 0, e: ordRes.data.ord_e || 0, p: ordRes.data.pending_qty || 0,
+        r: ordRes.data.replace_qty || 0, amt: ordRes.data.amount || 0, cmt: ordRes.data.order_comment || ""
+    } : null;
+
+    const activeDelivery = (delRes && delRes.data && delRes.data.status === 'NEW') ? {
+        date: window.format360Date(delRes.data.del_date || delRes.data.order_date || delRes.data.created_at),
+        d: delRes.data.ord_d || 0, e: delRes.data.ord_e || 0, p: delRes.data.pending_qty || 0,
+        r: delRes.data.replace_qty || 0, amt: (Number(delRes.data.ord_d) || 0) * (Number(delRes.data.rate) || 0), cmt: delRes.data.delivery_comment || delRes.data.order_comment || ""
+    } : null;
+
+    const salesArr = (salesRes.data || []).map(s => ({ date: window.format360Date(s.del_date), actD: s.act_d, actE: s.act_e, amt: s.amount }));
+    const paysArr = (paysRes.data || []).map(p => ({ date: window.format360Date(p.payment_date), mode: p.mode, amt: p.amount }));
+
+    const logsArr = (logsRes.data || []).map(l => ({
+        date: window.format360Date(l.last_updated), status: l.call_status || 'Pending', actionBy: l.action_taken_by || 'System',
+        prevStatus: l.previous_customer_status || "-", newStatus: l.new_customer_status || "-", reason: l.reason_for_dormancy || "-", remark: l.telecaller_feedback || "-", lastUpdated: window.format360Date(l.last_updated)
+    }));
+
+    if (!isInline) {
+        clearInterval(window.active360TimerInterval);
+        var badge = document.getElementById('modal-360-timer');
+        if (badge) badge.innerText = ((performance.now() - startTime) / 1000).toFixed(2) + "s";
+    }
+    
+    renderCustomer360UI(cpn, {profile, liveData}, activeOrder, activeDelivery, {sales: salesArr, pays: paysArr}, logsArr, targetId, isInline);
+    
+    // IMPORTANT: Return activeOrder so external workflows (like CRM) can react
+    return { activeOrder: activeOrder };
+
+  } catch (err) {
+    console.error(err);
+    if (!isInline) clearInterval(window.active360TimerInterval);
+    if (window.showToast) window.showToast("360 Fetch Error: " + err.message, "error");
+    if (container) container.innerHTML = '<p class="text-center text-rose-500 font-bold py-12">Failed to load profile data: ' + err.message + '</p>';
+  }
+};
+
+function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSalesPays, historyLogs, targetId, isInline) {
+  var p = resProfile.profile;
+  var container = document.getElementById(targetId);
+  
+  if (!p) {
+    container.innerHTML = '<p class="text-center text-rose-500 font-bold py-12">Customer profile missing.</p>';
+    return;
+  }
+
+  const t_card = isInline ? "bg-white border-slate-200" : "bg-slate-800/60 border-slate-700/60";
+  const t_text = isInline ? "text-slate-800" : "text-white";
+  const t_sub = isInline ? "text-slate-500" : "text-slate-400";
+  const t_box = isInline ? "bg-slate-50 border-slate-200" : "bg-slate-900/80 border-slate-800";
+  const t_lbl = isInline ? "text-slate-400" : "text-slate-500";
+
+  var html = `
+    <div class="${t_card} border p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+      <div>
+        <div class="flex items-center gap-3">
+           <span class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 font-black px-2.5 py-1 rounded-md text-xs">${cpn}</span>
+           <span class="bg-slate-100 border border-slate-300 text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 font-black px-2.5 py-1 rounded-md text-xs uppercase tracking-widest">${p.status}</span>
+        </div>
+        <h4 class="text-xl font-black ${t_text} mt-2">${p.name}</h4>
+        <p class="text-xs font-bold ${t_sub} mt-0.5">${p.apt} &bull; Block ${p.blk} &bull; Door ${p.door} &bull; Ph: ${p.phone}</p>
+      </div>
+      <div class="flex flex-wrap gap-2 md:gap-4 justify-start md:justify-end">
+        <div class="${t_box} border p-2.5 rounded-xl text-right">
+          <p class="text-[9px] uppercase font-black ${t_lbl}">Cans Held</p>
+          <p class="text-base font-black text-sky-500">${resProfile.liveData.cansHeld}</p>
+        </div>
+        <div class="${t_box} border p-2.5 rounded-xl text-right">
+          <p class="text-[9px] uppercase font-black ${t_lbl}">Can Deposit</p>
+          <p class="text-base font-black ${p.canDeposit > 0 ? 'text-rose-500' : 'text-emerald-500'}">₹${p.canDeposit.toLocaleString('en-IN')}</p>
+        </div>
+        <div class="${t_box} border p-2.5 rounded-xl text-right">
+          <p class="text-[9px] uppercase font-black ${t_lbl}">Outstanding</p>
+          <p class="text-base font-black ${resProfile.liveData.outstanding > 0 ? 'text-rose-500' : 'text-emerald-500'}">₹${resProfile.liveData.outstanding.toLocaleString('en-IN')}</p>
+        </div>
+        <div class="${t_box} border p-2.5 rounded-xl text-right">
+          <p class="text-[9px] uppercase font-black ${t_lbl}">Rate</p>
+          <p class="text-base font-black text-indigo-500">₹${p.rate}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (activeOrder) {
+    let cmtHtml = activeOrder.cmt ? `<p class="mt-2 text-xs font-bold text-indigo-500 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 p-2 rounded-lg border border-indigo-200 dark:border-indigo-500/20 w-full truncate" title="${activeOrder.cmt}">💬 ${activeOrder.cmt}</p>` : '';    
+
+    // REMOVED THE BUTTON INJECTION ENTIRELY FROM HERE
+    html += `
+    <div class="mt-4 bg-gradient-to-r ${isInline ? 'from-indigo-50 to-white border-indigo-200' : 'from-indigo-900/60 to-slate-800/60 border-indigo-500/40'} border p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+      <div class="w-full md:w-auto">
+         <p class="text-[10px] font-black ${isInline ? 'text-indigo-600' : 'text-indigo-400'} uppercase tracking-widest mb-1 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Pending Order</p>
+         <p class="text-sm font-bold ${isInline ? 'text-slate-700' : 'text-slate-300'}">Placed: ${activeOrder.date}</p>
+         ${cmtHtml}
+      </div>
+      <div class="flex gap-3 md:gap-5 text-center ${isInline ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-slate-700/50'} p-2.5 rounded-xl border w-full md:w-auto overflow-x-auto">
+         <div class="px-2"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">ORD D</p><p class="font-black text-xl text-sky-500">${activeOrder.d}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">ORD E</p><p class="font-black text-xl ${t_text}">${activeOrder.e}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">PEND</p><p class="font-black text-xl text-amber-500">${activeOrder.p}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">REP</p><p class="font-black text-xl text-rose-500">${activeOrder.r}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">Est Amt</p><p class="font-black text-xl text-emerald-500">₹${activeOrder.amt}</p></div>
+      </div>
+    </div>`;
+  }
+
+  if (activeDelivery) {
+    let cmtHtml = activeDelivery.cmt ? `<p class="mt-2 text-xs font-bold text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/50 p-2 rounded-lg border border-sky-200 dark:border-sky-500/20 w-full truncate" title="${activeDelivery.cmt}">💬 ${activeDelivery.cmt}</p>` : '';
+    
+    html += `
+    <div class="mt-4 bg-gradient-to-r ${isInline ? 'from-sky-50 to-white border-sky-200' : 'from-sky-900/60 to-slate-800/60 border-sky-500/40'} border p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+      <div class="w-full md:w-auto">
+         <p class="text-[10px] font-black ${isInline ? 'text-sky-600' : 'text-sky-400'} uppercase tracking-widest mb-1 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> Out For Delivery</p>
+         <p class="text-sm font-bold ${isInline ? 'text-slate-700' : 'text-slate-300'}">Scheduled: ${activeDelivery.date}</p>
+         ${cmtHtml}
+      </div>
+      <div class="flex gap-3 md:gap-5 text-center ${isInline ? 'bg-white border-slate-200' : 'bg-slate-900/50 border-slate-700/50'} p-2.5 rounded-xl border w-full md:w-auto overflow-x-auto">
+         <div class="px-2"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">ORD D</p><p class="font-black text-xl text-sky-500">${activeDelivery.d}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">ORD E</p><p class="font-black text-xl ${t_text}">${activeDelivery.e}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">PEND</p><p class="font-black text-xl text-amber-500">${activeDelivery.p}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">REP</p><p class="font-black text-xl text-rose-500">${activeDelivery.r}</p></div>
+         <div class="px-2 border-l ${isInline ? 'border-slate-200' : 'border-slate-700'}"><p class="text-[9px] font-bold ${t_lbl} uppercase tracking-widest">Est Amt</p><p class="font-black text-xl text-emerald-500">₹${activeDelivery.amt}</p></div>
+      </div>
+    </div>`;
+  }
+
+  html += `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div class="${t_card} border p-4 rounded-2xl">
+        <h5 class="text-xs font-black uppercase tracking-widest ${t_sub} mb-3 border-b ${isInline ? 'border-slate-100' : 'border-slate-800'} pb-2">Recent Deliveries</h5>
+        <div class="space-y-2">`;
+  
+  if (resSalesPays.sales.length === 0) html += `<p class="text-xs ${t_sub} italic">No recent sales records.</p>`;
+  else {
+    resSalesPays.sales.forEach(s => {
+      html += `<div class="flex justify-between items-center ${t_box} p-2.5 rounded-xl border text-xs">
+        <div><span class="font-black ${t_text}">${s.date}</span> <span class="${t_sub} ml-2">(${s.actD} Full / ${s.actE} Emp)</span></div>
+        <span class="font-black text-emerald-500">₹${s.amt}</span>
+      </div>`;
+    });
+  }
+
+  html += `</div></div>
+      <div class="${t_card} border p-4 rounded-2xl">
+        <h5 class="text-xs font-black uppercase tracking-widest ${t_sub} mb-3 border-b ${isInline ? 'border-slate-100' : 'border-slate-800'} pb-2">Payment History</h5>
+        <div class="space-y-2">`;
+
+  if (resSalesPays.pays.length === 0) html += `<p class="text-xs ${t_sub} italic">No recent payments recorded.</p>`;
+  else {
+    resSalesPays.pays.forEach(pay => {
+      html += `<div class="flex justify-between items-center ${t_box} p-2.5 rounded-xl border text-xs">
+        <div><span class="font-black ${t_text}">${pay.date}</span> <span class="bg-indigo-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[9px] text-indigo-500 dark:text-indigo-300 uppercase ml-2">${pay.mode}</span></div>
+        <span class="font-black text-emerald-500">₹${pay.amt}</span>
+      </div>`;
+    });
+  }
+
+  html += `</div></div></div>
+    <div class="${t_card} border p-4 rounded-2xl mt-4">
+        <h5 class="text-xs font-black uppercase tracking-widest ${t_sub} mb-3 border-b ${isInline ? 'border-slate-100' : 'border-slate-800'} pb-2">Telecaller History Logs</h5>
+        <div class="space-y-2 max-h-40 overflow-y-auto hide-scrollbar">`;
+
+  if (historyLogs.length === 0) html += `<p class="text-xs ${t_sub} italic">No CRM interactions logged.</p>`;
+  else {
+    historyLogs.forEach(log => {
+      html += `<div class="${t_box} p-3 rounded-xl border text-xs mb-2">
+          <div class="flex justify-between border-b ${isInline ? 'border-slate-200' : 'border-slate-700/50'} pb-2 mb-2"><span class="font-black ${t_text}">${log.date} - ${log.status}</span><span class="font-bold ${t_sub}">${log.lastUpdated} by ${log.actionBy}</span></div>
+          <div class="grid grid-cols-2 gap-3 mb-2"><p><span class="${t_lbl} font-bold uppercase text-[9px] tracking-widest">Change</span> <br><span class="font-black text-indigo-500 dark:text-indigo-400">${log.prevStatus} &rarr; ${log.newStatus}</span></p><p><span class="${t_lbl} font-bold uppercase text-[9px] tracking-widest">Reason</span> <br><span class="font-bold ${t_text}">${log.reason}</span></p></div>
+          <div class="${isInline ? 'bg-slate-100 border-slate-200' : 'bg-slate-950 border-slate-800/50'} p-2 rounded-lg border"><p class="font-medium ${t_sub}">${log.remark}</p></div>
+      </div>`;
+    });
+  }
+
+  html += `</div></div>`;
+  container.innerHTML = html;
+}

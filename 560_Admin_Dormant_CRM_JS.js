@@ -138,20 +138,20 @@ window.fetchCRMDashboardStats = async function (days) {
             return arr.length > 0 ? arr.join("") : "No activity";
         }
 
-        document.getElementById('crm-card-inactive').innerText = payload.inactive.total;
-        document.getElementById('crm-split-inactive').innerHTML = formatClickableSplit(payload.inactive.splits, 'REASON');
+        var cInactive = document.getElementById('crm-card-inactive'); if (cInactive) cInactive.innerText = payload.inactive.total;
+        var sInactive = document.getElementById('crm-split-inactive'); if (sInactive) sInactive.innerHTML = formatClickableSplit(payload.inactive.splits, 'REASON');
 
-        document.getElementById('crm-card-retained').innerText = payload.retained.total;
-        document.getElementById('crm-split-retained').innerHTML = formatClickableSplit(payload.retained.splits, 'STATUS');
+        var cRetained = document.getElementById('crm-card-retained'); if (cRetained) cRetained.innerText = payload.retained.total;
+        var sRetained = document.getElementById('crm-split-retained'); if (sRetained) sRetained.innerHTML = formatClickableSplit(payload.retained.splits, 'STATUS');
 
-        document.getElementById('crm-card-wip').innerText = payload.wip.total;
-        document.getElementById('crm-split-wip').innerHTML = formatClickableSplit(payload.wip.splits, 'STATUS');
+        var cWip = document.getElementById('crm-card-wip'); if (cWip) cWip.innerText = payload.wip.total;
+        var sWip = document.getElementById('crm-split-wip'); if (sWip) sWip.innerHTML = formatClickableSplit(payload.wip.splits, 'STATUS');
 
-        document.getElementById('crm-card-completed').innerText = payload.completed.total;
-        document.getElementById('crm-split-completed').innerHTML = formatClickableSplit(payload.completed.splits, 'REASON');
+        var cCompleted = document.getElementById('crm-card-completed'); if (cCompleted) cCompleted.innerText = payload.completed.total;
+        var sCompleted = document.getElementById('crm-split-completed'); if (sCompleted) sCompleted.innerHTML = formatClickableSplit(payload.completed.splits, 'REASON');
 
-        document.getElementById('crm-card-escalated').innerText = payload.escalated.total;
-        document.getElementById('crm-split-escalated').innerHTML = formatClickableSplit(payload.escalated.splits, 'REASON');
+        var cEscalated = document.getElementById('crm-card-escalated'); if (cEscalated) cEscalated.innerText = payload.escalated.total;
+        var sEscalated = document.getElementById('crm-split-escalated'); if (sEscalated) sEscalated.innerHTML = formatClickableSplit(payload.escalated.splits, 'REASON');
 
         if (!document.getElementById('crm-detailed-report').classList.contains('hidden')) {
             window.renderCRMTable();
@@ -259,7 +259,17 @@ window.loadCRMReportData = function (categoryType) {
     document.getElementById('crm-flt-date').value = "";
 
     window.renderCRMTable();
-    document.getElementById('crm-detailed-report').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Smooth scroll with a visual focus flash
+    setTimeout(function() {
+        var repDiv = document.getElementById('crm-detailed-report');
+        repDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        repDiv.classList.add('ring-4', 'ring-indigo-400', 'ring-offset-4', 'transition-all', 'duration-500');
+        
+        setTimeout(function() {
+            repDiv.classList.remove('ring-4', 'ring-indigo-400', 'ring-offset-4');
+        }, 800);
+    }, 50);
+    
 };
 
 window.renderCRMTable = function () {
@@ -315,7 +325,7 @@ window.renderCRMTable = function () {
     var h = "";
     for (var j = 0; j < filtered.length; j++) {
         var r = filtered[j];
-        var escalateBadge = r.tcRemark.indexOf("⚠️") > -1 ? "bg-rose-100 border-rose-300" : "bg-white";
+        var escalateBadge = String(r.tcRemark || "").indexOf("⚠️") > -1 ? "bg-rose-100 border-rose-300" : "bg-white";
         var dispCallStatus = String(r.callStatus).trim() === "" ? "PENDING" : r.callStatus;
 
         h += "<tr class='hover:bg-slate-50 border-b border-slate-100 " + escalateBadge + "'>" +

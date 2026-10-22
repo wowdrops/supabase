@@ -666,6 +666,7 @@ window.rbacEditPage = function(pageId) {
     document.getElementById('rbac-new-page-sort').value = p.sort_order ?? 10;
     document.getElementById('rbac-new-page-icon').value = p.icon_svg || "";
     document.getElementById('rbac-new-page-visible').checked = p.show_in_sidebar !== false;
+    document.getElementById('rbac-new-page-filepath').value = p.file_path || "";
     window.rbacUpdateIconPreview('page');
 
     document.getElementById('rbac-page-form-title').innerText = "Edit Page: " + p.page_title;
@@ -687,6 +688,7 @@ window.rbacResetPageForm = function() {
     document.getElementById('rbac-new-page-sort').value = "10";
     document.getElementById('rbac-new-page-icon').value = "";
     document.getElementById('rbac-new-page-visible').checked = true;
+    document.getElementById('rbac-new-page-filepath').value = "";
     window.rbacUpdateIconPreview('page');
 
     document.getElementById('rbac-page-form-title').innerText = "Register App Page";
@@ -703,6 +705,7 @@ window.rbacSavePage = async function() {
     var sortOrder = parseInt(document.getElementById('rbac-new-page-sort').value, 10);
     if (isNaN(sortOrder)) sortOrder = 10;
     var iconSvg = document.getElementById('rbac-new-page-icon').value.trim() || null;
+    var filePath = document.getElementById('rbac-new-page-filepath').value.trim() || null;
     var vis = document.getElementById('rbac-new-page-visible').checked;
     var mod = window.rbacState.activeModule;
 
@@ -713,6 +716,7 @@ window.rbacSavePage = async function() {
         menu_id: menuId ? Number(menuId) : null,
         sort_order: sortOrder,
         icon_svg: iconSvg,
+        file_path: filePath,
         show_in_sidebar: vis
     };
 

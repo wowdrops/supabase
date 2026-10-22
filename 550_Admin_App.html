@@ -5,65 +5,49 @@
   <base target="_top">
   <link rel="icon" type="image/x-icon" href="wowLogo.jpg">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.0.10.1/html2pdf.bundle.min.js"></script>-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-
   <!-- Local CSS Styles -->
   <link rel="stylesheet" href="550_Admin_App_CSS.css">
 </head>
 
-<!-- 2. HTML Placeholders (Replaces <?!= include() ?>) -->
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
+
+<!-- Ensure Auth is loaded directly so the user can log in -->
 <div data-include="551_Admin_Auth.html"></div>
 
+<!-- The Main Workspace (Revealed post-login) -->
 <div id="view-workspace" class="hidden h-screen w-full relative fade-in">
+  
   <div data-include="553_Admin_Header.html"></div>
 
   <div class="flex h-full w-full overflow-hidden relative">
+    
     <div data-include="554_Admin_Sidebar.html"></div>
 
     <main id="scroll-area" class="flex-1 overflow-y-auto pt-24 pb-8 px-4 md:px-8 w-full relative">
-      <div data-include="555_Admin_Dashboard.html"></div>
-      <div data-include="556_Admin_UpdateCan.html"></div>
-      <div data-include="557_Admin_Tran_Order.html"></div>
-      <div data-include="558_Admin_Tran_DeliveryQC.html"></div>
-
-      <div data-include="559_Admin_Tran_Escalations.html"></div>
-      <div data-include="560_Admin_Dormant_CRM.html"></div>
-      <div data-include="561_Admin_Master_Customer.html"></div>
-      <div data-include="562_Admin_User_Access.html"></div>
-      <div data-include="564_Admin_Tran_Sales.html"></div>
-      <div data-include="565_Admin_Tran_Pays.html"></div>
-      <div data-include="566_Admin_360_Modal.html"></div>
-      <div data-include="567_Admin_Push_Notifications.html"></div>
-      <div data-include="568_Admin_SysConfig.html"></div>
-      <div data-include="569_Admin_Handshake.html"></div>
-      <div data-include="580_1_Admin_DailySalesReports.html"></div>
-      <div data-include="580_2_Admin_Outstanding.html"></div>
-      <div data-include="580_3_Admin_Dormant.html"></div>
-      <div data-include="580_4_Admin_Sales.html"></div>
-      <div data-include="580_5_Admin_Pays.html"></div>
-      <div data-include="580_6_Admin_Orders.html"></div>
-      <div data-include="580_7_Admin_Delivery.html"></div>
-      <div data-include="580_9_Admin_CRM_Reports.html"></div>
-      <div data-include="581_0_Admin_Reports_Customer.html"></div>
-      <div data-include="581_1_Admin_Report_Week.html"></div>
-      <div data-include="590_Admin_Password.html"></div>
+      
+      <!-- THIS IS THE NEW LAZY LOAD DROP ZONE -->
+      <div id="dynamic-module-workspace" class="w-full h-full relative">
+        <!-- Fetched HTML modules will be injected here on demand -->
+      </div>
 
     </main>
   </div>
 </div>
 
-<!-- 3. Master Loader: Loads ALL HTML first, THEN loads JS files in order -->
+<div data-include="566_Admin_360_Modal.html"></div>
+
+<!-- Master Loader: Fetches ONLY the Core Shell HTML, then boots JS -->
 <script>
-  // List of your JS files in the exact order from 550_Admin_App.html
+  // Note: Only the Core JS files are loaded upfront. Module-specific JS 
+  // will either stay here or be lazy-loaded depending on your preference later.
   const jsFiles = [
     "supabase_config.js",
     "551_Admin_Auth_JS.js",
@@ -92,52 +76,58 @@
     "580_9_Admin_CRM_Reports_JS.js",
     "581_0_Admin_Reports_Customer_JS.js",
     "581_1_Admin_Report_Week_JS.js",
-    "590_Admin_Password_JS.js"
+    "590_Admin_Password_JS.js",
+    "652_CRM_App_JS.js",
+    "701_Accounts_App.js",
+    "702_Accounts_Auth.js",
+    "703_Accounts_Header.js",
+    "704_Accounts_Sidebar.js",
+    "705_Accounts_Maker.js",
+    "706_Accounts_Checker.js",
+    "707_Accounts_Maker_Auto.js"
   ];
 
-  async function bootAdminApp() {
-    // STEP 1: Fetch all HTML views in parallel and inject them into the DOM
+  async function bootAdminShell() {
+    // 1. Fetch only the core structural HTML files (Auth, Header, Sidebar)
     const elements = document.querySelectorAll('[data-include]');
     await Promise.all(Array.from(elements).map(async (el) => {
       const file = el.getAttribute('data-include');
-      const response = await fetch(file);
-      if (response.ok) {
-        let html = await response.text();
-
-        // FIX: Remove VS Code Live Server's injected script so it doesn't break SVGs!
-        //html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
-
+      try {
+        const response = await fetch(file);
+        if (response.ok) {
+          let html = await response.text();
           el.outerHTML = html;
-      } else {
-        console.error("Failed to load view:", file);
+        } else {
+          console.error("Failed to load structural view:", file);
+        }
+      } catch (e) {
+        console.error("Network error fetching:", file);
       }
     }));
 
-    // STEP 2: Now that 100% of the HTML exists on the page, load JS files in exact order
+    // 2. Load all necessary JavaScript files sequentially
     for (const src of jsFiles) {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve) => {
         const script = document.createElement('script');
         script.src = src;
-        script.async = false; // Guarantees execution order
+        script.async = false;
         script.onload = resolve;
         script.onerror = () => {
           console.error("Failed to load script:", src);
-          resolve(); // Continue loading even if one file has an issue
+          resolve();
         };
         document.body.appendChild(script);
       });
     }
 
-    // STEP 3: If any of your JS files used window.onload or DOMContentLoaded, 
-    // manually trigger them now so they run as expected!
+    // 3. Trigger load events so legacy JS functions fire
     window.dispatchEvent(new Event('DOMContentLoaded'));
     window.dispatchEvent(new Event('load'));
-    console.log("✅ WowDrops Admin App Fully Loaded!");
+    console.log("✅ WowDrops Core Shell Loaded! Awaiting Module Clicks...");
   }
 
-  // Start the boot process
-  bootAdminApp();
+  // Start the streamlined boot process
+  bootAdminShell();
 </script>
 </body>
-
 </html>

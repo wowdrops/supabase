@@ -33,8 +33,7 @@
 
   <!-- TAB 1: DORMANT BLOCKS (Moved from Operations) -->
   <div id="crm-dash-content-1" class="hidden space-y-10 fade-in">
-    <div onclick="window.goToReport('dormant')"
-      class="cursor-pointer hover:-translate-y-1 transition shadow-xl hover:shadow-2xl bg-white rounded-3xl border-4 border-amber-200 p-8 flex flex-col text-center max-w-4xl mx-auto">
+    <div class="bg-white rounded-3xl border-4 border-amber-200 p-8 flex flex-col text-center max-w-4xl mx-auto">
       <h3
         class="text-3xl font-black text-slate-800 uppercase tracking-widest border-b-4 border-slate-100 pb-6 mb-8 flex justify-center items-center gap-2">
         <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,27 +43,26 @@
         System Dormant Tracker
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-        <!-- Existing: Exactly 7 Days -->
-        <div class="bg-amber-50 p-6 rounded-3xl border-4 border-amber-200 flex flex-col justify-center shadow-inner">
+        <!-- Exactly 7 Days -->
+        <div onclick="window.navigateFromDashboard('dormant', '7,7')" class="bg-amber-50 p-6 rounded-3xl border-4 border-amber-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-amber-100 hover:scale-[1.02] transition-all">
           <p class="text-2xl md:text-3xl font-black text-amber-800 uppercase mb-4">Exactly 7 Days</p>
           <p class="text-6xl md:text-8xl font-black text-amber-600 drop-shadow-md" id="dormant-7">0</p>
         </div>
 
-        <!-- Existing: 7 - 10 Days -->
-        <div class="bg-rose-50 p-6 rounded-3xl border-4 border-rose-200 flex flex-col justify-center shadow-inner">
+        <!-- 7 - 10 Days -->
+        <div onclick="window.navigateFromDashboard('dormant', '7,10')" class="bg-rose-50 p-6 rounded-3xl border-4 border-rose-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-rose-100 hover:scale-[1.02] transition-all">
           <p class="text-2xl md:text-3xl font-black text-rose-800 uppercase mb-4">7 - 10 Days</p>
           <p class="text-6xl md:text-8xl font-black text-rose-600 drop-shadow-md" id="dormant-10">0</p>
         </div>
 
-        <!-- NEW: 10 - 15 Days -->
-        <div class="bg-indigo-50 p-6 rounded-3xl border-4 border-indigo-200 flex flex-col justify-center shadow-inner">
+        <!-- 10 - 15 Days -->
+        <div onclick="window.navigateFromDashboard('dormant', '10,15')" class="bg-indigo-50 p-6 rounded-3xl border-4 border-indigo-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-indigo-100 hover:scale-[1.02] transition-all">
           <p class="text-2xl md:text-3xl font-black text-indigo-800 uppercase mb-4">10 - 15 Days</p>
           <p class="text-6xl md:text-8xl font-black text-indigo-600 drop-shadow-md" id="dormant-15">0</p>
         </div>
 
-        <!-- NEW: 15 - 30 Days -->
-        <div
-          class="bg-emerald-50 p-6 rounded-3xl border-4 border-emerald-200 flex flex-col justify-center shadow-inner">
+        <!-- 15 - 30 Days -->
+        <div onclick="window.navigateFromDashboard('dormant', '15,30')" class="bg-emerald-50 p-6 rounded-3xl border-4 border-emerald-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-emerald-100 hover:scale-[1.02] transition-all">
           <p class="text-2xl md:text-3xl font-black text-emerald-800 uppercase mb-4">15 - 30 Days</p>
           <p class="text-6xl md:text-8xl font-black text-emerald-600 drop-shadow-md" id="dormant-30">0</p>
         </div>
@@ -151,13 +149,13 @@
       </div>
 
       <!-- Card 5: Escalations -->
-      <div id="crm-card-container-ESCALATED" onclick="window.loadCRMReportData('ESCALATED')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-indigo-200 shadow-lg flex flex-col justify-between h-full group">
+      <div onclick="window.navigateFromDashboard('tran-escalations')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-indigo-200 shadow-lg flex flex-col justify-between h-full group">
         <div class="flex justify-between items-start mb-4">
           <span class="text-lg font-bold uppercase tracking-widest text-slate-400 group-hover:text-indigo-500 transition">Admin Escalations</span>
-          <span class="crm-days-badge bg-indigo-100 text-indigo-800 text-xs font-black px-2 py-1 rounded tracking-wider">LAST 7 DAYS</span>
+          <span class="crm-days-badge bg-indigo-100 text-indigo-800 text-xs font-black px-2 py-1 rounded tracking-wider">ACTION REQ</span>
         </div>
         <h3 id="crm-card-escalated" class="text-6xl font-black text-slate-800 mb-4">0</h3>
-        <div id="crm-split-escalated" class="text-sm font-bold text-slate-400 flex gap-2 flex-wrap">Loading...</div>
+        <div class="text-sm font-black text-indigo-500 flex items-center gap-1 mt-auto">Go to Escalations <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div>
       </div>
     </div>
 

@@ -3,6 +3,7 @@ window.windowWidthBabu = 1024;
 window.activeAdminSession = null;
 window.isSidebarOpen = window.innerWidth >= window.windowWidthBabu;
 window._sessionHeartbeatTimer = null;
+window.sysPagesMap = []; // Holds the dynamic file_paths from Supabase
 
 // Global Data Caches
 window.activeReportData = { delivery: [] };
@@ -14,20 +15,14 @@ window.visCols = { m1: true, m2: true, m3: true, m4: true, adv: true };
 window.dashboardReturnState = 1;
 window.dashboardLeaveTime = 0;
 window.defaultersData = { highest: [], oldest: [] };
-
 window.dormantMinDays = 7;
 window.dormantMaxDays = 30;
 window.sortDirection = true;
-
 window.masterSalesData = [];
 window.salesDisplayCount = 50;
-
 window._lastWindowWidth = window.innerWidth;
-
-// GLOBAL ROUTING REGISTRY (Modules will register themselves here)
 window.tabActions = {};
 
-// Utility Functions
 window.getUniqueArray = function (arr) { var res = []; for (var i = 0; i < arr.length; i++) { if (res.indexOf(arr[i]) === -1 && arr[i]) res.push(arr[i]); } return res; };
 window.trimMonth = function (str) { if (!str) return 'M'; return str.toUpperCase().replace("PEND", "").trim().substring(0, 3); };
 
@@ -38,7 +33,6 @@ window.hasWriteAccess = function (tabName) {
     return !readOnlyList.includes(tabName);
 };
 
-// Browser Crypto SHA-256 Hashing for Supabase
 window.hashPassword = async function (password) {
     if (!password) return "";
     const msgBuffer = new TextEncoder().encode(String(password).trim());
@@ -47,9 +41,6 @@ window.hashPassword = async function (password) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
-// =========================================================
-// SESSION HEARTBEAT (Kicks out INACTIVE users automatically)
-// =========================================================
 window.verifyLiveUserStatus = async function () {
     if (!window.activeAdminSession || !window.activeAdminSession.username) return true;
     try {
@@ -59,7 +50,7 @@ window.verifyLiveUserStatus = async function () {
             .eq('username', window.activeAdminSession.username)
             .maybeSingle();
 
-        if (error || !userData) return true; // Ignore transient network hiccups
+        if (error || !userData) return true; 
 
         var currentStatus = String(userData.status || 'ACTIVE').toUpperCase();
         var appRoles = userData.app_roles || {};
@@ -77,14 +68,12 @@ window.verifyLiveUserStatus = async function () {
 
 window.startSessionHeartbeat = function () {
     if (window._sessionHeartbeatTimer) clearInterval(window._sessionHeartbeatTimer);
-    // Check live user status every 60 seconds
     window._sessionHeartbeatTimer = setInterval(function () {
         window.verifyLiveUserStatus();
     }, 60000);
 };
 
 window.assertWorkspaceDeployment = async function () {
-    // 1. Verify user is still ACTIVE in Supabase before deploying workspace
     var isStillActive = await window.verifyLiveUserStatus();
     if (!isStillActive) return;
 
@@ -98,16 +87,21 @@ window.assertWorkspaceDeployment = async function () {
         dispAdmin.innerText = "User: " + window.activeAdminSession.username;
     }
 
-    // Start background heartbeat for ghost-session protection
     window.startSessionHeartbeat();
-
-    // 2. Wait for the sidebar to finish building dynamically before routing
     await window.applyRolePermissions();
     
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
     var firstTab = (allowed.includes('ALL') || allowed.includes('dashboard')) ? 'dashboard' : allowed[0];
     firstTab = firstTab || 'password';
-    window.goToReport(firstTab);
+
+    // NEW: Check if the user refreshed while on a specific tab via the URL Hash
+    var hashTab = window.location.hash.replace('#', '');
+    
+    if (hashTab && (allowed.includes('ALL') || allowed.includes(hashTab))) {
+        window.goToReport(hashTab);
+    } else {
+        window.goToReport(firstTab);
+    }
 };
 
 window.applyRolePermissions = async function () {
@@ -115,14 +109,19 @@ window.applyRolePermissions = async function () {
     var allowed = window.activeAdminSession.allowedTabs || [];
     var isSuper = allowed.includes("ALL");
 
-    // Fetch the architecture for the ADMIN module
+    // Fetch the architecture for the ADMIN module (No show_in_sidebar filter yet, we need all file paths!)
     const [menusRes, pagesRes] = await Promise.all([
         window.supabase1.from('sys_menus').select('*').eq('module_name', 'ADMIN'),
-        window.supabase1.from('sys_pages').select('*').eq('module_name', 'ADMIN').eq('show_in_sidebar', true)
+        window.supabase1.from('sys_pages').select('*').eq('module_name', 'ADMIN')
     ]);
 
+    // Store globally for the Lazy Load Router
+    window.sysPagesMap = pagesRes.data || [];
+
     var menus = (menusRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.id - b.id);
-    var pages = (pagesRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || (a.page_title || '').localeCompare(b.page_title || ''));
+    
+    // Filter strictly for the visual sidebar rendering
+    var sidebarPages = window.sysPagesMap.filter(p => p.show_in_sidebar === true).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || (a.page_title || '').localeCompare(b.page_title || ''));
 
     var navContainer = document.querySelector('#app-sidebar nav');
     if (!navContainer) return;
@@ -131,12 +130,12 @@ window.applyRolePermissions = async function () {
     var mainMenus = menus.filter(m => !m.parent_menu_id);
 
     mainMenus.forEach((m, index) => {
-        var directPages = pages.filter(p => String(p.menu_id) === String(m.id) && (isSuper || allowed.includes(p.page_id)));
+        var directPages = sidebarPages.filter(p => String(p.menu_id) === String(m.id) && (isSuper || allowed.includes(p.page_id)));
         var subMenus = menus.filter(sub => String(sub.parent_menu_id) === String(m.id));
         var subMenuHtml = "";
         
         subMenus.forEach(sub => {
-            var subPages = pages.filter(p => String(p.menu_id) === String(sub.id) && (isSuper || allowed.includes(p.page_id)));
+            var subPages = sidebarPages.filter(p => String(p.menu_id) === String(sub.id) && (isSuper || allowed.includes(p.page_id)));
             if (subPages.length > 0) {
                 var defaultSubIcon = '<svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
                 subMenuHtml += `
@@ -257,6 +256,20 @@ window.showNotif = function (el, msg, success) {
     el.className = "text-sm md:text-lg text-center font-bold mt-4 p-4 rounded-xl border-2 block " + (success ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200') + " fade-in";
 };
 
+window.toggleScrollLock = function (isLocked) {
+  var scrollArea = document.getElementById('scroll-area');
+  if (scrollArea) {
+    if (isLocked) scrollArea.classList.add('overflow-hidden');
+    else scrollArea.classList.remove('overflow-hidden');
+  }
+};
+
+window.closeModal = function (id) { 
+  var modal = document.getElementById(id);
+  if (modal) modal.classList.add('hidden'); 
+  window.toggleScrollLock(false);
+};
+
 window.goToReport = function (tabName, filterArg) {
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
@@ -272,15 +285,26 @@ window.goToReport = function (tabName, filterArg) {
     window._executeRouting(tabName, filterArg);
 };
 
+window.activeDashboardModule = 'dashboard';
+
 window.navigateFromDashboard = function (reportId, filterArg) {
-    var dash1 = document.getElementById('dash-content-1');
-    var dash2 = document.getElementById('dash-content-2');
-    var dash3 = document.getElementById('dash-content-3');
+    var isCRM = document.getElementById('tab-dormant-crm') && !document.getElementById('tab-dormant-crm').classList.contains('hidden');
     
-    if (dash1 && !dash1.classList.contains('hidden')) window.dashboardReturnState = 1;
-    else if (dash2 && !dash2.classList.contains('hidden')) window.dashboardReturnState = 2;
-    else if (dash3 && !dash3.classList.contains('hidden')) window.dashboardReturnState = 3;
-    else window.dashboardReturnState = 1;
+    if (isCRM) {
+        window.activeDashboardModule = 'dormant-crm';
+        var crmDash2 = document.getElementById('crm-dash-content-2');
+        window.dashboardReturnState = (crmDash2 && !crmDash2.classList.contains('hidden')) ? 2 : 1;
+    } else {
+        window.activeDashboardModule = 'dashboard';
+        var dash1 = document.getElementById('dash-content-1');
+        var dash2 = document.getElementById('dash-content-2');
+        var dash3 = document.getElementById('dash-content-3');
+        
+        if (dash1 && !dash1.classList.contains('hidden')) window.dashboardReturnState = 1;
+        else if (dash2 && !dash2.classList.contains('hidden')) window.dashboardReturnState = 2;
+        else if (dash3 && !dash3.classList.contains('hidden')) window.dashboardReturnState = 3;
+        else window.dashboardReturnState = 1;
+    }
 
     window.dashboardLeaveTime = new Date().getTime();
     
@@ -308,16 +332,22 @@ window.returnToDashboard = function () {
     if (brand) brand.classList.remove('hidden');
     if (backBtn) backBtn.classList.add('hidden');
     
-    window._executeRouting('dashboard');
-    if(typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
-    if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
+    var targetDash = window.activeDashboardModule || 'dashboard';
+    window._executeRouting(targetDash);
+    
+    if (targetDash === 'dashboard' && typeof window.switchDashTab === 'function') {
+        window.switchDashTab(window.dashboardReturnState || 1);
+        if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
+    } else if (targetDash === 'dormant-crm' && typeof window.switchCRMDashTab === 'function') {
+        window.switchCRMDashTab(window.dashboardReturnState || 1);
+        if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.fetchCRMDashboardStats === 'function') window.fetchCRMDashboardStats();
+    }
 };
 
 // =====================================
-// THE NEW DYNAMIC ROUTER
+// THE NEW DATABASE-DRIVEN LAZY ROUTER
 // =====================================
-window._executeRouting = function (tabName, filterArg) {
-    // Silent background check on route switch to ensure user hasn't been deactivated
+window._executeRouting = async function (tabName, filterArg) {
     window.verifyLiveUserStatus();
 
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
@@ -326,22 +356,57 @@ window._executeRouting = function (tabName, filterArg) {
         return alert("Access Denied: Your role does not have permission to view this module.");
     }
 
-    // Hide all tabs dynamically
+    // NEW: Silently update the browser URL and History so Refresh and Back/Forward work
+    if (window.location.hash !== '#' + tabName) {
+        history.pushState({ tab: tabName, arg: filterArg }, '', '#' + tabName);
+    }
+
+    var workspace = document.getElementById('dynamic-module-workspace');
+    var targetTab = document.getElementById('tab-' + tabName);
+
+    // Dynamic Database Lookup
+    var pageRecord = window.sysPagesMap ? window.sysPagesMap.find(p => p.page_id === tabName) : null;
+    var filePath = pageRecord ? pageRecord.file_path : null;
+
+    if (!targetTab && filePath) {
+        var loadingMsg = document.createElement('div');
+        loadingMsg.id = 'lazy-load-msg';
+        loadingMsg.className = "text-center py-12 font-black text-indigo-400 animate-pulse tracking-widest uppercase text-xl";
+        loadingMsg.innerText = "Loading " + (pageRecord.page_title || "Module") + "...";
+        if(workspace) workspace.appendChild(loadingMsg);
+
+        try {
+            const response = await fetch(filePath);
+            if (!response.ok) throw new Error("File not found on server");
+            const html = await response.text();
+            
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            while (tempDiv.firstChild) {
+                if(workspace) workspace.appendChild(tempDiv.firstChild);
+            }
+            targetTab = document.getElementById('tab-' + tabName);
+        } catch (e) {
+            console.error("Lazy Load Error:", e);
+            alert("Failed to load module. Check your file_path in the database for: " + filePath);
+        } finally {
+            var msg = document.getElementById('lazy-load-msg');
+            if (msg) msg.remove();
+        }
+    }
+
     var allTabs = document.querySelectorAll('div[id^="tab-"]');
     allTabs.forEach(t => t.classList.add('hidden'));
 
-    // Reset all sidebar buttons
     var allNavBtns = document.querySelectorAll('button[id^="nav-tab-"]');
     allNavBtns.forEach(btn => {
         btn.classList.remove('text-white', 'bg-slate-800/50');
         btn.classList.add('text-slate-400');
     });
 
-    // Show active tab
-    var activeTab = document.getElementById('tab-' + tabName);
-    if (activeTab) activeTab.classList.remove('hidden');
+    if (targetTab) targetTab.classList.remove('hidden');
 
-    // Highlight active button
     var aBtn = document.getElementById('nav-tab-' + tabName);
     if (aBtn) {
         aBtn.classList.remove('text-slate-400');
@@ -352,7 +417,6 @@ window._executeRouting = function (tabName, filterArg) {
         window.toggleSidebar();
     }
 
-    // Execute Module Logic
     if (window.tabActions && typeof window.tabActions[tabName] === 'function') {
         window.tabActions[tabName](filterArg);
     }
@@ -375,6 +439,9 @@ window.logoutAdmin = function (customMsg) {
     if (window._sessionHeartbeatTimer) clearInterval(window._sessionHeartbeatTimer);
     localStorage.removeItem('wowdrops_admin_session_payload');
     window.activeAdminSession = null;
+
+    history.replaceState(null, null, ' ');
+
     document.getElementById('view-workspace').classList.add('hidden');
     document.getElementById('view-auth').classList.remove('hidden');
     document.getElementById('auth-forgot').classList.add('hidden');
@@ -385,7 +452,6 @@ window.logoutAdmin = function (customMsg) {
     window.showNotif(document.getElementById('login-err'), customMsg || "Successfully logged out.", isSuccess);
 };
 
-// --- SUPABASE AUTHENTICATION (JSONB Multi-Module + Status Check) ---
 window.handleAdminLogin = async function () {
     var id = document.getElementById('admin-id').value.trim().toLowerCase();
     var pass = document.getElementById('admin-pass').value;
@@ -406,7 +472,6 @@ window.handleAdminLogin = async function () {
             return window.showNotif(errBox, "User not found.", false);
         }
 
-        // 1. Check if user status is ACTIVE
         if (String(userData.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') {
             document.getElementById('btn-login').innerText = "Sign In";
             return window.showNotif(errBox, "Access Denied: Your account is currently INACTIVE.", false);
@@ -551,6 +616,52 @@ window.confirmPasswordReset = async function () {
     }
 };
 
+// =====================================
+// GLOBAL INFINITE SCROLL MANAGER
+// =====================================
+window.handleGlobalScroll = function() {
+    var scrollArea = document.getElementById('scroll-area');
+    if (!scrollArea) return;
+    
+    // Check if the user has scrolled to the bottom
+    if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 100) {
+        
+        // Find exactly which tab is currently visible
+        var activeTab = document.querySelector('div[id^="tab-"]:not(.hidden)');
+        if (!activeTab) return;
+        
+        // Route the infinite scroll to the correct module's function
+        if (activeTab.id === 'tab-master-customer' && typeof window.loadMoreCustomers === 'function') {
+            if (window.customerDisplayLimit < window.filteredCustomers.length) {
+                window.loadMoreCustomers();
+            }
+        }
+        // You can easily add future modules here!
+        // else if (activeTab.id === 'tab-sales') window.loadMoreSales();
+    }
+};
+
+// =====================================
+// BROWSER BACK / FORWARD BUTTON SUPPORT
+// =====================================
+window.addEventListener('popstate', function(event) {
+    if (!window.activeAdminSession) return; // Ignore if logged out
+    
+    var hashTab = window.location.hash.replace('#', '');
+    if (hashTab) {
+        var arg = event.state ? event.state.arg : null;
+        window._executeRouting(hashTab, arg); // Route backwards/forwards instantly!
+    }
+});
+
+// Attach the listener exactly once when the core app boots
+setTimeout(function() {
+    var mainScrollArea = document.getElementById('scroll-area');
+    if (mainScrollArea) {
+        mainScrollArea.addEventListener('scroll', window.handleGlobalScroll);
+    }
+}, 1000);
+
 window.initAdminAuth = function () {
     var storedSession = localStorage.getItem('wowdrops_admin_session_payload');
     if (storedSession) { 
@@ -582,5 +693,4 @@ window.initAdminAuth = function () {
     window.addEventListener('resize', window.handleSidebarResize);
 };
 
-// Execute immediately upon file load:
 window.initAdminAuth();

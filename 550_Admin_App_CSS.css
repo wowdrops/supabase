@@ -23,6 +23,40 @@
   .card-click { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
   .card-click:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border-color: #6366f1; }
 
+
+  /* --- BULLETPROOF SIDEBAR COLLAPSE LOGIC --- */
+  #app-sidebar { 
+      transition: width 0.3s ease; 
+      overflow-x: hidden; 
+  }
+
+  /* Target the sidebar automatically whenever it is NOT full width (w-64) */
+  #app-sidebar:not(.w-64) .sidebar-text {
+      display: none !important;
+  }
+  
+  /* Remove horizontal padding and center all buttons/links */
+  #app-sidebar:not(.w-64) a, 
+  #app-sidebar:not(.w-64) button {
+      justify-content: center !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+  }
+  
+  /* Center the SVG icons */
+  #app-sidebar:not(.w-64) svg {
+      margin: 0 auto !important;
+  }
+  
+  /* Reduce bulky container paddings so icons fit perfectly */
+  #app-sidebar:not(.w-64) .p-4,
+  #app-sidebar:not(.w-64) .p-3 {
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+  }
+
   @media print {
     body * { visibility: hidden; }
     #tab-dormant, #tab-dormant * { visibility: visible; }

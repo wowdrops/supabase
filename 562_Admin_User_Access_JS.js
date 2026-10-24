@@ -7,12 +7,9 @@ window.rbacState = {
     permissions: [],
     selectedRoleForMatrix: null,
     editingUserId: null,
-    iconPickerTarget: 'menu' // 'menu' or 'page'
+    iconPickerTarget: 'menu'
 };
 
-// ==========================================
-// BUILT-IN CURATED ICON LIBRARY (44 Icons)
-// ==========================================
 window.RBAC_ICON_LIBRARY = [
     {
         category: "Navigation & Layout",
@@ -80,9 +77,6 @@ window.RBAC_ICON_LIBRARY = [
     }
 ];
 
-// ==========================================
-// CORE INITIALIZATION & NAVIGATION
-// ==========================================
 window.rbacLoadCurrentContext = async function() {
     var moduleSelect = document.getElementById('rbac-module-select');
     window.rbacState.activeModule = moduleSelect ? moduleSelect.value : 'ADMIN';
@@ -131,10 +125,10 @@ window.rbacSwitchTab = function(tabName) {
         var t = tabs[i];
         document.getElementById('rbac-view-' + t).classList.add('hidden');
         var btn = document.getElementById('btn-rbac-' + t);
-        btn.className = "flex-1 px-4 py-2.5 rounded-xl text-sm font-black text-slate-500 hover:text-slate-800 transition";
+        btn.className = "flex-1 px-4 py-2.5 rounded-xl text-sm font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors";
     }
     document.getElementById('rbac-view-' + tabName).classList.remove('hidden');
-    document.getElementById('btn-rbac-' + tabName).className = "flex-1 px-4 py-2.5 rounded-xl text-sm font-black bg-white text-indigo-700 shadow-sm transition";
+    document.getElementById('btn-rbac-' + tabName).className = "flex-1 px-4 py-2.5 rounded-xl text-sm font-black bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm transition-colors";
 };
 
 window.loadSystemAccessMap = function() {
@@ -142,9 +136,6 @@ window.loadSystemAccessMap = function() {
     window.rbacLoadCurrentContext();
 };
 
-// ==========================================
-// TAB 1: USER MANAGEMENT & STATUS TOGGLE
-// ==========================================
 window.rbacRenderUsers = function(searchTerm = "") {
     var tbody = document.getElementById('rbac-users-tbody');
     if (!tbody) return;
@@ -157,7 +148,7 @@ window.rbacRenderUsers = function(searchTerm = "") {
     );
 
     if(filteredUsers.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5' class='px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest'>No users found.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5' class='px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest transition-colors'>No users found.</td></tr>";
         return;
     }
 
@@ -167,21 +158,21 @@ window.rbacRenderUsers = function(searchTerm = "") {
         var modRoles = appRoles[mod] || [];
         
         var roleBadges = modRoles.length > 0 
-            ? modRoles.map(r => `<span class="bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-lg text-xs border border-indigo-200">${r}</span>`).join(' ')
-            : `<span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">No roles for ${mod}</span>`;
+            ? modRoles.map(r => `<span class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-400 px-2.5 py-1 rounded-lg text-xs border border-indigo-200 dark:border-indigo-800 transition-colors">${r}</span>`).join(' ')
+            : `<span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold transition-colors">No roles for ${mod}</span>`;
 
         var currentStatus = String(u.status || 'ACTIVE').toUpperCase();
         var statusBadge = currentStatus === 'ACTIVE' 
-            ? `<button onclick="window.rbacToggleUserStatus('${u.id}', 'ACTIVE')" title="Click to mark INACTIVE" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border border-emerald-300 transition shadow-sm outline-none">● ACTIVE</button>`
-            : `<button onclick="window.rbacToggleUserStatus('${u.id}', 'INACTIVE')" title="Click to mark ACTIVE" class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border border-rose-300 transition shadow-sm outline-none">○ INACTIVE</button>`;
+            ? `<button onclick="window.rbacToggleUserStatus('${u.id}', 'ACTIVE')" title="Click to mark INACTIVE" class="bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border border-emerald-300 dark:border-emerald-800 transition-colors shadow-sm outline-none">● ACTIVE</button>`
+            : `<button onclick="window.rbacToggleUserStatus('${u.id}', 'INACTIVE')" title="Click to mark ACTIVE" class="bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-800 dark:text-rose-400 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border border-rose-300 dark:border-rose-800 transition-colors shadow-sm outline-none">○ INACTIVE</button>`;
 
-        html += `<tr class="hover:bg-slate-50 border-b border-slate-100 transition">
-            <td class="px-6 py-4 font-black text-slate-800">${u.username}</td>
-            <td class="px-6 py-4"><div class="text-xs font-bold text-slate-500">${u.mail_id || '-'}</div><div class="text-[10px] uppercase tracking-widest text-slate-400 mt-0.5">${u.phone || '-'}</div></td>
-            <td class="px-6 py-4"><div class="flex flex-wrap gap-1.5">${roleBadges}</div></td>
-            <td class="px-6 py-4 text-center">${statusBadge}</td>
-            <td class="px-6 py-4 text-right">
-                <button onclick="window.rbacOpenUserModal('${u.id}')" class="bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200 px-4 py-1.5 rounded-lg text-xs font-black tracking-widest uppercase transition outline-none shadow-sm">Edit</button>
+        html += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 transition-colors">
+            <td class="px-6 py-4 font-black text-slate-800 dark:text-white transition-colors">${u.username}</td>
+            <td class="px-6 py-4"><div class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">${u.mail_id || '-'}</div><div class="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-0.5 transition-colors">${u.phone || '-'}</div></td>
+            <td class="px-6 py-4"><div class="flex flex-wrap gap-1.5 transition-colors">${roleBadges}</div></td>
+            <td class="px-6 py-4 text-center transition-colors">${statusBadge}</td>
+            <td class="px-6 py-4 text-right transition-colors">
+                <button onclick="window.rbacOpenUserModal('${u.id}')" class="bg-slate-100 dark:bg-slate-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 px-4 py-1.5 rounded-lg text-xs font-black tracking-widest uppercase transition-colors outline-none shadow-sm">Edit</button>
             </td>
         </tr>`;
     }
@@ -234,21 +225,21 @@ window.rbacOpenUserModal = function(userId) {
 
     var passSection = document.getElementById('rbac-modal-pass-section');
     if(!userId) {
-       passSection.innerHTML = '<label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Initial Password *</label><input type="text" id="rbac-modal-pass" placeholder="Enter temporary password" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-400">';
+       passSection.innerHTML = '<label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Initial Password *</label><input type="text" id="rbac-modal-pass" placeholder="Enter temporary password" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors">';
     } else {
-       passSection.innerHTML = '<label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password (Leave blank to keep unchanged)</label><input type="text" id="rbac-modal-pass" placeholder="Enter new password to override" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-400">';
+       passSection.innerHTML = '<label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Password (Leave blank to keep unchanged)</label><input type="text" id="rbac-modal-pass" placeholder="Enter new password to override" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors">';
     }
 
     var rolesHtml = "";
     var currentModRoles = (u.app_roles || {})[window.rbacState.activeModule] || [];
     window.rbacState.roles.forEach(r => {
         var checked = currentModRoles.includes(r.role_name) ? "checked" : "";
-        rolesHtml += `<label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition">
-            <input type="checkbox" value="${r.role_name}" class="rbac-role-check w-4 h-4 accent-indigo-600 shadow-sm" ${checked}>
-            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">${r.role_name}</span>
+        rolesHtml += `<label class="flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg cursor-pointer transition-colors">
+            <input type="checkbox" value="${r.role_name}" class="rbac-role-check w-4 h-4 accent-indigo-600 dark:accent-indigo-500 shadow-sm transition-colors" ${checked}>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide transition-colors">${r.role_name}</span>
         </label>`;
     });
-    document.getElementById('rbac-modal-roles-container').innerHTML = rolesHtml || "<p class='text-[10px] text-slate-400 uppercase tracking-widest font-bold py-2'>No roles created for this module yet.</p>";
+    document.getElementById('rbac-modal-roles-container').innerHTML = rolesHtml || "<p class='text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold py-2 transition-colors'>No roles created for this module yet.</p>";
 
     if(typeof window.toggleScrollLock === 'function') window.toggleScrollLock(true);
     document.getElementById('rbac-user-modal').classList.remove('hidden');
@@ -319,9 +310,6 @@ window.rbacSaveUser = async function() {
     }
 };
 
-// ==========================================
-// TAB 2: ROLE & PERMISSION MATRIX
-// ==========================================
 window.rbacPromptNewRole = async function() {
     var rName = prompt("Enter new Role Name (e.g. Sales Manager):");
     if (!rName || !rName.trim()) return;
@@ -346,13 +334,13 @@ window.rbacRenderRolesList = function() {
     if (!list) return;
     var html = "";
     if(window.rbacState.roles.length === 0) {
-        list.innerHTML = "<p class='text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest py-4'>No roles found</p>";
+        list.innerHTML = "<p class='text-[10px] text-center text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest py-4 transition-colors'>No roles found</p>";
         return;
     }
     
     window.rbacState.roles.forEach(r => {
-        var isActive = window.rbacState.selectedRoleForMatrix === r.role_name ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200 shadow-sm";
-        html += `<button onclick="window.rbacSelectRole('${r.role_name}')" class="w-full text-left px-4 py-3 rounded-xl font-black transition ${isActive} uppercase tracking-widest text-xs outline-none">${r.role_name}</button>`;
+        var isActive = window.rbacState.selectedRoleForMatrix === r.role_name ? "bg-indigo-600 dark:bg-indigo-700 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-700/50 border border-slate-200 dark:border-slate-700 shadow-sm";
+        html += `<button onclick="window.rbacSelectRole('${r.role_name}')" class="w-full text-left px-4 py-3 rounded-xl font-black transition-colors ${isActive} uppercase tracking-widest text-xs outline-none">${r.role_name}</button>`;
     });
     list.innerHTML = html;
 };
@@ -366,15 +354,15 @@ window.rbacSelectRole = function(roleName) {
     var modPages = window.rbacState.pages;
     var rolePerms = window.rbacState.permissions.filter(p => p.role_name === roleName);
     
-    var html = `<table class="w-full text-left border-collapse">
-        <thead class="bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest sticky top-0 z-10 shadow-sm">
+    var html = `<table class="w-full text-left border-collapse transition-colors">
+        <thead class="bg-slate-100 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-black uppercase text-[10px] tracking-widest sticky top-0 z-10 shadow-sm transition-colors">
             <tr>
-                <th class="p-3 pl-6 border-b border-slate-200">Page / Screen</th>
-                <th class="p-3 text-center border-b border-slate-200">Has Access</th>
-                <th class="p-3 text-center border-b border-slate-200">Can Edit (Read/Write)</th>
+                <th class="p-3 pl-6 border-b border-slate-200 dark:border-slate-700">Page / Screen</th>
+                <th class="p-3 text-center border-b border-slate-200 dark:border-slate-700">Has Access</th>
+                <th class="p-3 text-center border-b border-slate-200 dark:border-slate-700">Can Edit (Read/Write)</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 text-sm font-bold text-slate-700">`;
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">`;
 
     var noMenuPages = modPages.filter(p => !p.menu_id);
     if (noMenuPages.length > 0) {
@@ -391,19 +379,19 @@ window.rbacSelectRole = function(roleName) {
 };
 
 window._buildMatrixRows = function(groupName, pagesArray, rolePerms) {
-    var html = `<tr class="bg-slate-50/80"><td colspan="3" class="p-2.5 pl-4 text-[10px] font-black text-indigo-500 uppercase tracking-widest border-t border-b border-slate-200 shadow-inner">${groupName}</td></tr>`;
+    var html = `<tr class="bg-slate-50/80 dark:bg-slate-900/50 transition-colors"><td colspan="3" class="p-2.5 pl-4 text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest border-t border-b border-slate-200 dark:border-slate-700 shadow-inner transition-colors">${groupName}</td></tr>`;
     pagesArray.forEach(p => {
         var perm = rolePerms.find(x => x.page_id === p.page_id);
         var hasAccess = perm ? "checked" : "";
         var canEdit = (perm && perm.can_edit) ? "checked" : "";
         
-        html += `<tr class="hover:bg-indigo-50/50 transition">
-            <td class="p-3 pl-6">
+        html += `<tr class="hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-colors">
+            <td class="p-3 pl-6 transition-colors">
                <span class="font-black">${p.page_title}</span>
-               <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold ml-2">(${p.page_id})</span>
+               <span class="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 font-bold ml-2 transition-colors">(${p.page_id})</span>
             </td>
-            <td class="p-3 text-center"><input type="checkbox" class="rbac-access-cb w-4 h-4 accent-indigo-600 cursor-pointer shadow-sm" data-pid="${p.page_id}" ${hasAccess}></td>
-            <td class="p-3 text-center"><input type="checkbox" class="rbac-edit-cb w-4 h-4 accent-emerald-600 cursor-pointer shadow-sm" data-pid="${p.page_id}" ${canEdit}></td>
+            <td class="p-3 text-center transition-colors"><input type="checkbox" class="rbac-access-cb w-4 h-4 accent-indigo-600 dark:accent-indigo-500 cursor-pointer shadow-sm transition-colors" data-pid="${p.page_id}" ${hasAccess}></td>
+            <td class="p-3 text-center transition-colors"><input type="checkbox" class="rbac-edit-cb w-4 h-4 accent-emerald-600 dark:accent-emerald-500 cursor-pointer shadow-sm transition-colors" data-pid="${p.page_id}" ${canEdit}></td>
         </tr>`;
     });
     return html;
@@ -455,9 +443,6 @@ window.rbacSavePermissions = async function() {
     }
 };
 
-// ==========================================
-// TAB 3: MENU & PAGE BUILDER (FULL CRUD)
-// ==========================================
 window.rbacRenderMenuTree = function() {
     var container = document.getElementById('rbac-tree-container');
     if (!container) return;
@@ -467,48 +452,45 @@ window.rbacRenderMenuTree = function() {
 
     var mainMenus = menus.filter(m => !m.parent_menu_id);
     if (mainMenus.length === 0 && pages.length === 0) {
-        container.innerHTML = `<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center py-6">No menus or pages registered for ${window.rbacState.activeModule} yet.</p>`;
+        container.innerHTML = `<p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center py-6 transition-colors">No menus or pages registered for ${window.rbacState.activeModule} yet.</p>`;
         return;
     }
 
     mainMenus.forEach(m => {
-        var defaultMainIcon = `<svg class="w-5 h-5 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`;
-        html += `<div class="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm mb-4">`;
+        var defaultMainIcon = `<svg class="w-5 h-5 text-indigo-400 dark:text-indigo-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`;
+        html += `<div class="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm mb-4 transition-colors">`;
         
-        // Main Menu Header Row with Sort Badge + Edit/Delete
-        html += `<div class="flex items-center justify-between gap-2">
-            <div class="font-black text-slate-800 text-base flex items-center gap-3">
-                <span class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">${m.icon_svg || defaultMainIcon}</span>
-                <span class="uppercase tracking-widest text-sm">${m.menu_label}</span>
-                <span class="bg-slate-100 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded-md border border-slate-200 uppercase">Order: ${m.sort_order ?? 0}</span>
+        html += `<div class="flex items-center justify-between gap-2 transition-colors">
+            <div class="font-black text-slate-800 dark:text-white text-base flex items-center gap-3 transition-colors">
+                <span class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 shadow-inner transition-colors">${m.icon_svg || defaultMainIcon}</span>
+                <span class="uppercase tracking-widest text-sm transition-colors">${m.menu_label}</span>
+                <span class="bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-[9px] font-black px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 uppercase transition-colors">Order: ${m.sort_order ?? 0}</span>
             </div>
-            <div class="flex items-center gap-1.5">
-                <button onclick="window.rbacEditMenu('${m.id}')" title="Edit Menu" class="p-1.5 text-xs bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700 rounded-lg transition outline-none">✏️</button>
-                <button onclick="window.rbacDeleteMenu('${m.id}')" title="Delete Empty Menu" class="p-1.5 text-xs bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-lg transition outline-none">🗑️</button>
+            <div class="flex items-center gap-1.5 transition-colors">
+                <button onclick="window.rbacEditMenu('${m.id}')" title="Edit Menu" class="p-1.5 text-xs bg-slate-100 dark:bg-slate-900 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-lg transition-colors outline-none">✏️</button>
+                <button onclick="window.rbacDeleteMenu('${m.id}')" title="Delete Empty Menu" class="p-1.5 text-xs bg-slate-100 dark:bg-slate-900 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-slate-600 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 rounded-lg transition-colors outline-none">🗑️</button>
             </div>
         </div>`;
         
-        // Direct Pages under Main Menu
-        html += window._buildPageListForMenu(m.id, pages, "pl-4 mt-3 ml-4 border-l-2 border-slate-200");
+        html += window._buildPageListForMenu(m.id, pages, "pl-4 mt-3 ml-4 border-l-2 border-slate-200 dark:border-slate-700");
 
-        // Submenus under Main Menu
         var subMenus = menus.filter(sub => String(sub.parent_menu_id) === String(m.id));
         if (subMenus.length > 0) {
-            html += `<div class="pl-6 mt-4 space-y-3 border-l-2 border-indigo-100 ml-4">`;
+            html += `<div class="pl-6 mt-4 space-y-3 border-l-2 border-indigo-100 dark:border-indigo-900/30 ml-4 transition-colors">`;
             subMenus.forEach(sub => {
-                var defaultSubIcon = `<svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
-                html += `<div class="flex items-center justify-between gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="font-bold text-slate-700 text-xs flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-md bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">${sub.icon_svg || defaultSubIcon}</span>
-                        <span class="uppercase tracking-widest text-[11px] font-black">${sub.menu_label}</span>
-                        <span class="bg-white text-slate-400 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 uppercase">Order: ${sub.sort_order ?? 0}</span>
+                var defaultSubIcon = `<svg class="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
+                html += `<div class="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/50 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
+                    <div class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-2 transition-colors">
+                        <span class="w-6 h-6 rounded-md bg-slate-900 flex items-center justify-center shrink-0 shadow-inner transition-colors">${sub.icon_svg || defaultSubIcon}</span>
+                        <span class="uppercase tracking-widest text-[11px] font-black transition-colors">${sub.menu_label}</span>
+                        <span class="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase transition-colors">Order: ${sub.sort_order ?? 0}</span>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="window.rbacEditMenu('${sub.id}')" title="Edit Sub-Menu" class="p-1 text-[11px] hover:bg-indigo-100 rounded transition outline-none">✏️</button>
-                        <button onclick="window.rbacDeleteMenu('${sub.id}')" title="Delete Empty Sub-Menu" class="p-1 text-[11px] hover:bg-rose-100 rounded transition outline-none">🗑️</button>
+                    <div class="flex items-center gap-1.5 transition-colors">
+                        <button onclick="window.rbacEditMenu('${sub.id}')" title="Edit Sub-Menu" class="p-1 text-[11px] hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded transition-colors outline-none">✏️</button>
+                        <button onclick="window.rbacDeleteMenu('${sub.id}')" title="Delete Empty Sub-Menu" class="p-1 text-[11px] hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded transition-colors outline-none">🗑️</button>
                     </div>
                 </div>`;
-                html += window._buildPageListForMenu(sub.id, pages, "pl-5 mt-2 ml-3 border-l-2 border-slate-200");
+                html += window._buildPageListForMenu(sub.id, pages, "pl-5 mt-2 ml-3 border-l-2 border-slate-200 dark:border-slate-700");
             });
             html += `</div>`;
         }
@@ -518,8 +500,8 @@ window.rbacRenderMenuTree = function() {
 
     var orphanPages = pages.filter(p => !p.menu_id);
     if (orphanPages.length > 0) {
-        html += `<div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 shadow-sm mb-3">`;
-        html += `<div class="font-black text-amber-800 text-xs uppercase tracking-widest mb-3">Hidden / Unassigned Pages</div>`;
+        html += `<div class="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-sm mb-3 transition-colors">`;
+        html += `<div class="font-black text-amber-800 dark:text-amber-400 text-xs uppercase tracking-widest mb-3 transition-colors">Hidden / Unassigned Pages</div>`;
         html += window._buildPageListForMenu(null, orphanPages, "pl-2 mt-1", true);
         html += `</div>`;
     }
@@ -527,26 +509,26 @@ window.rbacRenderMenuTree = function() {
     container.innerHTML = html;
 };
 
-window._buildPageListForMenu = function(menuId, pagesArray, extraClasses = "pl-6 mt-1 ml-2 border-l-2 border-slate-100", isOrphan = false) {
+window._buildPageListForMenu = function(menuId, pagesArray, extraClasses = "pl-6 mt-1 ml-2 border-l-2 border-slate-100 dark:border-slate-700/50", isOrphan = false) {
     var pgs = isOrphan ? pagesArray : pagesArray.filter(p => String(p.menu_id) === String(menuId));
     if (pgs.length === 0) return "";
-    var h = `<ul class="${extraClasses} space-y-2">`;
+    var h = `<ul class="${extraClasses} space-y-2 transition-colors">`;
     pgs.forEach(p => {
-        var vis = p.show_in_sidebar ? "" : `<span class="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border border-amber-200">Hidden</span>`;
+        var vis = p.show_in_sidebar ? "" : `<span class="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border border-amber-200 dark:border-amber-800 transition-colors">Hidden</span>`;
         var iconThumb = p.icon_svg 
-            ? `<span class="w-5 h-5 rounded bg-slate-900 flex items-center justify-center shrink-0 shadow-inner">${p.icon_svg}</span>` 
-            : `<span class="text-slate-300 font-black">•</span>`;
-        h += `<li class="text-xs font-bold text-slate-600 flex items-center justify-between gap-2 bg-slate-50/70 hover:bg-indigo-50 px-3 py-2 rounded-xl border border-slate-200 transition shadow-sm">
-            <div class="flex items-center gap-2 truncate">
+            ? `<span class="w-5 h-5 rounded bg-slate-900 flex items-center justify-center shrink-0 shadow-inner transition-colors">${p.icon_svg}</span>` 
+            : `<span class="text-slate-300 dark:text-slate-600 font-black transition-colors">•</span>`;
+        h += `<li class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center justify-between gap-2 bg-slate-50/70 dark:bg-slate-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-sm">
+            <div class="flex items-center gap-2 truncate transition-colors">
                 ${iconThumb}
-                <span class="truncate text-slate-800 font-black text-[11px] uppercase tracking-wider">${p.page_title}</span>
-                <span class="font-bold text-slate-400 text-[9px] uppercase tracking-widest">(${p.page_id})</span>
-                <span class="bg-white text-slate-400 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 uppercase">Order: ${p.sort_order ?? 0}</span>
+                <span class="truncate text-slate-800 dark:text-white font-black text-[11px] uppercase tracking-wider transition-colors">${p.page_title}</span>
+                <span class="font-bold text-slate-400 dark:text-slate-500 text-[9px] uppercase tracking-widest transition-colors">(${p.page_id})</span>
+                <span class="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase transition-colors">Order: ${p.sort_order ?? 0}</span>
                 ${vis}
             </div>
-            <div class="flex items-center gap-1 shrink-0">
-                <button onclick="window.rbacEditPage('${p.page_id}')" title="Edit / Reassign Page" class="p-1 text-[11px] hover:bg-indigo-100 rounded transition outline-none">✏️</button>
-                <button onclick="window.rbacDeletePage('${p.page_id}')" title="Delete Page" class="p-1 text-[11px] hover:bg-rose-100 rounded transition outline-none">🗑️</button>
+            <div class="flex items-center gap-1 shrink-0 transition-colors">
+                <button onclick="window.rbacEditPage('${p.page_id}')" title="Edit / Reassign Page" class="p-1 text-[11px] hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded transition-colors outline-none">✏️</button>
+                <button onclick="window.rbacDeletePage('${p.page_id}')" title="Delete Page" class="p-1 text-[11px] hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded transition-colors outline-none">🗑️</button>
             </div>
         </li>`;
     });
@@ -568,15 +550,14 @@ window.rbacPopulateDropdowns = function() {
     var pageSelect = document.getElementById('rbac-new-page-menu');
     var mhtml = `<option value="">-- Do Not Assign (Hidden / Standalone) --</option>`;
     menus.filter(m => !m.parent_menu_id).forEach(m => {
-        mhtml += `<option value="${m.id}" class="font-black uppercase tracking-widest text-slate-800">📁 ${m.menu_label}</option>`;
+        mhtml += `<option value="${m.id}" class="font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">📁 ${m.menu_label}</option>`;
         menus.filter(sub => String(sub.parent_menu_id) === String(m.id)).forEach(sub => {
-            mhtml += `<option value="${sub.id}" class="font-bold text-slate-600">&nbsp;&nbsp;&nbsp;↳ ${sub.menu_label}</option>`;
+            mhtml += `<option value="${sub.id}" class="font-bold text-slate-600 dark:text-slate-400">&nbsp;&nbsp;&nbsp;↳ ${sub.menu_label}</option>`;
         });
     });
     if (pageSelect) pageSelect.innerHTML = mhtml;
 };
 
-// --- MENU CREATE / EDIT / DELETE ---
 window.rbacEditMenu = function(menuId) {
     var m = window.rbacState.menus.find(x => String(x.id) === String(menuId));
     if (!m) return;
@@ -593,7 +574,7 @@ window.rbacEditMenu = function(menuId) {
     document.getElementById('rbac-menu-form-title').innerText = "Edit Menu: " + m.menu_label;
     document.getElementById('rbac-btn-save-menu').innerText = "Update Menu";
     document.getElementById('rbac-btn-cancel-menu').classList.remove('hidden');
-    document.getElementById('rbac-menu-form-card').classList.add('ring-4', 'ring-amber-300');
+    document.getElementById('rbac-menu-form-card').classList.add('ring-4', 'ring-amber-300', 'dark:ring-amber-500');
     
     if(typeof window.scrollAdminTo === 'function') window.scrollAdminTo('bottom');
 };
@@ -610,7 +591,7 @@ window.rbacResetMenuForm = function() {
     document.getElementById('rbac-menu-form-title').innerText = "Add Sidebar Menu";
     document.getElementById('rbac-btn-save-menu').innerText = "Create Menu";
     document.getElementById('rbac-btn-cancel-menu').classList.add('hidden');
-    document.getElementById('rbac-menu-form-card').classList.remove('ring-4', 'ring-amber-300');
+    document.getElementById('rbac-menu-form-card').classList.remove('ring-4', 'ring-amber-300', 'dark:ring-amber-500');
 };
 
 window.rbacSaveMenu = async function() {
@@ -690,7 +671,6 @@ window.rbacDeleteMenu = async function(menuId) {
     }
 };
 
-// --- PAGE CREATE / EDIT / REASSIGN / DELETE ---
 window.rbacEditPage = function(pageId) {
     var p = window.rbacState.pages.find(x => x.page_id === pageId);
     if (!p) return;
@@ -699,7 +679,7 @@ window.rbacEditPage = function(pageId) {
     var idInput = document.getElementById('rbac-new-page-id');
     idInput.value = p.page_id;
     idInput.readOnly = true;
-    idInput.classList.add('bg-slate-200', 'text-slate-500', 'cursor-not-allowed', 'border-slate-300', 'shadow-none');
+    idInput.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-300', 'dark:border-slate-600', 'shadow-none');
 
     document.getElementById('rbac-new-page-title').value = p.page_title || "";
     document.getElementById('rbac-new-page-menu').value = p.menu_id || "";
@@ -712,7 +692,7 @@ window.rbacEditPage = function(pageId) {
     document.getElementById('rbac-page-form-title').innerText = "Edit Page: " + p.page_title;
     document.getElementById('rbac-btn-save-page').innerText = "Update Page";
     document.getElementById('rbac-btn-cancel-page').classList.remove('hidden');
-    document.getElementById('rbac-page-form-card').classList.add('ring-4', 'ring-amber-300');
+    document.getElementById('rbac-page-form-card').classList.add('ring-4', 'ring-amber-300', 'dark:ring-amber-500');
     
     if(typeof window.scrollAdminTo === 'function') window.scrollAdminTo('bottom');
 };
@@ -722,7 +702,7 @@ window.rbacResetPageForm = function() {
     var idInput = document.getElementById('rbac-new-page-id');
     idInput.value = "";
     idInput.readOnly = false;
-    idInput.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed', 'border-slate-300', 'shadow-none');
+    idInput.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-300', 'dark:border-slate-600', 'shadow-none');
 
     document.getElementById('rbac-new-page-title').value = "";
     document.getElementById('rbac-new-page-menu').value = "";
@@ -735,7 +715,7 @@ window.rbacResetPageForm = function() {
     document.getElementById('rbac-page-form-title').innerText = "Register App Page";
     document.getElementById('rbac-btn-save-page').innerText = "Register Page";
     document.getElementById('rbac-btn-cancel-page').classList.add('hidden');
-    document.getElementById('rbac-page-form-card').classList.remove('ring-4', 'ring-amber-300');
+    document.getElementById('rbac-page-form-card').classList.remove('ring-4', 'ring-amber-300', 'dark:ring-amber-500');
 };
 
 window.rbacSavePage = async function() {
@@ -815,9 +795,6 @@ window.rbacDeletePage = async function(pageId) {
     }
 };
 
-// ==========================================
-// BUILT-IN ICON PICKER & LIVE PREVIEW LOGIC
-// ==========================================
 window.rbacOpenIconPicker = function(targetType) {
     window.rbacState.iconPickerTarget = targetType;
     var sizeSelect = document.getElementById('rbac-icon-size-select');
@@ -842,16 +819,16 @@ window.rbacRenderIconPickerGrid = function() {
 
     var html = "";
     window.RBAC_ICON_LIBRARY.forEach((group, cIdx) => {
-        html += `<div>
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-700 pb-2 pl-2">${group.category}</h4>
+        html += `<div class="transition-colors">
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-700 pb-2 pl-2 transition-colors">${group.category}</h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">`;
         group.icons.forEach((ic, iIdx) => {
-            var svgCode = `<svg class="${sizeClass} shrink-0 ${colorClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${ic.path}</svg>`;
-            html += `<button type="button" onclick="window.rbacSelectIconFromModal(${cIdx}, ${iIdx})" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 hover:bg-slate-700 text-white border border-slate-700 hover:border-indigo-400 transition text-left group shadow-sm outline-none">
+            var svgCode = `<svg class="${sizeClass} shrink-0 ${colorClass} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">${ic.path}</svg>`;
+            html += `<button type="button" onclick="window.rbacSelectIconFromModal(${cIdx}, ${iIdx})" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 hover:bg-slate-700 text-white border border-slate-700 hover:border-indigo-400 transition-colors text-left group shadow-sm outline-none">
                 <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner">
                     ${svgCode}
                 </div>
-                <span class="text-[10px] font-bold text-slate-400 group-hover:text-white uppercase tracking-widest leading-tight">${ic.name}</span>
+                <span class="text-[10px] font-bold text-slate-400 group-hover:text-white uppercase tracking-widest leading-tight transition-colors">${ic.name}</span>
             </button>`;
         });
         html += `</div></div>`;
@@ -887,9 +864,9 @@ window.rbacUpdateIconPreview = function(targetType) {
     if (raw && raw.startsWith('<svg') && raw.endsWith('</svg>')) {
         previewBox.innerHTML = raw;
     } else if (!raw) {
-        previewBox.innerHTML = `<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">None</span>`;
+        previewBox.innerHTML = `<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest transition-colors">None</span>`;
     } else {
-        previewBox.innerHTML = `<span class="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Invalid</span>`;
+        previewBox.innerHTML = `<span class="text-[9px] font-bold text-amber-400 uppercase tracking-widest transition-colors">Invalid</span>`;
     }
 };
 

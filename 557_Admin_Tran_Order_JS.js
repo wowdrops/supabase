@@ -14,7 +14,6 @@ let ord2CachedProfile = { apt: "", blk: "", door: "", name: "", contact: "", rat
 window.activeOrd2TimerInterval = null;
 window.ord2StartTime = 0;
 
-// --- MATH PROTECTOR: AUTO-FILL ORD D ---
 window.handlePendAutoFill = function() {
   const pendVal = Number(document.getElementById('ord2-inp-pend').value) || 0;
   const ordDInput = document.getElementById('ord2-inp-ordD');
@@ -25,12 +24,11 @@ window.handlePendAutoFill = function() {
   }
 };
 
-// --- UNIVERSAL TIMER ENGINE ---
 window.startOrd2Timer = function(actionLabel) {
   var timerBadge = document.getElementById('ord2-live-timer');
   if (!timerBadge) return;
   
-  timerBadge.outerHTML = '<span id="ord2-live-timer" class="bg-indigo-100 text-indigo-800 font-black px-3 py-1.5 rounded-lg text-sm border-2 border-indigo-200 shadow-inner flex items-center gap-1.5 min-w-max"><svg class="w-4 h-4 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' + actionLabel + ': <span id="ord2-timer-sec">0.00</span>s</span>';
+  timerBadge.outerHTML = '<span id="ord2-live-timer" class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-400 font-black px-3 py-1.5 rounded-lg text-sm border-2 border-indigo-200 dark:border-indigo-800 shadow-inner flex items-center gap-1.5 min-w-max transition-colors"><svg class="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' + actionLabel + ': <span id="ord2-timer-sec">0.00</span>s</span>';
   
   var badge = document.getElementById('ord2-live-timer');
   badge.classList.remove('hidden');
@@ -51,9 +49,9 @@ window.stopOrd2Timer = function(successLabel, isError) {
   var badge = document.getElementById('ord2-live-timer');
   if(badge) {
       if (isError) {
-          badge.outerHTML = '<span id="ord2-live-timer" class="bg-red-100 text-red-800 font-bold px-3 py-1.5 rounded-lg border border-red-200 text-xs uppercase tracking-widest whitespace-nowrap shadow-sm min-w-max">Failed</span>';
+          badge.outerHTML = '<span id="ord2-live-timer" class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 font-bold px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-xs uppercase tracking-widest whitespace-nowrap shadow-sm min-w-max transition-colors">Failed</span>';
       } else {
-          badge.outerHTML = '<span id="ord2-live-timer" class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 text-xs uppercase tracking-widest whitespace-nowrap shadow-sm min-w-max">' + successLabel + ' in ' + finalTime + 's</span>';
+          badge.outerHTML = '<span id="ord2-live-timer" class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs uppercase tracking-widest whitespace-nowrap shadow-sm min-w-max transition-colors">' + successLabel + ' in ' + finalTime + 's</span>';
       }
   }
 };
@@ -65,13 +63,12 @@ window.toggleOrd2Header = function() {
   else { col.classList.add('hidden'); icon.classList.remove('rotate-180'); }
 };
 
-// --- FETCH ORDERS DATA & SETUP CAPACITY ---
 window.loadTranOrdersData = async function() {
   const tbody = document.getElementById('ord2-tbl-body');
   if (!tbody) return;
   
   window.startOrd2Timer('Loading');
-  tbody.innerHTML = '<tr><td colspan="18" class="text-center py-10 text-indigo-500 font-bold animate-pulse">Loading live orders...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="18" class="text-center py-10 text-indigo-500 dark:text-indigo-400 font-bold animate-pulse transition-colors">Loading live orders...</td></tr>';
   
   try {
     const supa = window.supabase1;
@@ -160,18 +157,17 @@ window.loadTranOrdersData = async function() {
   } catch (err) {
     window.stopOrd2Timer('Failed', true);
     if(window.showToast) window.showToast("Load Error: " + err.message, "error");
-    tbody.innerHTML = `<tr><td colspan="18" class="text-center py-10 text-red-500 font-bold">Error: ${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="18" class="text-center py-10 text-red-500 dark:text-red-400 font-bold transition-colors">Error: ${err.message}</td></tr>`;
   }
 };
 
-// --- RENDER TABLE & UPDATE DASHBOARD ---
 function renderOrd2Table(data) {
   const tbody = document.getElementById('ord2-tbl-body');
   tbody.innerHTML = '';
   let sumD = 0, sumE = 0, sumEst = 0, sumPend = 0, sumRep = 0, sumDeposit = 0;
 
   if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="18" class="text-center py-12 text-slate-400 font-bold">No active orders found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="18" class="text-center py-12 text-slate-400 dark:text-slate-500 font-bold transition-colors">No active orders found.</td></tr>';
   } else {
       data.forEach(order => {
         sumD += order.ordD;
@@ -182,39 +178,41 @@ function renderOrd2Table(data) {
         sumDeposit += (order.canDeposit || 0);
 
         const row = document.createElement('tr');
-        row.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-700/50";
         
-        let locHtml = `<p class="font-bold text-slate-500 text-xs tracking-widest uppercase">${order.apt}</p><p class="text-slate-800 font-black">${order.blk} / ${order.door}</p>`;
-        let custHtml = `<p class="font-black text-indigo-700 text-base"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${order.cpn}')">
+        let locHtml = `<p class="font-bold text-slate-500 dark:text-slate-400 text-xs tracking-widest uppercase transition-colors">${order.apt}</p><p class="text-slate-800 dark:text-white font-black transition-colors">${order.blk} / ${order.door}</p>`;
+        
+        let custHtml = `<p class="font-black text-indigo-700 text-base"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${order.cpn}')">
                           ${order.cpn}
-                          <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                          <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                           </span>
-                        </p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;  
-        let reasonStr = order.repReason ? `<br><span class="text-[9px] text-rose-500 font-bold uppercase tracking-widest">${order.repReason}</span>` : '';
+                        </p><p class="text-xs font-bold text-slate-500 dark:text-slate-400 truncate max-w-[150px] transition-colors">${order.name}</p><p class="text-[10px] text-slate-400 dark:text-slate-500 tracking-widest transition-colors">${order.phone}</p>`;  
+        
+        let reasonStr = order.repReason ? `<br><span class="text-[9px] text-rose-500 dark:text-rose-400 font-bold uppercase tracking-widest transition-colors">${order.repReason}</span>` : '';
 
         row.innerHTML = `
-          <td class="p-4 text-center"><input type="checkbox" class="w-5 h-5 rounded border-slate-300 ord-batch-chk cursor-pointer" value="${order.id}"></td>
-          <td class="p-4"><p class="text-sm font-black text-slate-700">${order.date}</p><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${order.time}</p></td>
+          <td class="p-4 text-center"><input type="checkbox" class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 ord-batch-chk cursor-pointer transition-colors"></td>
+          <td class="p-4"><p class="text-sm font-black text-slate-700 dark:text-slate-300 transition-colors">${order.date}</p><p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest transition-colors">${order.time}</p></td>
           <td class="p-4">${locHtml}</td>
           <td class="p-4">${custHtml}</td>
-          <td class="p-4 text-center"><span class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-lg font-black text-slate-700">${order.ordD}</span></td>
-          <td class="p-4 text-center"><span class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-lg font-black text-slate-700">${order.ordE}</span></td>
-          <td class="p-4 text-center"><span class="bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg text-base font-black text-amber-700">${order.pendQty}</span></td>
-          <td class="p-4 text-center leading-tight"><span class="bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg text-base font-black text-rose-700">${order.repQty}</span>${reasonStr}</td>
-          <td class="p-4 text-right text-emerald-600 text-lg font-black">₹${order.estAmt}</td>
-          <td class="p-4 text-right text-amber-600 text-lg font-black">₹${order.canDeposit || 0}</td>
-          <td class="p-4 text-right bg-slate-50 border-l border-slate-100 font-black text-lg ${order.outTotal > 0 ? 'text-red-500' : 'text-slate-400'}">₹${order.outTotal}</td>
-          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAB}</td>
-          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAC}</td>
-          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAD}</td>
-          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 font-black text-rose-600">${order.outAE}</td>
-          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 font-black text-amber-600">${order.outAF}</td>
-          <td class="p-4 text-xs text-slate-500 font-bold max-w-[150px] truncate"><div class="bg-slate-100 px-2 py-1 rounded border border-slate-200" title="${order.cmt}">${order.cmt || '-'}</div></td>
+          <td class="p-4 text-center"><span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-lg text-lg font-black text-slate-700 dark:text-slate-300 transition-colors">${order.ordD}</span></td>
+          <td class="p-4 text-center"><span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-lg text-lg font-black text-slate-700 dark:text-slate-300 transition-colors">${order.ordE}</span></td>
+          <td class="p-4 text-center"><span class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-2.5 py-1 rounded-lg text-base font-black text-amber-700 dark:text-amber-500 transition-colors">${order.pendQty}</span></td>
+          <td class="p-4 text-center leading-tight"><span class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-2.5 py-1 rounded-lg text-base font-black text-rose-700 dark:text-rose-500 transition-colors">${order.repQty}</span>${reasonStr}</td>
+          <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 text-lg font-black transition-colors">₹${order.estAmt}</td>
+          <td class="p-4 text-right text-amber-600 dark:text-amber-500 text-lg font-black transition-colors">₹${order.canDeposit || 0}</td>
+          <td class="p-4 text-right bg-slate-50 dark:bg-slate-900/50 border-l border-slate-100 dark:border-slate-700/50 font-black text-lg transition-colors ${order.outTotal > 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}">₹${order.outTotal}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs transition-colors">${order.outAB}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs transition-colors">${order.outAC}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs transition-colors">${order.outAD}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 dark:bg-slate-900/50 font-black text-rose-600 dark:text-rose-400 transition-colors">${order.outAE}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 dark:bg-slate-900/50 font-black text-amber-600 dark:text-amber-400 transition-colors">${order.outAF}</td>
+          <td class="p-4 text-xs text-slate-500 dark:text-slate-400 font-bold max-w-[150px] truncate transition-colors"><div class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 transition-colors" title="${order.cmt}">${order.cmt || '-'}</div></td>
           <td class="p-4 text-center space-x-2">
-            <button onclick="window.triggerOrd2Edit('${order.id}')" class="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-1.5 rounded transition" title="Edit Order">
+            <button onclick="window.triggerOrd2Edit('${order.id}')" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 p-1.5 rounded transition-colors" title="Edit Order">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             </button>
-            <button onclick="window.triggerOrd2Delete('${order.id}')" class="text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded transition" title="Delete Order">
+            <button onclick="window.triggerOrd2Delete('${order.id}')" class="text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors" title="Delete Order">
                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </button>
           </td>
@@ -355,7 +353,7 @@ window.executeOrd2CpnFetch = async function(cpn) {
 
     if (ord2CachedProfile.status === 'INACTIVE') {
       let reasonText = ord2CachedProfile.statusReason ? ` (${ord2CachedProfile.statusReason})` : '';
-      document.getElementById('ord2-txt-infoName').innerHTML = `<span class="text-rose-600 font-black">⚠️ INACTIVE${reasonText}:</span> ${ord2CachedProfile.name || 'Unknown'}`;
+      document.getElementById('ord2-txt-infoName').innerHTML = `<span class="text-rose-600 dark:text-rose-400 font-black">⚠️ INACTIVE${reasonText}:</span> ${ord2CachedProfile.name || 'Unknown'}`;
       document.getElementById('ord2-txt-infoAptBlkDoor').innerText = `${ord2CachedProfile.apt || '-'} | ${ord2CachedProfile.blk || '-'} | ${ord2CachedProfile.door || '-'}`;
       submitBtn.disabled = true;
       if(window.showToast) window.showToast("Cannot place order. Customer is INACTIVE.", "warning");
@@ -390,6 +388,8 @@ window.triggerOrd2Edit = function(uniqueNo) {
   const submitBtn = document.getElementById('ord2-btn-submit');
   submitBtn.classList.replace('bg-indigo-600', 'bg-amber-500');
   submitBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
+  submitBtn.classList.replace('dark:bg-indigo-700', 'dark:bg-amber-600');
+  submitBtn.classList.replace('dark:hover:bg-indigo-600', 'dark:hover:bg-amber-500');
   document.getElementById('ord2-icon-submit').outerHTML = `<svg id="ord2-icon-submit" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
   
   document.getElementById('ord2-btn-cancelEdit').classList.remove('hidden');
@@ -417,12 +417,13 @@ window.resetOrd2Form = function() {
   const submitBtn = document.getElementById('ord2-btn-submit');
   submitBtn.classList.replace('bg-amber-500', 'bg-indigo-600');
   submitBtn.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
+  submitBtn.classList.replace('dark:bg-amber-600', 'dark:bg-indigo-700');
+  submitBtn.classList.replace('dark:hover:bg-amber-500', 'dark:hover:bg-indigo-600');
   document.getElementById('ord2-icon-submit').outerHTML = `<svg id="ord2-icon-submit" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>`;
   
   document.getElementById('ord2-btn-cancelEdit').classList.add('hidden');
 };
 
-// --- SUBMIT / UPDATE LOGIC ---
 window.submitOrd2Order = async function() {
   const cpn = document.getElementById('ord2-inp-cpn').value.trim();
   let ordD = Number(document.getElementById('ord2-inp-ordD').value) || 0; 
@@ -450,7 +451,6 @@ window.submitOrd2Order = async function() {
       return window.showToast ? window.showToast("Cannot place order. Customer is INACTIVE.", "error") : alert("Customer is INACTIVE.");
   }
 
-  // MATH PROTECTOR
   if (pendQty > ordD) { 
     ordD = pendQty; 
     document.getElementById('ord2-inp-ordD').value = ordD; 
@@ -465,7 +465,6 @@ window.submitOrd2Order = async function() {
     const supa = window.supabase1;
     const cleanCpn = cpn.toUpperCase();
 
-    // DUPLICATE CHECK
     if (!ord2CurrentEditId) {
       const { data: duplicateCheck, error: dupErr } = await supa
         .from('orders')
@@ -533,7 +532,6 @@ window.submitOrd2Order = async function() {
   }
 };
 
-// --- DELETE LOGIC ---
 window.triggerOrd2Delete = async function(uniqueNo) {
   if (confirm("Are you sure you want to permanently delete this order?")) {
      window.startOrd2Timer('Deleting');
@@ -551,7 +549,6 @@ window.triggerOrd2Delete = async function(uniqueNo) {
   }
 };
 
-// --- BATCH TRANSFER LOGIC ---
 window.executeBatchTransferToDel2 = async function() {
   var btn = document.getElementById('ord2-btn-batchTransfer');
   var checkboxes = document.querySelectorAll('.ord-batch-chk:checked');
@@ -571,7 +568,6 @@ window.executeBatchTransferToDel2 = async function() {
       const supa = window.supabase1;
       const adminName = (window.activeAdminSession && window.activeAdminSession.username) ? window.activeAdminSession.username : 'Admin';
 
-      // CRITICAL PIPELINE BLOCKER
       const { data: activeDeliveries, error: delCheckErr } = await supa.from('deliveries').select('id').limit(1);
       if (delCheckErr) throw delCheckErr;
 
@@ -633,7 +629,6 @@ window.toggleAllOrdChk = function(mainChk) {
   checkboxes.forEach(chk => chk.checked = mainChk.checked);
 };
 
-// Router Hook: Clean state & Fetch on tab switch
 window.tabActions['tran-order'] = function() { 
     if(typeof window.resetOrd2Form === 'function') window.resetOrd2Form();
     window.loadTranOrdersData(); 

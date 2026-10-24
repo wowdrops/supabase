@@ -436,9 +436,7 @@ window._executeRouting = async function (tabName, filterArg) {
 
     var allNavBtns = document.querySelectorAll('button[id^="nav-tab-"]');
     allNavBtns.forEach(btn => {
-        // Remove active state classes
         btn.classList.remove('text-indigo-700', 'bg-indigo-50', 'dark:text-white', 'dark:bg-indigo-900/50');
-        // Add inactive state classes
         btn.classList.add('text-slate-500', 'dark:text-slate-400');
     });
 
@@ -446,10 +444,39 @@ window._executeRouting = async function (tabName, filterArg) {
 
     var aBtn = document.getElementById('nav-tab-' + tabName);
     if (aBtn) {
-        // Remove inactive state classes
         aBtn.classList.remove('text-slate-500', 'dark:text-slate-400');
-        // Add active state classes (Indigo in Light mode, White on Dark Blue in Dark mode)
         aBtn.classList.add('text-indigo-700', 'bg-indigo-50', 'dark:text-white', 'dark:bg-indigo-900/50');
+
+        // ===============================================
+        // NEW: AUTO-EXPAND SIDEBAR ACCORDIONS
+        // ===============================================
+        
+        // 1. Clean slate: Close all menus first to keep sidebar tidy
+        document.querySelectorAll('div[id^="sub-menu-"]').forEach(sub => sub.classList.add('hidden'));
+        document.querySelectorAll('svg[id^="icon-sub-"]').forEach(icon => icon.classList.remove('rotate-180'));
+        
+        document.querySelectorAll('.accordion-content').forEach(acc => {
+            acc.classList.remove('open');
+            acc.style.maxHeight = null;
+        });
+        document.querySelectorAll('svg[id^="icon-main-"]').forEach(icon => icon.classList.remove('rotate-180'));
+
+        // 2. Snap open the active sub-menu (if applicable)
+        var parentSub = aBtn.closest('div[id^="sub-menu-"]');
+        if (parentSub) {
+            parentSub.classList.remove('hidden');
+            var iconSub = document.getElementById(parentSub.id.replace('sub-menu-', 'icon-sub-'));
+            if (iconSub) iconSub.classList.add('rotate-180');
+        }
+
+        // 3. Snap open the active main menu folder
+        var parentMain = aBtn.closest('.accordion-content');
+        if (parentMain) {
+            parentMain.classList.add('open');
+            parentMain.style.maxHeight = "none";
+            var iconMain = document.getElementById(parentMain.id.replace('acc-main-', 'icon-main-'));
+            if (iconMain) iconMain.classList.add('rotate-180');
+        }
     }
 
     if (window.innerWidth < window.windowWidthBabu && window.isSidebarOpen) {

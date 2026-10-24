@@ -1,6 +1,6 @@
 window.masterCustomerData = [];
 window.filteredCustomers = [];
-window.dynamicStatuses = ['ACTIVE', 'INACTIVE']; // Default fallback
+window.dynamicStatuses = ['ACTIVE', 'INACTIVE'];
 window.customerDisplayLimit = 50;
 window.activeEditCPN = null;
 window.activeEditPart = null;
@@ -98,7 +98,7 @@ window.renderCustomerCards = function () {
   var canEdit = window.hasWriteAccess('master-customer');
 
   if (window.filteredCustomers.length === 0) {
-    container.innerHTML = '<div class="text-center py-12"><div class="text-5xl mb-4 opacity-50">🔍</div><p class="text-xl font-black text-slate-400 uppercase tracking-widest">No customers found.</p></div>';
+    container.innerHTML = '<div class="text-center py-12"><div class="text-5xl mb-4 opacity-50">🔍</div><p class="text-xl font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest transition-colors">No customers found.</p></div>';
     return;
   }
 
@@ -106,10 +106,10 @@ window.renderCustomerCards = function () {
     var c = window.filteredCustomers[i];
     var uId = 'card-cust-' + i;
     var statusBadge = c.finalStatus.toUpperCase() === 'INACTIVE' 
-        ? '<span class="px-3 py-1 bg-rose-100 border border-rose-200 shadow-sm text-rose-700 font-black rounded-lg text-[10px] tracking-widest uppercase">INACTIVE</span>'
-        : '<span class="px-3 py-1 bg-emerald-100 border border-emerald-200 shadow-sm text-emerald-700 font-black rounded-lg text-[10px] tracking-widest uppercase">' + c.finalStatus + '</span>';
+        ? '<span class="px-3 py-1 bg-rose-100 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 shadow-sm text-rose-700 dark:text-rose-400 font-black rounded-lg text-[10px] tracking-widest uppercase transition-colors">INACTIVE</span>'
+        : '<span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 shadow-sm text-emerald-700 dark:text-emerald-400 font-black rounded-lg text-[10px] tracking-widest uppercase transition-colors">' + c.finalStatus + '</span>';
 
-    var editBtnClass = "absolute top-4 right-4 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 p-1.5 rounded-lg border border-transparent hover:border-indigo-200 transition outline-none shadow-sm hover:shadow";
+    var editBtnClass = "absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 p-1.5 rounded-lg border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors outline-none shadow-sm hover:shadow";
     var editSvg = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>';
 
     var editBtn1 = canEdit ? '<button onclick="window.openEditPart(\'' + c.cpn + '\', 1)" class="' + editBtnClass + '">' + editSvg + '</button>' : '';
@@ -120,80 +120,80 @@ window.renderCustomerCards = function () {
 
     var dangerousActionsArea = '';
     if (canEdit) {
-        dangerousActionsArea = '<div class="bg-slate-100 p-4 rounded-2xl border-2 border-slate-200 border-dashed flex flex-col justify-center space-y-3">' +
+        dangerousActionsArea = '<div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 border-dashed flex flex-col justify-center space-y-3 transition-colors">' +
           (c.passwordSet 
-            ? '<button onclick="window.triggerActionModal(\'REVOKE\', \'' + c.cpn + '\')" class="w-full py-2.5 bg-amber-100 text-amber-800 border border-amber-300 shadow-sm font-black rounded-xl hover:bg-amber-200 transition text-[10px] tracking-widest uppercase outline-none">Revoke Password</button>'
-            : '<div class="w-full py-2.5 bg-slate-200 text-slate-400 border border-slate-300 font-bold rounded-xl text-center text-[10px] tracking-widest uppercase">No Password Set</div>') +
-          '<button onclick="window.triggerActionModal(\'DELETE\', \'' + c.cpn + '\')" class="w-full py-2.5 bg-white text-rose-600 border border-rose-200 shadow-sm font-black rounded-xl hover:bg-rose-50 transition text-[10px] tracking-widest uppercase outline-none"><svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Delete Record</button>' +
+            ? '<button onclick="window.triggerActionModal(\'REVOKE\', \'' + c.cpn + '\')" class="w-full py-2.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-800 shadow-sm font-black rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors text-[10px] tracking-widest uppercase outline-none active:scale-95">Revoke Password</button>'
+            : '<div class="w-full py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 font-bold rounded-xl text-center text-[10px] tracking-widest uppercase transition-colors">No Password Set</div>') +
+          '<button onclick="window.triggerActionModal(\'DELETE\', \'' + c.cpn + '\')" class="w-full py-2.5 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 shadow-sm font-black rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-[10px] tracking-widest uppercase outline-none active:scale-95"><svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Delete Record</button>' +
         '</div>';
     } else {
-        dangerousActionsArea = '<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-center h-full shadow-inner"><p class="text-slate-400 font-bold text-sm uppercase tracking-widest">Read Only Mode</p></div>';
+        dangerousActionsArea = '<div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center h-full shadow-inner transition-colors"><p class="text-slate-400 dark:text-slate-500 font-bold text-sm uppercase tracking-widest">Read Only Mode</p></div>';
     }
 
     var cleanCpn = String(c.cpn || '').trim().toUpperCase();
 
-    html += '<div class="bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm transition hover:border-indigo-300">' +
-      '<div class="flex items-center justify-between p-4 md:p-5 cursor-pointer hover:bg-slate-50 transition" onclick="window.toggleAccordion(\'' + uId + '\', \'icon-' + uId + '\')">' +
+    html += '<div class="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-sm transition-colors hover:border-indigo-300 dark:hover:border-indigo-600">' +
+      '<div class="flex items-center justify-between p-4 md:p-5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors" onclick="window.toggleAccordion(\'' + uId + '\', \'icon-' + uId + '\')">' +
         '<div class="flex items-center gap-4 md:gap-5">' +
-          '<div class="h-12 w-12 md:h-14 md:w-14 bg-indigo-50 rounded-full flex items-center justify-center shrink-0 border border-indigo-200 shadow-inner"><svg class="w-6 h-6 md:w-7 md:h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>' +
+          '<div class="h-12 w-12 md:h-14 md:w-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center shrink-0 border border-indigo-200 dark:border-indigo-800 shadow-inner transition-colors"><svg class="w-6 h-6 md:w-7 md:h-7 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>' +
           '<div>' +
-            '<div class="flex flex-wrap items-center gap-2 mb-1"><h4 class="text-lg md:text-xl font-black text-slate-800 uppercase">' + (c.poc1 || 'No Name') + '</h4>' + statusBadge + '</div>' +
-            '<div class="flex flex-wrap items-center gap-1.5 text-xs md:text-sm font-bold text-slate-500 tracking-widest uppercase">' +
-               '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded hover:bg-indigo-100 transition-all cursor-pointer group shadow-sm" onclick="event.stopPropagation(); window.openCustomer360(\'' + cleanCpn + '\')">' + cleanCpn + '<svg class="w-3 h-3 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></span>' + 
-               '<span class="mx-1 text-slate-300">&bull;</span> <span class="truncate">' + c.apt + ' ' + c.blk + ' ' + c.door + '</span>' +
+            '<div class="flex flex-wrap items-center gap-2 mb-1"><h4 class="text-lg md:text-xl font-black text-slate-800 dark:text-white uppercase transition-colors">' + (c.poc1 || 'No Name') + '</h4>' + statusBadge + '</div>' +
+            '<div class="flex flex-wrap items-center gap-1.5 text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 tracking-widest uppercase transition-colors">' +
+               '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors cursor-pointer group shadow-sm" onclick="event.stopPropagation(); window.openCustomer360(\'' + cleanCpn + '\')">' + cleanCpn + '<svg class="w-3 h-3 text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></span>' + 
+               '<span class="mx-1 text-slate-300 dark:text-slate-600">&bull;</span> <span class="truncate">' + c.apt + ' ' + c.blk + ' ' + c.door + '</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
-        '<svg id="icon-' + uId + '" class="w-6 h-6 text-slate-400 transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>' +
+        '<svg id="icon-' + uId + '" class="w-6 h-6 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>' +
       '</div>' +
       
-      '<div id="' + uId + '" class="accordion-content bg-slate-50"><div class="overflow-hidden p-4 md:p-6 border-t border-slate-200 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">' +
+      '<div id="' + uId + '" class="accordion-content bg-slate-50 dark:bg-slate-900 transition-colors"><div class="overflow-hidden p-4 md:p-6 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 transition-colors">' +
         
-        '<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative">' +
+        '<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative transition-colors">' +
           editBtn1 +
-          '<h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Part 1: Primary Info</h5>' +
+          '<h5 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-slate-700 pb-2 transition-colors">Part 1: Primary Info</h5>' +
           '<div class="space-y-2">' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Location</span> ' + c.apt + ' ' + c.blk + ' ' + c.door + '</p>' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Contact</span> ' + c.con1 + '</p>' +
-             '<p class="text-sm font-black text-slate-800 truncate" title="'+(c.email || '-')+'"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Email</span> ' + (c.email || '-') + '</p>' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Pay Type</span> ' + (c.payType || '-') + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Location</span> ' + c.apt + ' ' + c.blk + ' ' + c.door + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Contact</span> ' + c.con1 + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 truncate transition-colors" title="'+(c.email || '-')+'"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Email</span> ' + (c.email || '-') + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Pay Type</span> ' + (c.payType || '-') + '</p>' +
           '</div>' +
         '</div>' +
 
-        '<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative">' +
+        '<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative transition-colors">' +
           editBtn2 +
-          '<h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Part 2: Master Status</h5>' +
+          '<h5 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-slate-700 pb-2 transition-colors">Part 2: Master Status</h5>' +
           '<div class="space-y-2">' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Status</span> ' + c.finalStatus + '</p>' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Reason Logged</span> ' + (c.inactiveReason || '-') + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Status</span> ' + c.finalStatus + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Reason Logged</span> ' + (c.inactiveReason || '-') + '</p>' +
           '</div>' +
         '</div>' +
 
-        '<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative">' +
+        '<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative transition-colors">' +
           editBtn3 +
-          '<h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Part 3: Delivery Config</h5>' +
+          '<h5 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-slate-700 pb-2 transition-colors">Part 3: Delivery Config</h5>' +
           '<div class="space-y-2">' +
-             '<p class="text-sm font-black text-indigo-700"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Default Rate</span> ₹' + (c.defaultRate || '0') + '</p>' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Door Color Tag</span> ' + (c.delColor || 'NONE') + '</p>' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Delivery Instruction</span> ' + (c.delRemark || '-') + '</p>' +
+             '<p class="text-sm font-black text-indigo-700 dark:text-indigo-400 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Default Rate</span> ₹' + (c.defaultRate || '0') + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Door Color Tag</span> ' + (c.delColor || 'NONE') + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Delivery Instruction</span> ' + (c.delRemark || '-') + '</p>' +
           '</div>' +
         '</div>' +
 
-        '<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative flex flex-col justify-center text-center">' +
+        '<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative flex flex-col justify-center text-center transition-colors">' +
           editBtn5 +
-          '<h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-100 pb-2 text-left">Part 5: Can Deposit</h5>' +
-          '<p class="text-4xl md:text-5xl font-black text-emerald-600 mt-2 mb-2 drop-shadow-sm">₹' + c.advance + '</p>' +
+          '<h5 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 border-b border-slate-100 dark:border-slate-700 pb-2 text-left transition-colors">Part 5: Can Deposit</h5>' +
+          '<p class="text-4xl md:text-5xl font-black text-emerald-600 dark:text-emerald-400 mt-2 mb-2 drop-shadow-sm transition-colors">₹' + c.advance + '</p>' +
         '</div>' +
 
-        '<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative">' +
+        '<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative transition-colors">' +
           editBtn6 +
-          '<h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Part 6: Waivers & Limits</h5>' +
+          '<h5 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-slate-700 pb-2 transition-colors">Part 6: Waivers & Limits</h5>' +
           '<div class="space-y-3">' +
              '<div class="flex gap-4">' +
-                '<div><p class="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Max Ord D</p><p class="text-lg font-black text-slate-800 bg-slate-100 px-3 py-1 rounded text-center">' + (c.maxOrdD || '0') + '</p></div>' +
-                '<div><p class="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Max Ord E</p><p class="text-lg font-black text-slate-800 bg-slate-100 px-3 py-1 rounded text-center">' + (c.maxOrdE || '0') + '</p></div>' +
+                '<div><p class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-0.5 transition-colors">Max Ord D</p><p class="text-lg font-black text-slate-800 dark:text-white bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded text-center transition-colors">' + (c.maxOrdD || '0') + '</p></div>' +
+                '<div><p class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-0.5 transition-colors">Max Ord E</p><p class="text-lg font-black text-slate-800 dark:text-white bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded text-center transition-colors">' + (c.maxOrdE || '0') + '</p></div>' +
              '</div>' +
-             '<p class="text-sm font-black text-slate-800"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Overdue Waiver Status</span> ' + (c.overdueWaiver || 'No') + '</p>' +
+             '<p class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors"><span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Overdue Waiver Status</span> ' + (c.overdueWaiver || 'No') + '</p>' +
           '</div>' +
         '</div>' +
 
@@ -204,7 +204,7 @@ window.renderCustomerCards = function () {
   }
 
   if (window.customerDisplayLimit < window.filteredCustomers.length) {
-    html += '<div class="text-center pt-6"><button onclick="window.loadMoreCustomers()" class="px-8 py-3 bg-slate-800 hover:bg-slate-900 text-white font-black rounded-xl transition shadow-lg tracking-widest uppercase text-sm outline-none">Load More Customers...</button></div>';
+    html += '<div class="text-center pt-6"><button onclick="window.loadMoreCustomers()" class="px-8 py-3 bg-slate-800 dark:bg-indigo-600 hover:bg-slate-900 dark:hover:bg-indigo-700 text-white font-black rounded-xl transition-colors shadow-lg tracking-widest uppercase text-sm outline-none active:scale-95">Load More Customers...</button></div>';
   }
 
   container.innerHTML = html;
@@ -215,9 +215,6 @@ window.loadMoreCustomers = function() {
   window.renderCustomerCards();
 };
 
-// =====================================
-// EXPORT TO EXCEL FUNCTIONALITY
-// =====================================
 window.exportMasterCustomersToCSV = function() {
     if (!window.masterCustomerData || window.masterCustomerData.length === 0) {
         if(window.showToast) return window.showToast("No data to export.", "warning");
@@ -225,7 +222,6 @@ window.exportMasterCustomersToCSV = function() {
     }
 
     var csvRows = [];
-    // Define exact headers
     var headers = ["CPN_NO", "APARTMENT", "BLOCK", "DOOR", "POC1", "CON1", "POC2", "CON2", "CON3", "EMAIL", "PAY_TYPE", "DEFAULT_RATE", "DELIVERY_COLOR", "DELIVERY_REMARK", "CAN_DEPOSIT", "MAX_ORD_D", "MAX_ORD_E", "OVERDUE_WAIVER", "FINAL_STATUS", "INACTIVE_REASON", "HAS_PASSWORD", "CLIENT_STATUS", "CLIENT_STATUS_NEW", "GC", "CREATED_AT"];
     csvRows.push(headers.join(","));
 
@@ -346,11 +342,11 @@ window.updateWizardUI = function () {
   var currentStepEl = document.getElementById('wiz-step-' + window.wizardCurrentStep);
   if(currentStepEl) currentStepEl.classList.remove('hidden');
   
-  document.getElementById('wiz-ind-1').className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 1 ? "bg-indigo-600" : "bg-slate-200");
-  document.getElementById('wiz-ind-2').className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 2 ? "bg-indigo-600" : "bg-slate-200");
-  document.getElementById('wiz-ind-3').className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 3 ? "bg-indigo-600" : "bg-slate-200");
+  document.getElementById('wiz-ind-1').className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 1 ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-200 dark:bg-slate-700");
+  document.getElementById('wiz-ind-2').className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 2 ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-200 dark:bg-slate-700");
+  document.getElementById('wiz-ind-3').className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 3 ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-200 dark:bg-slate-700");
   var ind4 = document.getElementById('wiz-ind-4');
-  if(ind4) ind4.className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 4 ? "bg-indigo-600" : "bg-slate-200");
+  if(ind4) ind4.className = "h-2 flex-1 rounded-full transition-colors shadow-inner " + (window.wizardCurrentStep >= 4 ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-200 dark:bg-slate-700");
 
   document.getElementById('wiz-btn-back').classList.toggle('hidden', window.wizardCurrentStep === 1);
   document.getElementById('wiz-btn-next').classList.toggle('hidden', window.wizardCurrentStep === 4);
@@ -424,43 +420,43 @@ window.openEditPart = function (cpn, partId) {
 
   if (partId === 1) {
     html += '<div class="grid grid-cols-2 gap-4">';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Apt *</label><input type="text" id="ep1-apt" value="' + c.apt + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Blk *</label><input type="text" id="ep1-blk" value="' + c.blk + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Door *</label><input type="text" id="ep1-door" value="' + c.door + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div class="col-span-2 border-t border-slate-200 my-1"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">POC 1 *</label><input type="text" id="ep1-poc1" value="' + c.poc1 + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Con 1 *</label><input type="text" id="ep1-con1" value="' + c.con1 + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">POC 2</label><input type="text" id="ep1-poc2" value="' + c.poc2 + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Con 2</label><input type="text" id="ep1-con2" value="' + c.con2 + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Con 3</label><input type="text" id="ep1-con3" value="' + c.con3 + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</label><input type="email" id="ep1-email" value="' + c.email + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Pay Type</label><select id="ep1-pt" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400 text-slate-700"><option value="">Select</option><option value="ONLINE" '+(c.payType==='ONLINE'?'selected':'')+'>ONLINE</option><option value="CASH" '+(c.payType==='CASH'?'selected':'')+'>CASH</option></select></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Client Status New</label><input type="text" id="ep1-csn" value="' + c.clientStatusNew + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">GC</label><input type="text" id="ep1-gc" value="' + c.gc + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Client Status</label><input type="text" id="ep1-cs" value="' + c.clientStatus + '" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Apt *</label><input type="text" id="ep1-apt" value="' + c.apt + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Blk *</label><input type="text" id="ep1-blk" value="' + c.blk + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Door *</label><input type="text" id="ep1-door" value="' + c.door + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div class="col-span-2 border-t border-slate-200 dark:border-slate-700 my-1 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">POC 1 *</label><input type="text" id="ep1-poc1" value="' + c.poc1 + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Con 1 *</label><input type="text" id="ep1-con1" value="' + c.con1 + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">POC 2</label><input type="text" id="ep1-poc2" value="' + c.poc2 + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Con 2</label><input type="text" id="ep1-con2" value="' + c.con2 + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Con 3</label><input type="text" id="ep1-con3" value="' + c.con3 + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Email</label><input type="email" id="ep1-email" value="' + c.email + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Pay Type</label><select id="ep1-pt" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-700 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 color-scheme-dark transition-colors"><option value="">Select</option><option value="ONLINE" '+(c.payType==='ONLINE'?'selected':'')+'>ONLINE</option><option value="CASH" '+(c.payType==='CASH'?'selected':'')+'>CASH</option></select></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Client Status New</label><input type="text" id="ep1-csn" value="' + c.clientStatusNew + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">GC</label><input type="text" id="ep1-gc" value="' + c.gc + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Client Status</label><input type="text" id="ep1-cs" value="' + c.clientStatus + '" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
     html += '</div>';
   } 
   else if (partId === 2) {
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Final Status *</label><select id="ep2-fs" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400 text-slate-700">';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Final Status *</label><select id="ep2-fs" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-700 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 color-scheme-dark transition-colors">';
     for (var s = 0; s < window.dynamicStatuses.length; s++) {
       html += '<option value="' + window.dynamicStatuses[s] + '" ' + (c.finalStatus === window.dynamicStatuses[s] ? 'selected' : '') + '>' + window.dynamicStatuses[s] + '</option>';
     }
     html += '</select></div>';
-    html += '<div class="mt-4"><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Inactive Reason</label><textarea id="ep2-ir" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400" rows="3">' + c.inactiveReason + '</textarea></div>';
+    html += '<div class="mt-4"><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Inactive Reason</label><textarea id="ep2-ir" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors" rows="3">' + c.inactiveReason + '</textarea></div>';
   }
   else if (partId === 3) {
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Default Rate (₹) *</label><input type="number" id="ep3-rate" value="' + c.defaultRate + '" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div class="mt-4"><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Delivery Color</label><input type="text" id="ep3-color" value="' + c.delColor + '" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div class="mt-4"><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Delivery Remark</label><textarea id="ep3-rem" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400">' + c.delRemark + '</textarea></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Default Rate (₹) *</label><input type="number" id="ep3-rate" value="' + c.defaultRate + '" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div class="mt-4"><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Delivery Color</label><input type="text" id="ep3-color" value="' + c.delColor + '" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div class="mt-4"><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Delivery Remark</label><textarea id="ep3-rem" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors">' + c.delRemark + '</textarea></div>';
   }
   else if (partId === 5) {
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Can Deposit / Advance (₹) *</label><input type="number" id="ep5-adv" min="0" value="' + c.advance + '" class="w-full mt-2 p-6 bg-emerald-50 border-2 border-emerald-200 shadow-inner rounded-xl text-5xl font-black text-emerald-700 text-center outline-none focus:border-emerald-500"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center transition-colors">Can Deposit / Advance (₹) *</label><input type="number" id="ep5-adv" min="0" value="' + c.advance + '" class="w-full mt-2 p-6 bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 shadow-inner rounded-xl text-5xl font-black text-emerald-700 dark:text-emerald-400 text-center outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors"></div>';
   }
   else if (partId === 6) {
     html += '<div class="grid grid-cols-2 gap-4">';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Max Ord D *</label><input type="number" id="ep6-md" value="' + c.maxOrdD + '" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Max Ord E *</label><input type="number" id="ep6-me" value="' + c.maxOrdE + '" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400"></div>';
-    html += '<div class="col-span-2"><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Overdue Waiver *</label><select id="ep6-ow" class="w-full mt-1 p-3 bg-white border border-slate-200 shadow-inner rounded-xl font-bold outline-none focus:border-indigo-400 text-slate-700">' +
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Max Ord D *</label><input type="number" id="ep6-md" value="' + c.maxOrdD + '" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Max Ord E *</label><input type="number" id="ep6-me" value="' + c.maxOrdE + '" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"></div>';
+    html += '<div class="col-span-2"><label class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Overdue Waiver *</label><select id="ep6-ow" class="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-xl font-bold text-slate-700 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 color-scheme-dark transition-colors">' +
       '<option value="FALSE" ' + (String(c.overdueWaiver).toUpperCase() === 'FALSE' || c.overdueWaiver === false ? 'selected' : '') + '>FALSE</option>' +
       '<option value="TRUE" ' + (String(c.overdueWaiver).toUpperCase() === 'TRUE' || c.overdueWaiver === true ? 'selected' : '') + '>TRUE</option>' +
       '</select></div>';
@@ -539,16 +535,16 @@ window.triggerActionModal = function (actionType, cpn) {
   if (actionType === 'REVOKE') {
     document.getElementById('action-title').innerText = "Revoke Password";
     document.getElementById('action-desc').innerText = "This will delete the customer's current password. They will need to set a new one via OTP on their next login.";
-    btn.className = "w-full px-6 py-4 font-black text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl transition shadow-sm outline-none";
-    icon.className = "mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-amber-50 mb-6 border-4 border-amber-100";
-    icon.innerHTML = '<svg class="h-10 w-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3.25l7.75-7.75A6 6 0 0115 7z"></path></svg>';
+    btn.className = "w-full px-6 py-4 font-black text-amber-800 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 border border-amber-300 dark:border-amber-800 rounded-xl transition-colors shadow-sm outline-none";
+    icon.className = "mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-amber-50 dark:bg-amber-900/10 mb-6 border-4 border-amber-100 dark:border-amber-900/20 transition-colors";
+    icon.innerHTML = '<svg class="h-10 w-10 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3.25l7.75-7.75A6 6 0 0115 7z"></path></svg>';
     btn.onclick = function() { window.executeRevoke(); };
   } else {
     document.getElementById('action-title').innerText = "Delete Customer";
     document.getElementById('action-desc').innerText = "This action is restricted. Customer will only be deleted if no Sales, Payments, or Order records are found.";
-    btn.className = "w-full px-6 py-4 font-black text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-lg outline-none";
-    icon.className = "mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6 border-4 border-red-50";
-    icon.innerHTML = '<svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+    btn.className = "w-full px-6 py-4 font-black text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors shadow-lg outline-none active:scale-95";
+    icon.className = "mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 dark:bg-red-900/30 mb-6 border-4 border-red-50 dark:border-red-900/10 transition-colors";
+    icon.innerHTML = '<svg class="h-10 w-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
     btn.onclick = function() { window.executeDelete(); };
   }
   document.getElementById('modal-action').classList.remove('hidden');
@@ -601,7 +597,6 @@ window.executeDelete = async function () {
   }
 };
 
-// SPA Standard Router Hook
 window.tabActions['master-customer'] = function() {
     window.loadMasterCustomers();
 };

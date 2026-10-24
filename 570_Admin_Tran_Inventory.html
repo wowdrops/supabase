@@ -1,0 +1,283 @@
+<div id="tab-tran-inventory" class="hidden space-y-6 fade-in pb-20 relative h-full transition-colors">
+  
+  <!-- STICKY HEADER -->
+  <div class="sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur pt-2 pb-4 border-b-4 border-indigo-200 dark:border-indigo-800 transition-colors">
+    <div class="px-4">
+      <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Inventory Operations</h2>
+      <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Manage Plant Refills & Asset Purchases</p>
+    </div>
+  </div>
+
+  <!-- Internal Sub-Navigation -->
+  <div class="px-2 md:px-4">
+    <div class="flex flex-col sm:flex-row bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-full max-w-4xl shadow-inner transition-colors gap-1">
+      <button id="btn-inv-refills" onclick="window.invSwitchTab('refills')" class="flex-1 px-4 py-3 rounded-xl text-sm font-black bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm transition-colors uppercase tracking-widest">Plant Refills</button>
+      <button id="btn-inv-purchase" onclick="window.invSwitchTab('purchase')" class="flex-1 px-4 py-3 rounded-xl text-sm font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors uppercase tracking-widest">New Assets</button>
+      <button id="btn-inv-retire" onclick="window.invSwitchTab('retire')" class="flex-1 px-4 py-3 rounded-xl text-sm font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors uppercase tracking-widest">Scrap / Retire</button>
+    </div>
+  </div>
+
+  <div class="px-2 md:px-4 w-full">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: PLANT REFILLS (Side-by-Side)        -->
+    <!-- ========================================== -->
+    <div id="inv-view-refills" class="fade-in">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        <!-- LEFT: FORM -->
+        <div class="xl:col-span-1 bg-white dark:bg-slate-800 p-5 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl transition-colors self-start sticky top-24">
+          <div class="flex justify-between items-center border-b-2 border-slate-100 dark:border-slate-700/50 pb-3 mb-4">
+            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+              <span id="rf-form-title">Log Refill</span>
+            </h3>
+            <button id="btn-rf-cancel" onclick="window.invClearRefillForm()" class="hidden text-[10px] font-black bg-rose-100 text-rose-700 px-2 py-1 rounded uppercase tracking-widest hover:bg-rose-200">Cancel Edit</button>
+          </div>
+
+          <div class="space-y-4">
+            <input type="hidden" id="inv-rf-id">
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="col-span-2">
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Supplier / Plant *</label>
+                <select id="inv-rf-supplier" onchange="window.invAutoFillRate('rf')" class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500"><option value="">Select...</option></select>
+              </div>
+              <div class="col-span-2">
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Date *</label>
+                <input type="date" id="inv-rf-date" class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+              </div>
+            </div>
+
+            <!-- Empties -->
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-200 dark:border-emerald-900/30 rounded-2xl">
+              <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">Empty Cans Sent</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">VJ Empty</label>
+                  <input type="number" id="inv-rf-evj" value="0" min="0" class="w-full mt-1 p-2 bg-white dark:bg-slate-950 border border-emerald-300 dark:border-emerald-800 rounded-lg font-black text-emerald-700 dark:text-emerald-400 text-center outline-none">
+                </div>
+                <div>
+                  <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">NVJ Empty</label>
+                  <input type="number" id="inv-rf-envj" value="0" min="0" class="w-full mt-1 p-2 bg-white dark:bg-slate-950 border border-emerald-300 dark:border-emerald-800 rounded-lg font-black text-emerald-700 dark:text-emerald-400 text-center outline-none">
+                </div>
+              </div>
+            </div>
+
+            <!-- Fulls -->
+            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/10 border-2 border-indigo-200 dark:border-indigo-900/30 rounded-2xl">
+              <p class="text-[9px] font-black text-indigo-600 dark:text-indigo-500 uppercase tracking-widest mb-2">Full Cans Received</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">VJ Full</label>
+                  <input type="number" id="inv-rf-fvj" value="0" min="0" class="w-full mt-1 p-2 bg-white dark:bg-slate-950 border border-indigo-300 dark:border-indigo-800 rounded-lg font-black text-indigo-700 dark:text-indigo-400 text-center outline-none">
+                </div>
+                <div>
+                  <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">NVJ Full</label>
+                  <input type="number" id="inv-rf-fnvj" value="0" min="0" class="w-full mt-1 p-2 bg-white dark:bg-slate-950 border border-indigo-300 dark:border-indigo-800 rounded-lg font-black text-indigo-700 dark:text-indigo-400 text-center outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Rate (₹)</label>
+                <input type="number" id="inv-rf-rate" value="0" class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-black text-sm outline-none">
+              </div>
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</label>
+                <select id="inv-rf-paystatus" class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs outline-none">
+                  <option value="PENDING">PENDING</option>
+                  <option value="PAID">PAID</option>
+                </select>
+              </div>
+              <div class="col-span-2">
+                <input type="text" id="inv-rf-remarks" placeholder="Optional notes..." class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none">
+              </div>
+            </div>
+
+            <button id="btn-submit-refill" onclick="window.submitPlantRefill()" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-md transition-colors uppercase tracking-widest text-xs flex items-center justify-center gap-2 outline-none">
+               Save Entry
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT: RECENT HISTORY -->
+        <div class="xl:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl transition-colors flex flex-col h-[75vh]">
+          <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest border-b-2 border-slate-100 dark:border-slate-700/50 pb-3 mb-4 shrink-0">Recent Refill Logs</h3>
+          <div class="overflow-y-auto hide-scrollbar flex-1 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <table class="w-full text-left whitespace-nowrap">
+              <thead class="bg-slate-100 dark:bg-slate-900/50 sticky top-0 z-10 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                  <th class="px-4 py-3">Date & Supplier</th>
+                  <th class="px-4 py-3 text-center bg-emerald-50 dark:bg-emerald-900/10">Empties Sent</th>
+                  <th class="px-4 py-3 text-center bg-indigo-50 dark:bg-indigo-900/10">Fulls Rcvd</th>
+                  <th class="px-4 py-3 text-center">Status</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rf-history-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <tr><td colspan="5" class="text-center py-12 text-slate-400 uppercase tracking-widest">Loading history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: PURCHASE ASSETS (Side-by-Side)      -->
+    <!-- ========================================== -->
+    <div id="inv-view-purchase" class="hidden fade-in">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        <!-- LEFT: FORM -->
+        <div class="xl:col-span-1 bg-white dark:bg-slate-800 p-5 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl transition-colors self-start sticky top-24">
+          <div class="flex justify-between items-center border-b-2 border-slate-100 dark:border-slate-700/50 pb-3 mb-4">
+            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+              <span id="pu-form-title">Log Purchase</span>
+            </h3>
+            <button id="btn-pu-cancel" onclick="window.invClearPurchaseForm()" class="hidden text-[10px] font-black bg-rose-100 text-rose-700 px-2 py-1 rounded uppercase tracking-widest hover:bg-rose-200">Cancel Edit</button>
+          </div>
+
+          <div class="space-y-4">
+            <input type="hidden" id="inv-pu-id">
+            
+            <div>
+              <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Purchase Date *</label>
+              <input type="date" id="inv-pu-date" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Manufacturer *</label>
+              <select id="inv-pu-supplier" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-emerald-500">
+                <option value="">Select Manufacturer...</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Batch No *</label>
+              <input type="text" id="inv-pu-batch" placeholder="e.g. BATCH-NOV26-1" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-900 dark:text-white uppercase outline-none focus:border-emerald-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Can Type *</label>
+                <select id="inv-pu-type" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-black text-xs outline-none focus:border-emerald-500">
+                  <option value="VJ">VJ (Validity Jar)</option>
+                  <option value="NVJ">NVJ (Non-Validity)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Qty Bought *</label>
+                <input type="number" id="inv-pu-qty" value="" min="1" oninput="window.invCalcPuAmt()" class="w-full mt-1 p-2.5 bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl font-black text-emerald-700 dark:text-emerald-400 outline-none">
+              </div>
+            </div>
+
+            <!-- NEW: Rate and Total Amount -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Rate / Can (₹) *</label>
+                <input type="number" id="inv-pu-rate" value="0" min="0" oninput="window.invCalcPuAmt()" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-black text-sm outline-none">
+              </div>
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Cost (₹)</label>
+                <input type="number" id="inv-pu-amt" readonly class="w-full mt-1 p-2.5 bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm text-slate-500 dark:text-slate-400 outline-none">
+              </div>
+            </div>
+
+            <button id="btn-submit-purchase" onclick="window.submitAssetPurchase()" class="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl shadow-md transition-colors uppercase tracking-widest text-xs flex items-center justify-center gap-2 outline-none">
+               Save Purchase
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT: RECENT PURCHASES -->
+        <div class="xl:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl transition-colors flex flex-col h-[75vh]">
+          <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest border-b-2 border-slate-100 dark:border-slate-700/50 pb-3 mb-4 shrink-0">Recent Asset Purchases</h3>
+          <div class="overflow-y-auto hide-scrollbar flex-1 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <table class="w-full text-left whitespace-nowrap">
+              <thead class="bg-slate-100 dark:bg-slate-900/50 sticky top-0 z-10 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                  <th class="px-4 py-3">Batch & Date</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3 text-center">Purchased</th>
+                  <th class="px-4 py-3 text-center">Expiry</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pu-history-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <tr><td colspan="5" class="text-center py-12 text-slate-400 uppercase tracking-widest">Loading history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: SCRAP / RETIRE (Side-by-Side)       -->
+    <!-- ========================================== -->
+    <div id="inv-view-retire" class="hidden fade-in">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        <!-- LEFT: FORM -->
+        <div class="xl:col-span-1 bg-white dark:bg-slate-800 p-5 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl transition-colors self-start sticky top-24">
+          <div class="flex items-center border-b-2 border-slate-100 dark:border-slate-700/50 pb-3 mb-4">
+            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              Scrap Assets
+            </h3>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Select Batch *</label>
+              <select id="inv-rt-batch" onchange="window.invSelectBatch()" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-rose-500">
+                <option value="">Loading...</option>
+              </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Active Qty</label>
+                <input type="number" id="inv-rt-avail" readonly class="w-full mt-1 p-2.5 bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-500 outline-none">
+              </div>
+              <div>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Qty to Scrap *</label>
+                <input type="number" id="inv-rt-qty" value="" min="1" class="w-full mt-1 p-2.5 bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-200 dark:border-rose-800 rounded-xl font-black text-rose-700 dark:text-rose-400 outline-none focus:border-rose-500">
+              </div>
+            </div>
+
+            <button id="btn-submit-retire" onclick="window.submitScrapRetire()" class="w-full mt-4 bg-rose-600 hover:bg-rose-700 text-white font-black py-3 rounded-xl shadow-md transition-colors uppercase tracking-widest text-xs flex items-center justify-center gap-2 outline-none">
+               Confirm Scrap
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT: ACTIVE BATCHES OVERVIEW -->
+        <div class="xl:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl transition-colors flex flex-col h-[75vh]">
+          <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest border-b-2 border-slate-100 dark:border-slate-700/50 pb-3 mb-4 shrink-0">Live Active Batches</h3>
+          <div class="overflow-y-auto hide-scrollbar flex-1 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <table class="w-full text-left whitespace-nowrap">
+              <thead class="bg-slate-100 dark:bg-slate-900/50 sticky top-0 z-10 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                  <th class="px-4 py-3">Batch Info</th>
+                  <th class="px-4 py-3 text-center text-emerald-600">Active</th>
+                  <th class="px-4 py-3 text-center text-rose-600">Retired</th>
+                  <th class="px-4 py-3 text-center">Expiry</th>
+                </tr>
+              </thead>
+              <tbody id="rt-history-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <tr><td colspan="4" class="text-center py-12 text-slate-400 uppercase tracking-widest">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,93 @@
+<div id="tab-master-supplier" class="hidden pb-20 fade-in h-full relative transition-colors">
+  
+  <!-- STICKY HEADER -->
+  <div class="sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur pt-2 pb-4 border-b-4 border-slate-200 dark:border-slate-800 transition-colors">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-4 md:p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 mx-2 transition-colors">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Supplier Directory</h2>
+        <p class="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Manage Water & Can Vendors</p>
+      </div>
+      <div class="flex w-full md:w-auto gap-2 md:gap-3">
+        <div class="relative flex-1 md:w-64">
+          <svg class="w-5 h-5 absolute left-3 top-3 text-slate-400 dark:text-slate-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="sup-search" onkeyup="window.filterSuppliers()" placeholder="Search suppliers..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-xl font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 outline-none transition-colors text-sm">
+        </div>
+        
+        <button id="btnSupplierAddNew" onclick="window.openSupplierModal(null)" class="shrink-0 bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white p-2.5 px-4 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 active:scale-95 font-black uppercase tracking-widest text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+          <span class="hidden sm:inline">Add Supplier</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-2 mt-4">
+    <div id="sup-loading" class="hidden text-center py-12">
+      <p class="text-xl font-black text-indigo-400 dark:text-indigo-500 animate-pulse tracking-widest uppercase transition-colors">Syncing Suppliers...</p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border-4 border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+      <div class="overflow-x-auto overflow-y-auto max-h-[60vh] hide-scrollbar scroll-smooth">
+        <table class="w-full text-left whitespace-nowrap border-collapse">
+          <thead class="bg-slate-800 dark:bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] md:text-xs sticky top-0 z-10 shadow-sm transition-colors">
+            <tr>
+              <th class="px-6 py-4">Supplier Details</th>
+              <th class="px-6 py-4 text-center">Rate / Can</th>
+              <th class="px-6 py-4">Ledger Code</th>
+              <th class="px-6 py-4 text-center">Status</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="supplier-tbody" class="divide-y-2 divide-slate-100 dark:divide-slate-700/50 text-slate-700 dark:text-slate-300 font-bold text-sm bg-white dark:bg-slate-800 transition-colors">
+             <tr><td colspan='5' class='px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest transition-colors'>Loading suppliers...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPPLIER MODAL (Create / Edit) -->
+  <div id="modal-supplier" class="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in transition-colors">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-4 border-slate-200 dark:border-slate-700 w-full max-w-md overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+      <div class="bg-slate-800 dark:bg-slate-950 p-5 flex justify-between items-center shadow-sm z-10 relative transition-colors shrink-0">
+        <h3 id="sup-modal-title" class="text-xl font-black text-white uppercase tracking-widest leading-tight">Add Supplier</h3>
+        <button onclick="window.closeModal('modal-supplier')" class="text-slate-400 hover:text-rose-400 transition-colors outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      </div>
+      
+      <div class="p-6 space-y-4 bg-slate-50 dark:bg-slate-900 transition-colors flex-1 overflow-y-auto hide-scrollbar">
+        <input type="hidden" id="sup-modal-id">
+        
+        <div>
+          <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier Name *</label>
+          <input type="text" id="sup-modal-name" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Rate per Can (₹) *</label>
+            <input type="number" id="sup-modal-rate" step="0.01" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-lg font-black text-indigo-700 dark:text-indigo-400 text-center outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors color-scheme-dark">
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Status *</label>
+            <select id="sup-modal-status" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-lg font-black text-xs outline-none focus:border-indigo-400 dark:focus:border-indigo-500 cursor-pointer transition-colors color-scheme-dark">
+              <option value="ACTIVE" class="text-emerald-600 dark:text-emerald-400">ACTIVE</option>
+              <option value="INACTIVE" class="text-rose-600 dark:text-rose-400">INACTIVE</option>
+            </select>
+          </div>
+        </div>
+        
+        <div>
+          <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Ledger Code (Optional)</label>
+          <input type="text" id="sup-modal-ledger" placeholder="e.g. L-WTR-PURCHASE" class="w-full mt-1 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner rounded-lg font-bold text-slate-900 dark:text-white uppercase outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors">
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-5 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative transition-colors shrink-0">
+        <button onclick="window.closeModal('modal-supplier')" class="px-6 py-2.5 rounded-xl font-black text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors outline-none shadow-sm uppercase tracking-widest text-xs">Cancel</button>
+        <button id="btn-save-supplier" onclick="window.saveSupplier()" class="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-black px-8 py-2.5 rounded-xl shadow-lg transition-colors active:scale-95 uppercase tracking-widest text-xs outline-none flex items-center gap-2">
+           Save Vendor
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

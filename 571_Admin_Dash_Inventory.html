@@ -1,0 +1,134 @@
+<div id="tab-inventory-dash" class="hidden space-y-6 fade-in pb-20 relative h-full transition-colors">
+  
+  <!-- STICKY HEADER -->
+  <div class="sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur pt-2 pb-4 border-b-4 border-indigo-200 dark:border-indigo-800 transition-colors">
+    <div class="px-4 flex justify-between items-end">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Live Inventory</h2>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Real-Time Godown & Asset Monitor</p>
+      </div>
+      <button onclick="window.loadInventoryDashboard()" class="bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 p-2.5 rounded-xl shadow-sm transition-colors outline-none">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="px-2 md:px-4 w-full max-w-7xl mx-auto space-y-6">
+
+    <!-- MASTER TOTALS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black p-6 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 opacity-10">
+          <svg class="w-32 h-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        </div>
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Owned Assets (VJ)</p>
+        <h3 id="dash-tot-vj" class="text-4xl md:text-5xl font-black text-white tracking-tight">0</h3>
+        <p class="text-xs font-bold text-slate-500 mt-2">Validity Jars across all locations</p>
+      </div>
+      
+      <div class="bg-gradient-to-br from-indigo-50 to-white dark:from-slate-800 dark:to-slate-900 p-6 rounded-3xl shadow-xl border border-indigo-100 dark:border-slate-700 relative overflow-hidden transition-colors">
+        <div class="absolute -right-4 -top-4 opacity-5">
+          <svg class="w-32 h-32 text-indigo-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        </div>
+        <p class="text-[10px] font-black text-indigo-400 dark:text-slate-400 uppercase tracking-widest mb-1">Total Owned Assets (NVJ)</p>
+        <h3 id="dash-tot-nvj" class="text-4xl md:text-5xl font-black text-indigo-900 dark:text-indigo-400 tracking-tight">0</h3>
+        <p class="text-xs font-bold text-slate-400 dark:text-slate-500 mt-2">Non-Validity Jars across all locations</p>
+      </div>
+    </div>
+
+    <!-- WAREHOUSE & LOGISTICS GRID -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      
+      <!-- COLUMN 1: GODOWN -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden transition-colors">
+        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 border-b border-slate-200 dark:border-slate-700">
+          <h4 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+            <span>🏭</span> Godown Floor
+          </h4>
+        </div>
+        <div class="p-5 space-y-4">
+          <!-- Full -->
+          <div class="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
+            <p class="text-[9px] font-black text-indigo-600 dark:text-indigo-500 uppercase tracking-widest border-b border-indigo-200 dark:border-indigo-800/50 pb-1 mb-3">Full (Ready to Dispatch)</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div><p class="text-[10px] font-bold text-slate-500">VJ Full</p><p id="dash-gd-fvj" class="text-2xl font-black text-indigo-700 dark:text-indigo-400">0</p></div>
+              <div><p class="text-[10px] font-bold text-slate-500">NVJ Full</p><p id="dash-gd-fnvj" class="text-2xl font-black text-indigo-700 dark:text-indigo-400">0</p></div>
+            </div>
+          </div>
+          <!-- Empty -->
+          <div class="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+            <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest border-b border-emerald-200 dark:border-emerald-800/50 pb-1 mb-3">Empty (Needs Refill)</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div><p class="text-[10px] font-bold text-slate-500">VJ Empty</p><p id="dash-gd-evj" class="text-2xl font-black text-emerald-700 dark:text-emerald-400">0</p></div>
+              <div><p class="text-[10px] font-bold text-slate-500">NVJ Empty</p><p id="dash-gd-envj" class="text-2xl font-black text-emerald-700 dark:text-emerald-400">0</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: TRANSIT (VAN) -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden transition-colors">
+        <div class="bg-slate-100 dark:bg-slate-900/50 p-4 border-b border-slate-200 dark:border-slate-700">
+          <h4 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+            <span>🚛</span> In Transit (Vans)
+          </h4>
+        </div>
+        <div class="p-5 space-y-4">
+          <!-- Full -->
+          <div class="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100 dark:border-amber-800/30">
+            <p class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest border-b border-amber-200 dark:border-amber-800/50 pb-1 mb-3">Full (Out for Delivery)</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div><p class="text-[10px] font-bold text-slate-500">VJ Full</p><p id="dash-tr-fvj" class="text-2xl font-black text-amber-700 dark:text-amber-400">0</p></div>
+              <div><p class="text-[10px] font-bold text-slate-500">NVJ Full</p><p id="dash-tr-fnvj" class="text-2xl font-black text-amber-700 dark:text-amber-400">0</p></div>
+            </div>
+          </div>
+          <!-- Empty -->
+          <div class="bg-stone-50 dark:bg-stone-900/20 p-4 rounded-2xl border border-stone-200 dark:border-stone-800/50">
+            <p class="text-[9px] font-black text-stone-600 dark:text-stone-400 uppercase tracking-widest border-b border-stone-200 dark:border-stone-700/50 pb-1 mb-3">Empty (Returning)</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div><p class="text-[10px] font-bold text-slate-500">VJ Empty</p><p id="dash-tr-evj" class="text-2xl font-black text-stone-700 dark:text-stone-300">0</p></div>
+              <div><p class="text-[10px] font-bold text-slate-500">NVJ Empty</p><p id="dash-tr-envj" class="text-2xl font-black text-stone-700 dark:text-stone-300">0</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: CUSTOMERS & EXPIRY -->
+      <div class="space-y-6">
+        <!-- Customers -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden transition-colors">
+          <div class="bg-slate-100 dark:bg-slate-900/50 p-4 border-b border-slate-200 dark:border-slate-700">
+            <h4 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <span>🏠</span> With Customers
+            </h4>
+          </div>
+          <div class="p-5">
+            <div class="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-2xl border border-purple-100 dark:border-purple-800/30">
+              <p class="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest border-b border-purple-200 dark:border-purple-800/50 pb-1 mb-3">Circulation Stock</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div><p class="text-[10px] font-bold text-slate-500">Cust. VJ</p><p id="dash-cu-vj" class="text-3xl font-black text-purple-700 dark:text-purple-400">0</p></div>
+                <div><p class="text-[10px] font-bold text-slate-500">Cust. NVJ</p><p id="dash-cu-nvj" class="text-3xl font-black text-purple-700 dark:text-purple-400">0</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expiry Radar -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden transition-colors flex flex-col max-h-[35vh]">
+          <div class="bg-slate-100 dark:bg-slate-900/50 p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0">
+            <h4 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <span>⏳</span> Expiry Radar
+            </h4>
+          </div>
+          <div class="overflow-y-auto hide-scrollbar flex-1 p-3">
+            <div id="dash-expiry-list" class="space-y-2">
+              <p class="text-center py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Scanning batches...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,54 +1,53 @@
 <div id="tab-outstanding" class="hidden space-y-8 fade-in pb-12">
-  <div class="border-b-4 border-slate-200 pb-4 flex justify-between items-end">
+  <div class="border-b-4 border-slate-200 dark:border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 transition-colors">
     <div>
-      <h2 class="text-3xl md:text-4xl font-black text-slate-800 tracking-tight uppercase">Outstanding Ledger</h2>
+      <h2 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight uppercase">Outstanding Ledger</h2>
     </div>
-    <button onclick="window.loadOutstandingData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-lg font-black shadow-lg transition">Sync Ledger</button>
+    <button onclick="window.loadOutstandingData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-lg font-black shadow-lg transition w-full md:w-auto">Sync Ledger</button>
   </div>
+
   <div class="w-full max-w-2xl mb-8">
-    <!-- Global Pay Type Selector -->
     <div class="mb-4">
-      <label class="text-sm font-black text-slate-500 uppercase tracking-widest block mb-2">Filter By Payment Mode</label>
-      <select id="global-filter-pay" onchange="window.onGlobalPayTypeChange()" class="w-full p-4 bg-white border-4 border-slate-200 rounded-2xl text-lg md:text-xl font-black outline-none shadow-md cursor-pointer hover:border-slate-300 transition">
+      <label class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Filter By Payment Mode</label>
+      <select id="global-filter-pay" onchange="window.onGlobalPayTypeChange()" class="w-full p-4 bg-white dark:bg-slate-800 border-4 border-slate-200 dark:border-slate-700 rounded-2xl text-lg md:text-xl font-black text-slate-800 dark:text-white outline-none shadow-md cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors color-scheme-dark">
         <option value="ALL">ALL PAYMENT TYPES (CASH & ONLINE)</option>
         <option value="CASH">CASH ONLY</option>
         <option value="ONLINE">ONLINE ONLY</option>
       </select>
     </div>
-    <div class="bg-white rounded-3xl border-l-8 border-red-500 shadow-xl flex flex-col border-y-4 border-r-4 border-slate-200 overflow-hidden">
-      <div class="p-6 cursor-pointer flex justify-between items-start hover:bg-slate-50 transition" onclick="window.toggleAccordion('kpi-accordion', 'kpi-icon')">
+
+    <div class="bg-white dark:bg-slate-800 rounded-3xl border-l-8 border-l-red-500 shadow-xl flex flex-col border-y-4 border-r-4 border-slate-200 dark:border-y-slate-700 dark:border-r-slate-700 overflow-hidden transition-colors">
+      <div class="p-6 cursor-pointer flex justify-between items-start hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors" onclick="window.toggleAccordion('kpi-accordion', 'kpi-icon')">
         <div>
-          <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Pending Balance</span>
-          <!-- Clickable Total Balance to reset all filters -->
-          <span id="kpi-total-pend" class="text-4xl md:text-5xl font-black text-slate-800 mt-2 block animate-pulse hover:text-blue-600 transition" title="Click to show all records" onclick="event.stopPropagation(); window.kpiFilterClick('ALL')">₹...</span>
+          <span class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Pending Balance</span>
+          <span id="kpi-total-pend" class="text-4xl md:text-5xl font-black text-slate-800 dark:text-white mt-2 block animate-pulse hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Click to show all records" onclick="event.stopPropagation(); window.kpiFilterClick('ALL')">₹...</span>
         </div>
-        <svg id="kpi-icon" class="w-8 h-8 text-slate-400 transition-transform duration-200 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+        <svg id="kpi-icon" class="w-8 h-8 text-slate-400 dark:text-slate-500 transition-transform duration-200 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
       </div>
       <div id="kpi-accordion" class="accordion-content">
         <div class="overflow-hidden">
-          <div class="bg-slate-50 border-t-4 border-slate-100 px-6">
+          <div class="bg-slate-50 dark:bg-slate-900/50 border-t-4 border-slate-100 dark:border-slate-700 px-6 transition-colors">
             <div class="py-6 space-y-1 md:space-y-2 text-lg md:text-xl font-black">
-              <!-- Interactive Month Rows with IDs and new kpiFilterClick -->
-              <div id="kpi-row-m1" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 transition p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('m1')">
-                <span class="text-slate-500 pointer-events-none" id="lbl-kpi-m1">Month 1</span>
-                <span id="val-kpi-m1" class="text-red-500 pointer-events-none">₹0</span>
+              <div id="kpi-row-m1" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('m1')">
+                <span class="text-slate-500 dark:text-slate-400 pointer-events-none" id="lbl-kpi-m1">Month 1</span>
+                <span id="val-kpi-m1" class="text-red-500 dark:text-red-400 pointer-events-none">₹0</span>
               </div>
-              <div id="kpi-row-m2" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 transition p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('m2')">
-                <span class="text-slate-500 pointer-events-none" id="lbl-kpi-m2">Month 2</span>
-                <span id="val-kpi-m2" class="text-red-500 pointer-events-none">₹0</span>
+              <div id="kpi-row-m2" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('m2')">
+                <span class="text-slate-500 dark:text-slate-400 pointer-events-none" id="lbl-kpi-m2">Month 2</span>
+                <span id="val-kpi-m2" class="text-red-500 dark:text-red-400 pointer-events-none">₹0</span>
               </div>
-              <div id="kpi-row-m3" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 transition p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('m3')">
-                <span class="text-slate-500 pointer-events-none" id="lbl-kpi-m3">Month 3</span>
-                <span id="val-kpi-m3" class="text-red-500 pointer-events-none">₹0</span>
+              <div id="kpi-row-m3" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('m3')">
+                <span class="text-slate-500 dark:text-slate-400 pointer-events-none" id="lbl-kpi-m3">Month 3</span>
+                <span id="val-kpi-m3" class="text-red-500 dark:text-red-400 pointer-events-none">₹0</span>
               </div>
-              <div id="kpi-row-ALL" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 transition p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('ALL')">
-                <span class="text-slate-500 pointer-events-none" id="lbl-kpi-m4">Older</span>
-                <span id="val-kpi-m4" class="text-red-500 pointer-events-none">₹0</span>
+              <div id="kpi-row-ALL" class="flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('ALL')">
+                <span class="text-slate-500 dark:text-slate-400 pointer-events-none" id="lbl-kpi-m4">Older</span>
+                <span id="val-kpi-m4" class="text-red-500 dark:text-red-400 pointer-events-none">₹0</span>
               </div>
-              <div class="border-t-4 border-slate-200 my-4 pt-4"></div>
-              <div class="flex justify-between items-center cursor-pointer hover:bg-slate-100 transition p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('ALL')">
-                <span class="text-slate-500 uppercase tracking-widest text-sm pointer-events-none">Total Advance Held</span>
-                <span id="val-kpi-adv" class="text-emerald-600 text-2xl pointer-events-none">₹0</span>
+              <div class="border-t-4 border-slate-200 dark:border-slate-700 my-4 pt-4"></div>
+              <div class="flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 -mx-2 rounded-lg border-2 border-transparent" onclick="window.kpiFilterClick('ALL')">
+                <span class="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-sm pointer-events-none">Total Advance Held</span>
+                <span id="val-kpi-adv" class="text-emerald-600 dark:text-emerald-400 text-2xl pointer-events-none">₹0</span>
               </div>
             </div>
           </div>
@@ -56,53 +55,59 @@
       </div>
     </div>
   </div>
-  <div class="bg-slate-900 rounded-3xl shadow-2xl p-8 border-4 border-slate-800">
-    <h3 class="text-white text-2xl font-black mb-6 flex items-center gap-3 uppercase tracking-widest"><svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> Apartment Dashboard (Older Dues)</h3>
-    <div id="apartment-dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><p class="text-slate-400 text-xl font-bold animate-pulse">Loading visual dashboard...</p></div>
+
+  <div class="bg-slate-900 dark:bg-slate-950 rounded-3xl shadow-2xl p-8 border-4 border-slate-800 dark:border-slate-800/80 transition-colors">
+    <h3 class="text-white text-2xl font-black mb-6 flex items-center gap-3 uppercase tracking-widest"><svg class="w-8 h-8 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> Apartment Dashboard (Older Dues)</h3>
+    <div id="apartment-dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><p class="text-slate-400 dark:text-slate-500 text-xl font-bold animate-pulse">Loading visual dashboard...</p></div>
   </div>
-  <div class="bg-white rounded-3xl shadow-xl border-4 border-slate-200 overflow-hidden">
-    <div class="p-6 bg-slate-50 border-b-4 border-slate-200">
+
+  <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border-4 border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+    <div class="p-6 bg-slate-50 dark:bg-slate-900/50 border-b-4 border-slate-200 dark:border-slate-700 transition-colors">
       <div class="flex flex-col md:flex-row gap-6 mb-6">
-        <div class="w-full md:w-1/2"><label class="text-sm font-black text-slate-500 uppercase tracking-widest block mb-2">Apartment Filter</label><select id="filter-apt" onchange="window.updateBlockDropdown(); window.renderDetailTable();" class="w-full p-4 bg-white border-2 border-slate-300 rounded-xl text-lg font-black outline-none"><option value="ALL">ALL APARTMENTS</option></select></div>
-        <div class="w-full md:w-1/2"><label class="text-sm font-black text-slate-500 uppercase tracking-widest block mb-2">Block Filter</label><select id="filter-blk" onchange="window.renderDetailTable();" class="w-full p-4 bg-white border-2 border-slate-300 rounded-xl text-lg font-black outline-none"><option value="ALL">ALL BLOCKS</option></select></div>
-      </div>
-      <div class="mb-6">
-        <p class="text-sm font-black text-slate-500 uppercase tracking-widest mb-3">Show Customers With Debt In:</p>
-        <div class="flex gap-3 overflow-x-auto pb-2">
-          <button id="flt-row-ALL" onclick="window.setRowMonthFilter('ALL')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-slate-800 text-white">Show All</button>
-          <button id="flt-row-m1" onclick="window.setRowMonthFilter('m1')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-white text-slate-600"><span id="lbl-flt-m1">M1</span></button>
-          <button id="flt-row-m2" onclick="window.setRowMonthFilter('m2')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-white text-slate-600"><span id="lbl-flt-m2">M2</span></button>
-          <button id="flt-row-m3" onclick="window.setRowMonthFilter('m3')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-white text-slate-600"><span id="lbl-flt-m3">M3</span></button>
+        <div class="w-full md:w-1/2">
+          <label class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Apartment Filter</label>
+          <select id="filter-apt" onchange="window.updateBlockDropdown(); window.renderDetailTable();" class="w-full p-4 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl text-lg font-black outline-none color-scheme-dark transition-colors"><option value="ALL">ALL APARTMENTS</option></select>
+        </div>
+        <div class="w-full md:w-1/2">
+          <label class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Block Filter</label>
+          <select id="filter-blk" onchange="window.renderDetailTable();" class="w-full p-4 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white rounded-xl text-lg font-black outline-none color-scheme-dark transition-colors"><option value="ALL">ALL BLOCKS</option></select>
         </div>
       </div>
-      <div class="border-t-4 border-slate-200 pt-6 flex items-center gap-3 overflow-x-auto pb-2">
-        <span class="text-sm font-black text-slate-500 uppercase tracking-widest mr-2">Columns</span>
-        <button id="tgl-col-m1" onclick="window.toggleColumn('m1')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 text-emerald-800">✓ <span id="lbl-tgl-m1">M1</span></button>
-        <button id="tgl-col-m2" onclick="window.toggleColumn('m2')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 text-emerald-800">✓ <span id="lbl-tgl-m2">M2</span></button>
-        <button id="tgl-col-m3" onclick="window.toggleColumn('m3')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 text-emerald-800">✓ <span id="lbl-tgl-m3">M3</span></button>
-        <button id="tgl-col-m4" onclick="window.toggleColumn('m4')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 text-emerald-800">✓ <span id="lbl-tgl-m4">M4</span></button>
-        <button id="tgl-col-adv" onclick="window.toggleColumn('adv')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 text-emerald-800">✓ ADV</button>
+      <div class="mb-6">
+        <p class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Show Customers With Debt In:</p>
+        <div class="flex gap-3 overflow-x-auto pb-2">
+          <button id="flt-row-ALL" onclick="window.setRowMonthFilter('ALL')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition-colors bg-slate-800 dark:bg-slate-600 text-white border-slate-800 dark:border-slate-600">Show All</button>
+          <button id="flt-row-m1" onclick="window.setRowMonthFilter('m1')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition-colors bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600"><span id="lbl-flt-m1">M1</span></button>
+          <button id="flt-row-m2" onclick="window.setRowMonthFilter('m2')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition-colors bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600"><span id="lbl-flt-m2">M2</span></button>
+          <button id="flt-row-m3" onclick="window.setRowMonthFilter('m3')" class="shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition-colors bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600"><span id="lbl-flt-m3">M3</span></button>
+        </div>
+      </div>
+      <div class="border-t-4 border-slate-200 dark:border-slate-700 pt-6 flex items-center gap-3 overflow-x-auto pb-2 transition-colors">
+        <span class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mr-2">Columns</span>
+        <button id="tgl-col-m1" onclick="window.toggleColumn('m1')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 transition-colors">✓ <span id="lbl-tgl-m1">M1</span></button>
+        <button id="tgl-col-m2" onclick="window.toggleColumn('m2')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 transition-colors">✓ <span id="lbl-tgl-m2">M2</span></button>
+        <button id="tgl-col-m3" onclick="window.toggleColumn('m3')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 transition-colors">✓ <span id="lbl-tgl-m3">M3</span></button>
+        <button id="tgl-col-m4" onclick="window.toggleColumn('m4')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 transition-colors">✓ <span id="lbl-tgl-m4">M4</span></button>
+        <button id="tgl-col-adv" onclick="window.toggleColumn('adv')" class="shrink-0 px-4 py-2 rounded-lg border-2 text-sm font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 transition-colors">✓ ADV</button>
       </div>
     </div>
-    <div class="overflow-x-auto overflow-y-auto relative" style="max-height: 65vh;">
+    <div class="overflow-x-auto overflow-y-auto relative scroll-smooth" style="max-height: 65vh;">
       <table class="w-full text-left whitespace-nowrap">
-        <thead id="outstanding-thead" class="text-slate-600 font-black text-sm uppercase tracking-widest bg-slate-100 sticky top-0 z-30"></thead>
-        <tbody id="outstanding-tbody" class="divide-y-4 divide-slate-100"></tbody>
+        <thead id="outstanding-thead" class="text-slate-600 dark:text-slate-300 font-black text-sm uppercase tracking-widest bg-slate-100 dark:bg-slate-800 sticky top-0 z-30 transition-colors"></thead>
+        <tbody id="outstanding-tbody" class="divide-y-4 divide-slate-100 dark:divide-slate-700/50 transition-colors"></tbody>
       </table>
     </div>
   </div>
 
   <!-- WAIVER MANAGEMENT MODAL -->
   <div id="waiver-modal" class="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
       
-      <!-- Customer Context Header -->
-      <div class="bg-slate-800 p-6 text-white relative">
+      <div class="bg-slate-800 p-6 text-white relative shrink-0">
         <button onclick="window.closeWaiverModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition font-black text-2xl outline-none">&times;</button>
         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2"><span id="waiver-cpn" class="bg-slate-700 text-slate-200 px-2 py-0.5 rounded"></span> <span id="waiver-loc"></span></p>
         <h3 id="waiver-name" class="text-2xl font-black truncate max-w-[90%]">Customer Name</h3>
         
-        <!-- Debt Snapshot -->
         <div class="grid grid-cols-3 gap-3 mt-4 text-center">
             <div class="bg-slate-900/50 p-2 rounded-xl border border-slate-700">
                 <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">M1 Pending</p>
@@ -119,51 +124,44 @@
         </div>
       </div>
 
-      <!-- Controls Body -->
-      <div class="p-6 space-y-6">
-        
-        <!-- M1 Grace Period Controls -->
-        <div class="bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-4 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-400"></div>
+      <div class="p-6 space-y-6 overflow-y-auto">
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 relative overflow-hidden transition-colors">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-400 dark:bg-indigo-500"></div>
             <div class="flex justify-between items-start mb-4 ml-2">
                 <div>
-                    <h4 class="font-black text-indigo-900 text-lg uppercase tracking-tight">M1 Grace Period</h4>
-                    <p class="text-xs font-bold text-indigo-500/80">Allow orders with recent 1-month debt.</p>
+                    <h4 class="font-black text-indigo-900 dark:text-indigo-300 text-lg uppercase tracking-tight">M1 Grace Period</h4>
+                    <p class="text-xs font-bold text-indigo-500/80 dark:text-indigo-400">Allow orders with recent 1-month debt.</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="inp-waiver-req" class="sr-only peer" onchange="window.toggleWaiverDate(this)">
-                  <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 shadow-inner"></div>
+                  <div class="w-11 h-6 bg-slate-300 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 shadow-inner"></div>
                 </label>
             </div>
             <div class="ml-2 flex items-center gap-3">
-                <label class="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Expires On (Day of Month):</label>
-                <input type="number" id="inp-waiver-date" min="1" max="28" class="w-20 p-2 font-black text-center text-indigo-900 bg-white border border-indigo-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm disabled:opacity-50 disabled:bg-slate-100">
+                <label class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest">Expires On (Day of Month):</label>
+                <input type="number" id="inp-waiver-date" min="1" max="28" class="w-20 p-2 font-black text-center text-indigo-900 dark:text-white bg-white dark:bg-slate-800 border border-indigo-200 dark:border-slate-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 transition-colors">
             </div>
         </div>
 
-        <!-- M2 Overdue Override -->
-        <div class="bg-rose-50 border-2 border-rose-100 rounded-2xl p-4 relative overflow-hidden">
+        <div class="bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-100 dark:border-rose-800 rounded-2xl p-4 relative overflow-hidden transition-colors">
             <div class="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
             <div class="flex justify-between items-center ml-2">
                 <div>
-                    <h4 class="font-black text-rose-900 text-lg uppercase tracking-tight flex items-center gap-2"><svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> M2+ Overdue Override</h4>
-                    <p class="text-xs font-bold text-rose-500/80">Force allow orders despite severe debt.</p>
+                    <h4 class="font-black text-rose-900 dark:text-rose-300 text-lg uppercase tracking-tight flex items-center gap-2"><svg class="w-5 h-5 text-rose-600 dark:text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> M2+ Overdue Override</h4>
+                    <p class="text-xs font-bold text-rose-500/80 dark:text-rose-400">Force allow orders despite severe debt.</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="inp-overdue-waiver" class="sr-only peer">
-                  <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600 shadow-inner"></div>
+                  <div class="w-11 h-6 bg-slate-300 dark:bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600 shadow-inner"></div>
                 </label>
             </div>
         </div>
-
       </div>
 
-      <!-- Action Footer -->
-      <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 rounded-b-3xl">
-        <button onclick="window.closeWaiverModal()" class="px-6 py-2.5 rounded-xl font-black text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 transition uppercase tracking-widest text-sm">Cancel</button>
-        <button id="btn-save-waiver" onclick="window.saveWaiverSettings()" class="px-6 py-2.5 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-900 shadow-lg transition uppercase tracking-widest text-sm flex items-center gap-2">Save Settings</button>
+      <div class="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3 rounded-b-3xl transition-colors">
+        <button onclick="window.closeWaiverModal()" class="px-6 py-2.5 rounded-xl font-black text-slate-500 dark:text-slate-300 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors uppercase tracking-widest text-sm">Cancel</button>
+        <button id="btn-save-waiver" onclick="window.saveWaiverSettings()" class="px-6 py-2.5 rounded-xl font-black text-white bg-slate-800 dark:bg-blue-600 hover:bg-slate-900 dark:hover:bg-blue-700 shadow-lg transition-colors uppercase tracking-widest text-sm flex items-center gap-2">Save Settings</button>
       </div>
     </div>
   </div>
-
 </div>

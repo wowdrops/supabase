@@ -1,92 +1,172 @@
-<div id="tab-handshake-log" class="hidden space-y-4 fade-in pb-20 relative">
+<div id="tab-handshake-log" class="hidden space-y-4 fade-in pb-20 relative h-full">
 
   <!-- Sticky Header -->
-  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-emerald-300 pt-2 pb-4">
-    <div class="flex justify-between items-center px-2">
-      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
-        EOD Handshake <span class="hidden md:inline"> Log</span>
-        <span id="handshake-live-timer" class="hidden"></span>
-        <button onclick="window.toggleHandshakeHeader()" class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none">
-          <svg id="handshake-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
-          </svg>
-        </button>
-      </h2>
+  <div class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 pt-2 pb-4 transition-colors">
+    <div class="flex justify-between items-center px-4">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-emerald-400 tracking-tight uppercase transition-colors">
+          Godown Handshake
+        </h2>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Physical Inward & Receiving</p>
+      </div>
+      <span id="handshake-live-timer" class="hidden"></span>
     </div>
+  </div>
 
-    <!-- Collapsible Controls -->
-    <div id="handshake-header-collapsible" class="transition-all duration-300 origin-top">
-      <div class="px-2 mt-4 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
+  <div class="px-2 md:px-4 w-full max-w-7xl mx-auto mt-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden transition-colors flex flex-col md:flex-row min-h-[70vh]">
+      
+      <!-- Left Tab Navigation -->
+      <div class="w-full md:w-64 bg-slate-50 dark:bg-slate-950 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-4 shrink-0 transition-colors">
+        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 pl-2">Handshake Modules</h3>
+        <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
+          <button id="hs-tab-btn-queue" onclick="window.switchHsTab('queue')" class="hs-tab-btn w-full text-left px-4 py-3 rounded-xl font-black text-sm transition-all bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-sm shrink-0 md:shrink flex justify-between items-center">
+            <span>🚛 Live Queue</span>
+            <span id="hs-queue-badge" class="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-inner hidden">0</span>
+          </button>
+          <button id="hs-tab-btn-history" onclick="window.switchHsTab('history')" class="hs-tab-btn w-full text-left px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-all border border-transparent shrink-0 md:shrink">
+            📚 History Log
+          </button>
+        </nav>
+      </div>
+
+      <!-- Right Content Area -->
+      <div class="flex-1 p-4 md:p-6 relative bg-white dark:bg-slate-900 transition-colors flex flex-col">
         
-        <!-- Live Count Badge -->
-        <span class="text-[10px] md:text-xs font-black bg-slate-200 text-slate-600 px-3 py-2 rounded-lg uppercase tracking-widest shadow-sm whitespace-nowrap mb-1 lg:mb-0">
-          Showing: <b id="handshake-total-count" class="text-slate-900">0</b>
-        </span>
-
-        <!-- Filters & Javascript Search -->
-        <div class="flex flex-col md:flex-row gap-3 w-full lg:w-auto bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-          
-          <!-- Date Filter Group -->
-          <div class="flex gap-3 items-end w-full md:w-auto border-r-0 md:border-r border-slate-200 pr-0 md:pr-3">
-            <div class="w-full md:w-32">
-              <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">From Date</label>
-              <input type="date" id="handshake-flt-from" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs outline-none focus:border-emerald-500">
+        <!-- TAB 1: LIVE QUEUE -->
+        <div id="hs-tab-queue" class="hs-tab-content flex-1 flex flex-col">
+          <div class="flex justify-between items-end pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
+            <div>
+              <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">Vehicles in Yard</h4>
+              <p class="text-xs text-slate-500 font-bold mt-1">Drivers waiting for physical inward confirmation.</p>
             </div>
-            <div class="w-full md:w-32">
-              <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">To Date</label>
-              <input type="date" id="handshake-flt-to" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs outline-none focus:border-emerald-500">
-            </div>
-            <button onclick="window.loadHandshakeLog()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-lg transition shadow text-xs tracking-widest uppercase h-[34px]">Fetch</button>
-          </div>
-
-          <!-- Live JS Search Box -->
-          <div class="w-full md:w-48 flex items-end">
-            <input type="text" id="handshake-search" onkeyup="window.filterHandshakeTable()" placeholder="🔍 Quick Search..." class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs outline-none focus:border-emerald-500 h-[34px]">
+            <button onclick="window.loadHandshakeQueue()" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-sm outline-none">Refresh</button>
           </div>
           
+          <div id="hs-queue-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto hide-scrollbar pb-10">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- TAB 2: HISTORY LOG -->
+        <div id="hs-tab-history" class="hs-tab-content hidden flex-1 flex flex-col">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-slate-100 dark:border-slate-800 mb-4 gap-4">
+            <div>
+              <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">Completed Handshakes</h4>
+              <p class="text-xs text-slate-500 font-bold mt-1">Pending auto-reconciliation with Delivery QC.</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+              <input type="date" id="hs-flt-date" class="w-full md:w-auto p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg outline-none focus:border-emerald-500 dark:[color-scheme:dark] transition-colors">
+              <button onclick="window.loadHandshakeHistory()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-colors shadow-sm outline-none">Fetch</button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto overflow-y-auto max-h-[60vh] w-full relative border border-slate-200 dark:border-slate-800 rounded-xl shadow-inner">
+            <table class="w-full text-left border-collapse whitespace-nowrap text-slate-700 dark:text-slate-200 text-sm transition-colors">
+              <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest border-b-2 border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+                <tr>
+                  <th class="p-3 pl-4">Timestamp</th>
+                  <th class="p-3">Driver</th>
+                  <th class="p-3 text-center border-l border-slate-200 dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-900/10">F-VJ</th>
+                  <th class="p-3 text-center bg-indigo-50/50 dark:bg-indigo-900/10">F-NVJ</th>
+                  <th class="p-3 text-center border-l border-slate-200 dark:border-slate-800 bg-emerald-50/50 dark:bg-emerald-900/10">E-VJ</th>
+                  <th class="p-3 text-center bg-emerald-50/50 dark:bg-emerald-900/10">E-NVJ</th>
+                  <th class="p-3 text-center border-l border-slate-200 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-900/10">R-VJ</th>
+                  <th class="p-3 text-center bg-amber-50/50 dark:bg-amber-900/10">R-NVJ</th>
+                  <th class="p-3 text-center border-l border-slate-200 dark:border-slate-800">Recon Status</th>
+                </tr>
+              </thead>
+              <tbody id="hs-history-tbody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold transition-colors">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Physical Inward Modal -->
+  <div id="hs-inward-modal" class="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col relative transition-colors">
+      <div class="p-5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm z-10 transition-colors">
+        <div>
+          <h3 class="text-lg font-black uppercase text-emerald-700 dark:text-emerald-400 tracking-widest">Physical Inward</h3>
+          <p id="hs-modal-driver-name" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Driver Name</p>
+        </div>
+        <button onclick="window.closeModal('hs-inward-modal')" class="text-slate-400 hover:text-rose-500 transition outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      </div>
+      
+      <div class="p-6 space-y-6 bg-white dark:bg-slate-900 transition-colors">
+        <input type="hidden" id="hs-modal-log-id">
+        
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/50 shadow-inner">
+          <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3 border-b border-indigo-200 dark:border-indigo-800/50 pb-1">1. Full Cans (Returns)</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">VJ Fulls</label>
+              <input type="number" id="hs-inp-fvj" class="w-full text-center font-black text-2xl text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl outline-none focus:border-indigo-500 shadow-sm transition-colors" value="0">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">NVJ Fulls</label>
+              <input type="number" id="hs-inp-fnvj" class="w-full text-center font-black text-2xl text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl outline-none focus:border-indigo-500 shadow-sm transition-colors" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 shadow-inner">
+          <p class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3 border-b border-emerald-200 dark:border-emerald-800/50 pb-1">2. Empty Cans (Collected)</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">VJ Empties</label>
+              <input type="number" id="hs-inp-evj" class="w-full text-center font-black text-2xl text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl outline-none focus:border-emerald-500 shadow-sm transition-colors" value="0">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">NVJ Empties</label>
+              <input type="number" id="hs-inp-envj" class="w-full text-center font-black text-2xl text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl outline-none focus:border-emerald-500 shadow-sm transition-colors" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100 dark:border-amber-800/50 shadow-inner">
+          <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3 border-b border-amber-200 dark:border-amber-800/50 pb-1">3. Replacements (Faulty)</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">Rep VJ</label>
+              <input type="number" id="hs-inp-rvj" class="w-full text-center font-black text-xl text-amber-700 dark:text-amber-400 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 rounded-xl outline-none focus:border-amber-500 shadow-sm transition-colors" value="0">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 ml-1">Rep NVJ</label>
+              <input type="number" id="hs-inp-rnvj" class="w-full text-center font-black text-xl text-amber-700 dark:text-amber-400 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 rounded-xl outline-none focus:border-amber-500 shadow-sm transition-colors" value="0">
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Data Table Container -->
-  <div class="px-2 w-full mt-4">
-    <div class="bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden relative" style="max-height: 70vh;">
-      <div class="overflow-y-auto w-full h-full custom-scrollbar">
-        <table class="w-full text-left border-collapse whitespace-nowrap">
-          <thead class="bg-emerald-100 text-emerald-900 text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-sm">
-            <tr>
-              <th class="p-3 border-b border-emerald-200">Timestamp</th>
-              <th class="p-3 border-b border-emerald-200">Driver</th>
-              <th class="p-3 border-b border-emerald-200">Manager</th>
-              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Full VJ">F-VJ</th>
-              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Full NVJ">F-NVJ</th>
-              <th class="p-3 border-b border-emerald-200 text-center" title="Empty VJ">E-VJ</th>
-              <th class="p-3 border-b border-emerald-200 text-center" title="Empty NVJ">E-NVJ</th>
-              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Replace VJ">R-VJ</th>
-              <th class="p-3 border-b border-emerald-200 text-center bg-emerald-50" title="Replace NVJ">R-NVJ</th>
-              <th class="p-3 border-b border-emerald-200 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody id="handshake-table-body" class="divide-y divide-slate-100 text-xs">
-            <!-- Populated via JS -->
-          </tbody>
-        </table>
+      
+      <div class="p-5 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 transition-colors">
+        <button onclick="window.submitPhysicalInward()" id="hs-btn-save" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl transition shadow-lg uppercase tracking-widest text-sm active:scale-95 outline-none flex items-center justify-center gap-2">
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Confirm Physical Inward
+        </button>
       </div>
     </div>
   </div>
-
-  <!-- Floating Scroll Buttons -->
-  <div class="fixed bottom-8 right-6 z-[100] flex flex-col gap-3">
-    <button onclick="window.scrollAdminTo('top')" class="w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 transition opacity-80 hover:opacity-100 outline-none" title="Scroll to Top">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
-      </svg>
-    </button>
-    <button onclick="window.scrollAdminTo('bottom')" class="w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 transition opacity-80 hover:opacity-100 outline-none" title="Scroll to Bottom">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path>
-      </svg>
-    </button>
+  <!-- Active Crew Management Modal -->
+  <div id="hs-crew-modal" class="fixed inset-0 z-[220] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col relative transition-colors">
+      <div class="p-5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm z-10 transition-colors">
+        <div>
+          <h3 class="text-lg font-black uppercase text-indigo-700 dark:text-indigo-400 tracking-widest">Active Shift Crew</h3>
+          <p id="hs-crew-driver-name" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Driver Name</p>
+        </div>
+        <button onclick="window.closeCrewModal()" class="text-slate-400 hover:text-rose-500 transition outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      </div>
+      
+      <div class="p-6 bg-white dark:bg-slate-900 transition-colors max-h-[60vh] overflow-y-auto custom-scrollbar">
+         <div id="hs-crew-list" class="space-y-3">
+             <!-- Injected via JS -->
+         </div>
+      </div>
+    </div>
   </div>
 </div>

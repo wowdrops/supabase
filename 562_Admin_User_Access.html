@@ -1,16 +1,15 @@
-<div id="tab-user-access" class="hidden space-y-6 fade-in pb-20">
+<div id="tab-user-access" class="hidden space-y-6 fade-in pb-20 relative h-full">
   
-  <!-- Header & Module Context Selector -->
-  <div class="border-b-4 border-indigo-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+  <!-- STICKY HEADER -->
+  <div class="border-b-4 border-indigo-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 sticky top-0 z-20 bg-slate-50/95 backdrop-blur pt-2">
     <div>
       <h2 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight uppercase">Portal Security & RBAC</h2>
       <p class="text-slate-600 font-bold text-sm mt-1">Manage cross-module users, roles, menus, icons, and permissions.</p>
     </div>
     <div class="flex items-center gap-3 w-full md:w-auto">
       <label class="text-xs font-black text-slate-700 uppercase tracking-widest">Active Module:</label>
-      <select id="rbac-module-select" onchange="window.rbacLoadCurrentContext()" class="bg-indigo-50 border-2 border-indigo-200 text-indigo-800 font-black px-4 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
+      <select id="rbac-module-select" onchange="window.rbacLoadCurrentContext()" class="bg-indigo-50 border-2 border-indigo-200 text-indigo-800 font-black px-4 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm cursor-pointer">
         <option value="ADMIN">Admin Portal</option>
-        <option value="CRM">CRM Module</option>
         <option value="DELIVERY">Delivery App</option>
       </select>
     </div>
@@ -23,20 +22,24 @@
     <button id="btn-rbac-menus" onclick="window.rbacSwitchTab('menus')" class="flex-1 px-4 py-2.5 rounded-xl text-sm font-black text-slate-500 hover:text-slate-800 transition">Menu Builder</button>
   </div>
 
-  <div id="rbac-loading" class="hidden text-center text-indigo-600 font-black text-xl animate-pulse py-8">Syncing Architecture...</div>
+  <div id="rbac-loading" class="hidden text-center text-indigo-500 font-black text-xl animate-pulse py-12 uppercase tracking-widest">Syncing Architecture...</div>
 
   <!-- ========================================== -->
   <!-- TAB 1: USER MANAGEMENT                     -->
   <!-- ========================================== -->
-  <div id="rbac-view-users" class="space-y-6 fade-in">
-    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
-      <input type="text" id="rbac-user-search" onkeyup="window.rbacFilterUsers()" placeholder="Search username or email..." class="px-4 py-2 rounded-xl border border-slate-300 font-bold text-slate-700 outline-none w-full max-w-xs">
-      <button onclick="window.rbacOpenUserModal(null)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl font-black shadow-md transition w-full sm:w-auto">+ Add User</button>
+  <div id="rbac-view-users" class="space-y-6 fade-in mt-4">
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+      <input type="text" id="rbac-user-search" onkeyup="window.rbacFilterUsers()" placeholder="Search username or email..." class="px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-slate-700 outline-none w-full max-w-xs focus:border-indigo-400 transition bg-slate-50 shadow-inner">
+      <button onclick="window.rbacOpenUserModal(null)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-black shadow-lg transition w-full sm:w-auto active:scale-95">
+        <svg class="w-5 h-5 inline-block mr-1 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg> Add User
+      </button>
     </div>
+    
     <div class="bg-white rounded-3xl shadow-xl border-4 border-slate-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left whitespace-nowrap">
-          <thead class="bg-slate-100 text-slate-500 font-black uppercase tracking-widest border-b-4 border-slate-200">
+      <!-- SPA STANDARD LOCAL SCROLLBOX -->
+      <div class="overflow-x-auto overflow-y-auto max-h-[60vh] hide-scrollbar">
+        <table class="w-full text-left whitespace-nowrap border-collapse">
+          <thead class="bg-slate-800 text-white font-black uppercase tracking-widest text-[10px] md:text-xs sticky top-0 z-10 shadow-sm">
             <tr>
               <th class="px-6 py-4">Username</th>
               <th class="px-6 py-4">Contact</th>
@@ -45,8 +48,8 @@
               <th class="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody id="rbac-users-tbody" class="divide-y-4 divide-slate-50 text-slate-700 font-bold text-sm">
-            <!-- Injected via JS -->
+          <tbody id="rbac-users-tbody" class="divide-y-2 divide-slate-100 text-slate-700 font-bold text-sm">
+             <tr><td colspan='5' class='px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest'>Loading users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -56,25 +59,29 @@
   <!-- ========================================== -->
   <!-- TAB 2: ROLE & PERMISSION MATRIX            -->
   <!-- ========================================== -->
-  <div id="rbac-view-roles" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6 fade-in">
+  <div id="rbac-view-roles" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6 fade-in mt-4">
     <!-- Role List Sidebar -->
     <div class="md:col-span-1 space-y-4">
-      <button onclick="window.rbacPromptNewRole()" class="w-full bg-slate-800 hover:bg-slate-900 text-white px-4 py-3 rounded-xl font-black shadow transition">+ Create New Role</button>
-      <div id="rbac-roles-list" class="flex flex-col gap-2 bg-slate-50 p-3 rounded-2xl border-2 border-slate-200 h-[60vh] overflow-y-auto">
+      <button onclick="window.rbacPromptNewRole()" class="w-full bg-slate-800 hover:bg-slate-900 text-white px-4 py-3.5 rounded-xl font-black shadow-md transition active:scale-95 uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg> Create Role
+      </button>
+      <div id="rbac-roles-list" class="flex flex-col gap-2 bg-slate-50 p-3 rounded-2xl border-2 border-slate-200 max-h-[60vh] overflow-y-auto hide-scrollbar">
         <!-- Role items injected here -->
       </div>
     </div>
     <!-- Permission Matrix -->
-    <div class="md:col-span-3 bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col">
-      <div class="flex justify-between items-center border-b-2 border-slate-100 pb-4 mb-4">
+    <div class="md:col-span-3 bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col max-h-[75vh]">
+      <div class="flex justify-between items-center border-b-2 border-slate-100 pb-4 mb-4 shrink-0">
         <div>
           <h3 id="rbac-active-role-title" class="text-2xl font-black text-slate-800">Select a Role</h3>
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Assign page access and edit rights</p>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Assign page access and edit rights</p>
         </div>
-        <button onclick="window.rbacSavePermissions()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl font-black shadow transition">Save Permissions</button>
+        <button onclick="window.rbacSavePermissions()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-black shadow-md transition active:scale-95 uppercase tracking-widest text-sm flex items-center gap-2">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Save Permissions
+        </button>
       </div>
-      <div id="rbac-matrix-container" class="overflow-y-auto flex-1 max-h-[55vh]">
-        <p class="text-center text-slate-400 font-bold mt-10">Select a role from the left panel to configure its permissions.</p>
+      <div id="rbac-matrix-container" class="overflow-y-auto hide-scrollbar flex-1">
+        <div class="text-center py-20"><p class="text-slate-400 font-bold uppercase tracking-widest">Select a role from the left panel to configure its permissions.</p></div>
       </div>
     </div>
   </div>
@@ -82,13 +89,13 @@
   <!-- ========================================== -->
   <!-- TAB 3: MENU & PAGE BUILDER                 -->
   <!-- ========================================== -->
-  <div id="rbac-view-menus" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+  <div id="rbac-view-menus" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in mt-4">
     <!-- Current Architecture Tree -->
-    <div class="bg-slate-50 p-6 rounded-3xl border-4 border-slate-200 overflow-y-auto max-h-[82vh]">
-      <div class="flex justify-between items-center border-b-2 border-slate-200 pb-3 mb-4">
+    <div class="bg-slate-50 p-6 rounded-3xl border-4 border-slate-200 overflow-y-auto max-h-[75vh] hide-scrollbar shadow-inner">
+      <div class="flex justify-between items-center border-b-2 border-slate-200 pb-3 mb-4 sticky top-0 bg-slate-50 z-10">
         <div>
           <h3 class="text-lg font-black text-slate-800 uppercase tracking-widest">Architecture Tree</h3>
-          <p class="text-xs font-bold text-slate-400">Click Edit (✏️) or Delete (🗑️) on any item below</p>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">Click Edit (✏️) or Delete (🗑️) on any item below</p>
         </div>
       </div>
       <div id="rbac-tree-container" class="space-y-4">
@@ -97,51 +104,51 @@
     </div>
     
     <!-- Creation & Edit Forms -->
-    <div class="space-y-6">
+    <div class="space-y-6 max-h-[75vh] overflow-y-auto hide-scrollbar pr-2">
       
       <!-- Add / Edit Menu Form -->
       <div id="rbac-menu-form-card" class="bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-xl transition-all">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
+        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
           <h3 id="rbac-menu-form-title" class="text-lg font-black text-slate-800 uppercase tracking-widest">Add Sidebar Menu</h3>
-          <button id="rbac-btn-cancel-menu" onclick="window.rbacResetMenuForm()" class="hidden text-xs font-black text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-lg border border-red-200">Cancel Edit</button>
+          <button id="rbac-btn-cancel-menu" onclick="window.rbacResetMenuForm()" class="hidden text-[10px] font-black text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 uppercase tracking-widest outline-none transition">Cancel Edit</button>
         </div>
         <input type="hidden" id="rbac-edit-menu-id" value="">
         
         <div class="space-y-4">
           <div class="grid grid-cols-3 gap-4">
             <div class="col-span-2">
-              <label class="text-xs font-bold text-slate-500 uppercase">Menu Label</label>
-              <input type="text" id="rbac-new-menu-label" placeholder="e.g. Transactions" class="w-full mt-1 p-2 bg-slate-50 border rounded-lg font-bold outline-none focus:ring-2 focus:ring-slate-800">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Menu Label *</label>
+              <input type="text" id="rbac-new-menu-label" placeholder="e.g. Transactions" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold outline-none focus:border-indigo-400 shadow-inner">
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-500 uppercase">Sort Order</label>
-              <input type="number" id="rbac-new-menu-sort" value="10" placeholder="10" class="w-full mt-1 p-2 bg-slate-50 border rounded-lg font-bold outline-none focus:ring-2 focus:ring-slate-800">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sort Order</label>
+              <input type="number" id="rbac-new-menu-sort" value="10" placeholder="10" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold outline-none focus:border-indigo-400 shadow-inner text-center">
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase">Parent Menu (Optional)</label>
-            <select id="rbac-new-menu-parent" class="w-full mt-1 p-2 bg-slate-50 border rounded-lg font-bold outline-none"><option value="">-- Main Folder (Top Level) --</option></select>
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Parent Menu (Optional)</label>
+            <select id="rbac-new-menu-parent" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold outline-none focus:border-indigo-400 shadow-inner text-slate-700 cursor-pointer"><option value="">-- Main Folder (Top Level) --</option></select>
           </div>
 
           <!-- Hybrid Icon Selector + Custom SVG Input -->
           <div>
             <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-bold text-slate-500 uppercase">Menu Icon (Select or Paste SVG)</label>
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Menu Icon (Select or Paste SVG)</label>
               <div class="flex gap-2">
-                <button type="button" onclick="window.rbacOpenIconPicker('menu')" class="text-xs font-black bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 transition">🎨 Browse Icons</button>
-                <button type="button" onclick="window.rbacClearIconField('menu')" class="text-xs font-bold text-slate-400 hover:text-red-500 px-1.5 py-1">Clear</button>
+                <button type="button" onclick="window.rbacOpenIconPicker('menu')" class="text-[10px] font-black bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2.5 py-1 rounded border border-indigo-200 transition uppercase tracking-widest shadow-sm outline-none">🎨 Browse Icons</button>
+                <button type="button" onclick="window.rbacClearIconField('menu')" class="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-1.5 py-1 uppercase tracking-widest outline-none">Clear</button>
               </div>
             </div>
             <div class="flex gap-3 items-stretch">
               <div id="rbac-menu-icon-preview" class="w-14 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border-2 border-slate-300 shrink-0 shadow-inner" title="Live Dark Sidebar Preview">
                 <span class="text-[10px] font-bold text-slate-500">None</span>
               </div>
-              <textarea id="rbac-new-menu-icon" rows="2" oninput="window.rbacUpdateIconPreview('menu')" placeholder="Click 'Browse Icons' or paste raw <svg>...</svg> code here" class="flex-1 p-2 bg-slate-50 border rounded-lg font-mono text-[11px] text-slate-700 outline-none focus:ring-2 focus:ring-slate-800"></textarea>
+              <textarea id="rbac-new-menu-icon" rows="2" oninput="window.rbacUpdateIconPreview('menu')" placeholder="Click 'Browse Icons' or paste raw <svg>...</svg> code here" class="flex-1 p-2 bg-slate-50 border border-slate-200 shadow-inner rounded-lg font-mono text-[11px] text-slate-700 outline-none focus:border-indigo-400"></textarea>
             </div>
           </div>
 
-          <button id="rbac-btn-save-menu" onclick="window.rbacSaveMenu()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-2.5 rounded-xl shadow transition">Create Menu</button>
+          <button id="rbac-btn-save-menu" onclick="window.rbacSaveMenu()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 rounded-xl shadow-lg transition uppercase tracking-widest text-sm active:scale-95 outline-none">Create Menu</button>
         </div>
       </div>
 
@@ -149,61 +156,60 @@
       <div id="rbac-page-form-card" class="bg-indigo-50 p-6 rounded-3xl border-4 border-indigo-200 shadow-xl transition-all">
         <div class="flex justify-between items-center mb-4 border-b border-indigo-200 pb-2">
           <h3 id="rbac-page-form-title" class="text-lg font-black text-indigo-900 uppercase tracking-widest">Register App Page</h3>
-          <button id="rbac-btn-cancel-page" onclick="window.rbacResetPageForm()" class="hidden text-xs font-black text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-lg border border-red-200">Cancel Edit</button>
+          <button id="rbac-btn-cancel-page" onclick="window.rbacResetPageForm()" class="hidden text-[10px] font-black text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 uppercase tracking-widest outline-none transition">Cancel Edit</button>
         </div>
         <input type="hidden" id="rbac-edit-page-mode" value="">
 
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-xs font-bold text-slate-600 uppercase">Page ID (Code logic)</label>
-              <input type="text" id="rbac-new-page-id" placeholder="e.g. tran-delivery" class="w-full mt-1 p-2 bg-white border rounded-lg font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+              <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Page ID (Code logic) *</label>
+              <input type="text" id="rbac-new-page-id" placeholder="e.g. tran-delivery" class="w-full mt-1 p-2.5 bg-white border border-indigo-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-500">
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-600 uppercase">Display Title</label>
-              <input type="text" id="rbac-new-page-title" placeholder="e.g. Delivery QC" class="w-full mt-1 p-2 bg-white border rounded-lg font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+              <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Display Title *</label>
+              <input type="text" id="rbac-new-page-title" placeholder="e.g. Delivery QC" class="w-full mt-1 p-2.5 bg-white border border-indigo-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-500">
             </div>
           </div>
 
-          <!-- NEW FILE PATH FIELD -->
           <div>
-            <label class="text-xs font-bold text-slate-600 uppercase">HTML File Name (Lazy Load Target)</label>
-            <input type="text" id="rbac-new-page-filepath" placeholder="e.g. 564_Admin_Tran_Sales.html" class="w-full mt-1 p-2 bg-white border rounded-lg font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+            <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">HTML File Name (Lazy Load Target) *</label>
+            <input type="text" id="rbac-new-page-filepath" placeholder="e.g. 564_Admin_Tran_Sales.html" class="w-full mt-1 p-2.5 bg-white border border-indigo-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-500">
           </div>
 
           <div class="grid grid-cols-3 gap-4">
             <div class="col-span-2">
-              <label class="text-xs font-bold text-slate-600 uppercase">Assign to Menu</label>
-              <select id="rbac-new-page-menu" class="w-full mt-1 p-2 bg-white border rounded-lg font-bold outline-none"><option value="">-- Select Menu --</option></select>
+              <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Assign to Menu</label>
+              <select id="rbac-new-page-menu" class="w-full mt-1 p-2.5 bg-white border border-indigo-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-500 text-slate-700 cursor-pointer"><option value="">-- Select Menu --</option></select>
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-600 uppercase">Sort Order</label>
-              <input type="number" id="rbac-new-page-sort" value="10" placeholder="10" class="w-full mt-1 p-2 bg-white border rounded-lg font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+              <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Sort Order</label>
+              <input type="number" id="rbac-new-page-sort" value="10" placeholder="10" class="w-full mt-1 p-2.5 bg-white border border-indigo-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-500 text-center">
             </div>
           </div>
 
           <!-- Hybrid Icon Selector + Custom SVG Input for Page -->
           <div>
             <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-bold text-slate-600 uppercase">Page Icon (Optional SVG)</label>
+              <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Page Icon (Optional SVG)</label>
               <div class="flex gap-2">
-                <button type="button" onclick="window.rbacOpenIconPicker('page')" class="text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg shadow-sm transition">🎨 Browse Icons</button>
-                <button type="button" onclick="window.rbacClearIconField('page')" class="text-xs font-bold text-slate-500 hover:text-red-500 px-1.5 py-1">Clear</button>
+                <button type="button" onclick="window.rbacOpenIconPicker('page')" class="text-[10px] font-black bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded shadow-sm transition uppercase tracking-widest outline-none">🎨 Browse Icons</button>
+                <button type="button" onclick="window.rbacClearIconField('page')" class="text-[10px] font-bold text-indigo-400 hover:text-rose-500 px-1.5 py-1 uppercase tracking-widest outline-none">Clear</button>
               </div>
             </div>
             <div class="flex gap-3 items-stretch">
-              <div id="rbac-page-icon-preview" class="w-14 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border-2 border-indigo-200 shrink-0 shadow-inner" title="Live Dark Sidebar Preview">
+              <div id="rbac-page-icon-preview" class="w-14 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border-2 border-indigo-300 shrink-0 shadow-inner" title="Live Dark Sidebar Preview">
                 <span class="text-[10px] font-bold text-slate-500">None</span>
               </div>
-              <textarea id="rbac-new-page-icon" rows="2" oninput="window.rbacUpdateIconPreview('page')" placeholder="Click 'Browse Icons' or paste raw <svg>...</svg> code here" class="flex-1 p-2 bg-white border rounded-lg font-mono text-[11px] text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+              <textarea id="rbac-new-page-icon" rows="2" oninput="window.rbacUpdateIconPreview('page')" placeholder="Click 'Browse Icons' or paste raw <svg>...</svg> code here" class="flex-1 p-2 bg-white border border-indigo-200 shadow-inner rounded-lg font-mono text-[11px] text-slate-700 outline-none focus:border-indigo-500"></textarea>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="rbac-new-page-visible" checked class="w-5 h-5 accent-indigo-600 cursor-pointer">
-            <label for="rbac-new-page-visible" class="text-sm font-bold text-slate-700 cursor-pointer">Show button in Sidebar</label>
+          <div class="flex items-center gap-2 bg-white p-3 rounded-lg border border-indigo-100 shadow-sm cursor-pointer hover:bg-indigo-50 transition" onclick="document.getElementById('rbac-new-page-visible').click()">
+            <input type="checkbox" id="rbac-new-page-visible" checked class="w-5 h-5 accent-indigo-600 cursor-pointer pointer-events-none">
+            <label class="text-xs font-black text-slate-700 uppercase tracking-widest cursor-pointer pointer-events-none">Show button in Sidebar Menu</label>
           </div>
-          <button id="rbac-btn-save-page" onclick="window.rbacSavePage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-xl shadow transition">Register Page</button>
+          <button id="rbac-btn-save-page" onclick="window.rbacSavePage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-lg transition active:scale-95 uppercase tracking-widest text-sm outline-none">Register Page</button>
         </div>
       </div>
 
@@ -215,45 +221,47 @@
 <!-- ========================================== -->
 <!-- USER MODAL (Create / Edit User & Status)   -->
 <!-- ========================================== -->
-<div id="rbac-user-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl border-4 border-slate-200 w-full max-w-md overflow-hidden transform scale-95 transition-transform" id="rbac-user-modal-box">
-    <div class="bg-slate-50 p-5 border-b border-slate-200 flex justify-between items-center">
-      <h3 id="rbac-modal-title" class="text-xl font-black text-slate-800 uppercase tracking-widest">Create User</h3>
-      <button onclick="document.getElementById('rbac-user-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+<div id="rbac-user-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4 fade-in">
+  <div class="bg-white rounded-3xl shadow-2xl border-4 border-slate-200 w-full max-w-md overflow-hidden transform transition-transform" id="rbac-user-modal-box">
+    <div class="bg-slate-800 p-5 flex justify-between items-center shadow-sm z-10 relative">
+      <h3 id="rbac-modal-title" class="text-xl font-black text-white uppercase tracking-widest leading-tight">Create User</h3>
+      <button onclick="window.closeModal('rbac-user-modal')" class="text-slate-400 hover:text-rose-400 transition outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
-    <div class="p-6 space-y-4">
+    <div class="p-6 space-y-4 bg-slate-50">
       <input type="hidden" id="rbac-modal-userid">
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-3 gap-4">
         <div class="col-span-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Username</label>
-          <input type="text" id="rbac-modal-username" class="w-full p-2 bg-slate-50 border rounded-lg font-bold outline-none">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Username *</label>
+          <input type="text" id="rbac-modal-username" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-400">
         </div>
         <div>
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Account Status</label>
-          <select id="rbac-modal-status" class="w-full p-2 bg-slate-50 border rounded-lg font-black text-xs outline-none">
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</label>
+          <select id="rbac-modal-status" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-black text-xs outline-none focus:border-indigo-400 cursor-pointer">
+            <option value="ACTIVE" class="text-emerald-600">ACTIVE</option>
+            <option value="INACTIVE" class="text-rose-600">INACTIVE</option>
           </select>
         </div>
       </div>
-      <div><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</label><input type="email" id="rbac-modal-email" class="w-full p-2 bg-slate-50 border rounded-lg font-bold outline-none"></div>
-      <div><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone</label><input type="text" id="rbac-modal-phone" class="w-full p-2 bg-slate-50 border rounded-lg font-bold outline-none"></div>
+      <div><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</label><input type="email" id="rbac-modal-email" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-400"></div>
+      <div><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone Number</label><input type="text" id="rbac-modal-phone" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-400"></div>
       
       <div class="border-t border-slate-200 pt-4 mt-2">
         <label class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-2 block">Assign Roles (<span id="rbac-modal-module-label">ADMIN</span>)</label>
-        <div id="rbac-modal-roles-container" class="space-y-2 max-h-32 overflow-y-auto bg-slate-50 p-2 rounded-lg border">
+        <div id="rbac-modal-roles-container" class="space-y-2 max-h-40 overflow-y-auto bg-white p-3 rounded-lg border border-slate-200 shadow-inner hide-scrollbar">
           <!-- Checkboxes injected here -->
         </div>
       </div>
       
-      <div id="rbac-modal-pass-section">
+      <div id="rbac-modal-pass-section" class="pt-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password (Leave blank to keep unchanged)</label>
-        <input type="text" id="rbac-modal-pass" class="w-full p-2 bg-slate-50 border rounded-lg font-bold outline-none">
+        <input type="text" id="rbac-modal-pass" placeholder="Enter new password" class="w-full mt-1 p-2.5 bg-white border border-slate-200 shadow-inner rounded-lg font-bold outline-none focus:border-indigo-400">
       </div>
     </div>
-    <div class="bg-slate-100 p-4 border-t border-slate-200 flex justify-end gap-3">
-      <button onclick="document.getElementById('rbac-user-modal').classList.add('hidden')" class="px-4 py-2 rounded-lg font-bold text-slate-500">Cancel</button>
-      <button onclick="window.rbacSaveUser()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-6 py-2 rounded-xl shadow">Save User</button>
+    <div class="bg-white p-5 border-t border-slate-200 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative">
+      <button onclick="window.closeModal('rbac-user-modal')" class="px-6 py-2.5 rounded-xl font-black text-slate-500 hover:bg-slate-100 border border-slate-200 transition outline-none shadow-sm uppercase tracking-widest text-xs">Cancel</button>
+      <button onclick="window.rbacSaveUser()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-8 py-2.5 rounded-xl shadow-lg transition active:scale-95 uppercase tracking-widest text-xs outline-none flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Save User
+      </button>
     </div>
   </div>
 </div>
@@ -261,23 +269,23 @@
 <!-- ========================================== -->
 <!-- BUILT-IN ICON PICKER MODAL                 -->
 <!-- ========================================== -->
-<div id="rbac-icon-picker-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl border-4 border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
-    <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+<div id="rbac-icon-picker-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4 fade-in">
+  <div class="bg-slate-800 rounded-3xl shadow-2xl border-4 border-slate-700 w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="p-5 flex justify-between items-center border-b border-slate-700 shrink-0 shadow-sm z-10">
       <div>
-        <h3 class="text-lg font-black uppercase tracking-widest">Select Sidebar Icon</h3>
-        <p class="text-xs text-slate-400 font-semibold">Pick a colour accent and click any icon to insert its SVG code</p>
+        <h3 class="text-xl font-black uppercase tracking-widest text-white">Select Sidebar Icon</h3>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Pick a colour accent and click any icon to insert its SVG code</p>
       </div>
-      <button onclick="document.getElementById('rbac-icon-picker-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
+      <button onclick="window.closeModal('rbac-icon-picker-modal')" class="text-slate-500 hover:text-white transition outline-none">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
 
     <!-- Colour Accent Selector -->
-    <div class="bg-slate-100 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-black text-slate-600 uppercase">Icon Colour:</span>
-        <select id="rbac-icon-color-select" onchange="window.rbacRenderIconPickerGrid()" class="bg-white border border-slate-300 rounded-lg px-3 py-1 text-xs font-black text-slate-800 outline-none">
+    <div class="bg-slate-900 px-6 py-4 border-b border-slate-700 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-inner z-10">
+      <div class="flex items-center gap-3">
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Icon Colour:</span>
+        <select id="rbac-icon-color-select" onchange="window.rbacRenderIconPickerGrid()" class="bg-slate-800 border-2 border-slate-600 rounded-lg px-3 py-1.5 text-xs font-black text-white outline-none focus:border-indigo-400 cursor-pointer shadow-sm">
           <option value="text-indigo-400">Indigo (Dashboard)</option>
           <option value="text-slate-400">Slate Grey (Standard Main)</option>
           <option value="text-emerald-400">Emerald Green (Inventory)</option>
@@ -290,9 +298,9 @@
           <option value="text-fuchsia-400">Fuchsia (Security / RBAC)</option>
         </select>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-black text-slate-600 uppercase">Size:</span>
-        <select id="rbac-icon-size-select" onchange="window.rbacRenderIconPickerGrid()" class="bg-white border border-slate-300 rounded-lg px-3 py-1 text-xs font-black text-slate-800 outline-none">
+      <div class="flex items-center gap-3">
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Size:</span>
+        <select id="rbac-icon-size-select" onchange="window.rbacRenderIconPickerGrid()" class="bg-slate-800 border-2 border-slate-600 rounded-lg px-3 py-1.5 text-xs font-black text-white outline-none focus:border-indigo-400 cursor-pointer shadow-sm">
           <option value="w-5 h-5">Main Menu (w-5 h-5)</option>
           <option value="w-4 h-4">Page Item (w-4 h-4)</option>
           <option value="w-3.5 h-3.5">Sub-Menu (w-3.5 h-3.5)</option>
@@ -301,7 +309,7 @@
     </div>
 
     <!-- Scrollable Categorized Icon Grid -->
-    <div id="rbac-icon-picker-grid" class="p-6 overflow-y-auto space-y-6 bg-slate-50 flex-1">
+    <div id="rbac-icon-picker-grid" class="p-6 overflow-y-auto space-y-8 bg-slate-800 flex-1 hide-scrollbar">
       <!-- Populated dynamically via JS -->
     </div>
   </div>

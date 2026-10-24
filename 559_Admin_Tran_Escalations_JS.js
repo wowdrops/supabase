@@ -1,57 +1,94 @@
 window.loadEscalationsData = async function () {
     var tb = document.getElementById('escalations-tbody');
-    tb.innerHTML = "<tr><td colspan='4' class='px-6 py-12 text-center text-slate-500 font-bold text-2xl animate-pulse'>Scanning CRM logs...</td></tr>";
+    var badge = document.getElementById('escalation-count-badge');
+    
+    if (tb) tb.innerHTML = "<tr><td colspan='4' class='px-6 py-12 text-center text-indigo-400 font-bold text-xl animate-pulse tracking-widest uppercase'>Scanning CRM logs...</td></tr>";
 
     try {
-        const { data, error } = await supabase1
+        const { data, error } = await window.supabase1
             .from('crm_dormant_call_logs')
             .select('*')
-            .like('telecaller_feedback', '%⚠️ [ADMIN REVIEW REQUESTED]%')
+            .like('telecaller_feedback', '%⚠️ [ADMIN REVIEW]%')
             .order('last_updated', { ascending: false });
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            return tb.innerHTML = "<tr><td colspan='4' class='px-6 py-12 text-center font-bold text-slate-400 text-2xl'>No pending escalations. You're all caught up!</td></tr>";
+            if (badge) badge.innerText = "0 Pending";
+            if (tb) tb.innerHTML = "<tr><td colspan='4' class='px-6 py-16 text-center'><div class='text-4xl mb-4'>🌟</div><p class='font-black text-slate-400 text-xl tracking-widest uppercase'>No pending escalations. You're all caught up!</p></td></tr>";
+            return;
         }
+
+        if (badge) badge.innerText = data.length + " Pending";
 
         var html = '';
         data.forEach(e => {
-            var feedbackClean = (e.telecaller_feedback || "").replace("⚠️ [ADMIN REVIEW REQUESTED] - ", "").replace("⚠️ [ADMIN REVIEW REQUESTED]", "").trim();
-            var dateStr = e.last_updated ? new Date(e.last_updated).toLocaleString('en-IN', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : 'N/A';
+            // Strip out the trigger flag to keep the UI clean
+            var feedbackClean = (e.telecaller_feedback || "").replace("⚠️ [ADMIN REVIEW]", "").replace("⚠️ [ADMIN REVIEW REQUESTED]", "").trim();
+            if (feedbackClean.startsWith("]")) feedbackClean = feedbackClean.substring(1).trim(); 
             
-            html += `<tr class='hover:bg-slate-50 border-b-4 border-slate-100'>
-                <td class='px-6 py-5'><p class='font-black text-slate-800 text-xl'>${e.customer_name || 'Unknown'}</p><p class='text-sm font-bold text-blue-600 tracking-widest'>${e.cpn_no}</p><p class='text-xs font-bold text-slate-500 mt-1'>${e.phone || '-'}</p></td>
-                <td class='px-6 py-5'><p class='font-bold text-slate-700 text-lg'>${e.action_taken_by || 'System'}</p><p class='text-xs font-black text-slate-400 uppercase tracking-widest'>${dateStr}</p></td>
-                <td class='px-6 py-5 max-w-md'><div class='bg-red-50 border border-red-200 p-3 rounded-xl text-red-800 font-bold text-sm'>${feedbackClean}</div></td>
-                <td class='px-6 py-5 text-center'><button onclick='window.resolveEscalation("${e.log_id}", "${e.telecaller_feedback}")' class='bg-emerald-600 text-white font-black px-4 py-2 rounded-xl shadow-sm hover:bg-emerald-700 transition active:scale-95'>Resolve</button></td>
+            var dateStr = e.last_updated ? new Date(e.last_updated).toLocaleString('en-IN', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : 'N/A';
+            var cleanCpn = String(e.cpn_no || '').trim().toUpperCase();
+
+            html += `<tr class='hover:bg-slate-50 transition'>
+                <td class='px-6 py-5 whitespace-normal min-w-[200px]'>
+                    <p class='font-black text-slate-800 text-lg mb-1 leading-tight'>${e.customer_name || 'Unknown'}</p>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${cleanCpn}')">
+                        <span class="font-black text-sm tracking-widest">${cleanCpn}</span>
+                        <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </span>
+                    <p class='text-[10px] font-bold text-slate-400 tracking-widest mt-1.5 uppercase'>${e.phone || 'No Phone'}</p>
+                </td>
+                <td class='px-6 py-5 whitespace-normal'>
+                    <p class='font-black text-slate-700 text-base'>${e.action_taken_by || 'System'}</p>
+                    <p class='text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1'>${dateStr}</p>
+                </td>
+                <td class='px-6 py-5 whitespace-normal min-w-[300px]'>
+                    <div class='bg-rose-50 border border-rose-200 p-3 rounded-xl text-rose-800 font-bold text-sm shadow-sm inline-block'>
+                       <span class="text-rose-500 font-black mr-1">⚠️</span> ${feedbackClean}
+                    </div>
+                </td>
+                <td class='px-6 py-5 text-center'>
+                    <button onclick='window.resolveEscalation("${e.log_id}", ${JSON.stringify(e.telecaller_feedback)})' class='bg-emerald-600 text-white font-black px-5 py-2.5 rounded-xl shadow-md hover:bg-emerald-700 transition active:scale-95 text-xs md:text-sm uppercase tracking-widest flex items-center justify-center gap-2 mx-auto'>
+                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                       Resolve
+                    </button>
+                </td>
             </tr>`;
         });
-        tb.innerHTML = html;
+        if (tb) tb.innerHTML = html;
+        
     } catch (err) {
-        tb.innerHTML = `<tr><td colspan='4' class='px-6 py-12 text-center font-bold text-red-500 text-xl'>Error: ${err.message}</td></tr>`;
+        if (tb) tb.innerHTML = `<tr><td colspan='4' class='px-6 py-12 text-center font-bold text-rose-500 text-xl'>Error: ${err.message}</td></tr>`;
+        if (window.showToast) window.showToast("Failed to load escalations.", "error");
     }
 };
 
 window.resolveEscalation = async function (logId, currentFeedback) {
-    var note = prompt("Enter resolution notes:");
-    if (note === null) return;
+    var note = prompt("Enter resolution notes (this will be appended to the log history):");
+    if (note === null) return; 
     if (note.trim() === "") note = "Resolved by Admin";
     
     try {
-        var updatedFeedback = (currentFeedback || "").replace("⚠️ [ADMIN REVIEW REQUESTED]", `✅ [RESOLVED by Admin: ${note}]`);
+        var updatedFeedback = (currentFeedback || "").replace(/⚠️ \[ADMIN REVIEW\]/g, `✅ [RESOLVED by Admin: ${note}]`).replace(/⚠️ \[ADMIN REVIEW REQUESTED\]/g, `✅ [RESOLVED by Admin: ${note}]`);
         
-        const { error } = await supabase1
+        const { error } = await window.supabase1
             .from('crm_dormant_call_logs')
             .update({ telecaller_feedback: updatedFeedback })
             .eq('log_id', logId);
 
         if (error) throw error;
-        alert("Ticket resolved successfully.");
+        
+        if (window.showToast) window.showToast("Ticket resolved successfully.", "success");
         window.loadEscalationsData();
+        
     } catch (err) {
-        alert("Failed to resolve: " + err.message);
+        if (window.showToast) window.showToast("Failed to resolve: " + err.message, "error");
+        else alert("Failed to resolve: " + err.message);
     }
 };
 
-window.tabActions['tran-escalations'] = window.loadEscalationsData;
+// SPA Standard Router Hook
+window.tabActions['tran-escalations'] = function() {
+    window.loadEscalationsData();
+};

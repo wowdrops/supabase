@@ -3,6 +3,50 @@ window.crmCurrentTab = 'pending';
 window.crmSortOrder = 'none';
 window.crmSortMetricDirection = -1; 
 window.crmSetupConfig = { wipStatuses: [], completedStatuses: [] };
+window.crmDropdownsInitialized = false;
+
+window.crmInitDropdowns = async function() {
+    if (window.crmDropdownsInitialized) return;
+    
+    try {
+        const { data: setupOptions, error } = await window.supabase1.from('setup').select('key, value')
+            .in('key', ['Call_Statuses', 'WIP_Statuses', 'Completed_Statuses', 'Customer_Statuses', 'Dormancy_Reasons']);
+            
+        if(error) throw error;
+        
+        var callStatusDropdown = document.getElementById('crm-call-status');
+        var custStatusDropdown = document.getElementById('crm-cust-status');
+        var dormReasonDropdown = document.getElementById('crm-dorm-reason');
+
+        if(setupOptions) {
+            setupOptions.forEach(s => {
+                var keyRaw = String(s.key).toLowerCase();
+                var arr = s.value.split(',').map(x => x.trim());
+                var optionsHtml = arr.map(x => `<option value="${x}">${x}</option>`).join('');
+                
+                if(keyRaw === 'call_statuses') {
+                    if(callStatusDropdown) callStatusDropdown.innerHTML = optionsHtml;
+                }
+                if(keyRaw === 'wip_statuses') {
+                    window.crmSetupConfig.wipStatuses = arr.map(x => x.toUpperCase());
+                }
+                if(keyRaw === 'completed_statuses') {
+                    window.crmSetupConfig.completedStatuses = arr.map(x => x.toUpperCase());
+                }
+                if(keyRaw === 'customer_statuses') {
+                    if(custStatusDropdown) custStatusDropdown.innerHTML = optionsHtml;
+                }
+                if(keyRaw === 'dormancy_reasons') {
+                    if(dormReasonDropdown) dormReasonDropdown.innerHTML = optionsHtml;
+                }
+            });
+            window.crmDropdownsInitialized = true;
+        }
+    } catch(e) {
+        console.error("Failed to load CRM dropdown configurations:", e);
+        if(window.showToast) window.showToast("Warning: Failed to load dropdown configurations.", "error");
+    }
+};
 
 window.crmSwitchTab = function(tab) {
     window.crmCurrentTab = tab;
@@ -10,8 +54,8 @@ window.crmSwitchTab = function(tab) {
     ['pending', 'wip', 'completed', 'patterns', 'feedbacks'].forEach(t => {
         var el = document.getElementById('tab-' + t);
         if(!el) return;
-        if (t === tab) el.className = "px-5 py-2.5 bg-indigo-600 text-white font-black rounded-t-xl text-sm uppercase tracking-widest transition whitespace-nowrap";
-        else el.className = "px-5 py-2.5 bg-transparent text-slate-500 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 transition whitespace-nowrap";
+        if (t === tab) el.className = "px-5 py-2.5 bg-indigo-600 dark:bg-indigo-700 text-white font-black rounded-t-xl text-sm uppercase tracking-widest transition-colors whitespace-nowrap";
+        else el.className = "px-5 py-2.5 bg-transparent text-slate-500 dark:text-slate-400 font-black rounded-t-xl text-sm uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap";
     });
 
     var btnMetric = document.getElementById('btn-sort-metric');
@@ -22,26 +66,21 @@ window.crmSwitchTab = function(tab) {
 
     if (tab === 'patterns' || tab === 'feedbacks') {
         document.getElementById('queue-title').innerText = tab === 'patterns' ? 'Pattern Tracker' : 'Customer Feedbacks';
-        document.getElementById('queue-list').innerHTML = '<div class="col-span-full p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl text-center"><p class="text-slate-500 text-sm font-bold">Predictive AI module launching next phase.</p></div>';
+        document.getElementById('queue-count-badge').classList.add('hidden');
+        document.getElementById('queue-list').innerHTML = '<div class="col-span-full p-6 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center transition-colors"><p class="text-slate-500 dark:text-slate-400 text-sm font-bold">Predictive AI module launching next phase.</p></div>';
         return;
     }
 
+    document.getElementById('queue-count-badge').classList.remove('hidden');
+    document.getElementById('customer-360-view').classList.add('hidden'); 
     window.crmApplyQueueFilters();
 };
 
 window.crmLoadQueues = async function() {
     var container = document.getElementById('queue-list');
-    if(container) container.innerHTML = '<div class="col-span-full text-center p-6"><p class="text-sm font-bold text-indigo-500 animate-pulse">Syncing queues with Supabase...</p></div>';
+    if(container) container.innerHTML = '<div class="col-span-full text-center py-10"><p class="text-sm font-bold text-indigo-500 dark:text-indigo-400 animate-pulse tracking-widest uppercase transition-colors">Syncing Live Queues...</p></div>';
 
     try {
-        const { data: setupData } = await window.supabase1.from('setup').select('key, value').in('key', ['wip_statuses', 'completed_statuses']);
-        if (setupData) {
-            setupData.forEach(s => {
-                if (s.key === 'wip_statuses' && s.value) window.crmSetupConfig.wipStatuses = s.value.split(',').map(x => x.trim().toUpperCase());
-                if (s.key === 'completed_statuses' && s.value) window.crmSetupConfig.completedStatuses = s.value.split(',').map(x => x.trim().toUpperCase());
-            });
-        }
-
         const { data: logs, error } = await window.supabase1.from('crm_dormant_call_logs').select('*').order('last_updated', { ascending: false });
         if (error) throw error;
 
@@ -71,7 +110,8 @@ window.crmLoadQueues = async function() {
         window.crmApplyQueueFilters();
 
     } catch (err) {
-        if(container) container.innerHTML = '<div class="col-span-full p-4 text-rose-500 font-bold">Error loading queues: ' + err.message + '</div>';
+        if(container) container.innerHTML = '<div class="col-span-full p-6 bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-200 dark:border-rose-800 rounded-xl text-center transition-colors"><p class="text-sm font-bold text-rose-600 dark:text-rose-400">Error loading queues: ' + err.message + '</p></div>';
+        if(window.showToast) window.showToast("Sync Error: " + err.message, "error");
     }
 };
 
@@ -116,13 +156,14 @@ window.crmApplyQueueFilters = function() {
 
 window.crmDrawQueueList = function(dataArray) {
     var container = document.getElementById('queue-list');
-    var titleEl = document.getElementById('queue-title');
+    var badgeEl = document.getElementById('queue-count-badge');
     var titles = { 'pending': 'Pending Leads', 'wip': 'WIP / Follow-ups', 'completed': 'Recent History' };
     
-    if(titleEl) titleEl.innerText = titles[window.crmCurrentTab] + ' (' + dataArray.length + ')';
+    document.getElementById('queue-title').innerText = titles[window.crmCurrentTab];
+    if(badgeEl) badgeEl.innerText = dataArray.length;
     
     if(dataArray.length === 0) {
-        if(container) container.innerHTML = '<div class="col-span-full text-slate-500 text-sm font-bold p-3">No matching records found.</div>';
+        if(container) container.innerHTML = '<div class="col-span-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-center p-6 mt-4 transition-colors"><p class="text-slate-400 dark:text-slate-500 text-sm font-bold uppercase tracking-widest">Queue is Empty</p></div>';
         return;
     }
     
@@ -132,20 +173,20 @@ window.crmDrawQueueList = function(dataArray) {
         var subtext = "";
         
         if (window.crmCurrentTab === 'pending') {
-            subtext = '<p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">' + item.days + ' Days Inactive</p>';
+            subtext = '<p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest transition-colors">' + item.days + ' Days Inactive</p>';
         } else if (window.crmCurrentTab === 'wip') {
-            subtext = '<p class="text-[10px] font-bold text-amber-600 mt-1 uppercase tracking-widest">' + item.status + ' <span class="text-slate-400">(' + item.days + 'd)</span></p>';
+            subtext = '<p class="text-[10px] font-bold text-amber-600 dark:text-amber-500 mt-1 uppercase tracking-widest transition-colors">' + item.status + ' <span class="text-slate-400 dark:text-slate-500">(' + item.days + 'd)</span></p>';
         } else {
-            subtext = '<p class="text-[10px] font-bold text-emerald-600 mt-1 uppercase tracking-widest">' + item.status + ' | ' + item.dateStr + '</p>';
+            subtext = '<p class="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mt-1 uppercase tracking-widest transition-colors">' + item.status + ' <span class="text-slate-400 dark:text-slate-500 ml-1">| ' + item.dateStr + '</span></p>';
         }
 
         html += `<div onclick="window.crmOpenInlineProfile('${item.cpn}')" 
-                 class="p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition shadow-sm flex flex-col justify-between h-full">
+                 class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-slate-600 transition-colors shadow-sm flex flex-col justify-between h-full mb-2 active:scale-[0.98]">
             <div>
-                <p class="font-black text-slate-800 text-lg">${item.cpn}</p>
-                <p class="text-xs font-bold text-slate-600 truncate">${item.name}</p>
+                <p class="font-black text-slate-800 dark:text-white text-lg">${item.cpn}</p>
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">${item.name}</p>
             </div>
-            <div class="mt-2 pt-2 border-t border-slate-200">
+            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 transition-colors">
                 ${subtext}
             </div>
         </div>`;
@@ -154,14 +195,11 @@ window.crmDrawQueueList = function(dataArray) {
     if(container) container.innerHTML = html;
 };
 
-// =====================================
-// INLINE 360 PROFILE & FORM MANAGER
-// =====================================
 window.crmOpenInlineProfile = async function(cpn) {
     document.getElementById('customer-360-view').classList.remove('hidden');
     document.getElementById('crm-header-title').innerText = cpn;
+    document.getElementById('crm-hidden-cpn').value = cpn;
     
-    // 1. Handle Completed Tab Lockout
     var formContainer = document.getElementById('crm-interaction-form');
     var existingClosedMsg = document.getElementById('crm-closed-message');
 
@@ -170,8 +208,8 @@ window.crmOpenInlineProfile = async function(cpn) {
         if (!existingClosedMsg && formContainer) {
             var msg = document.createElement('div');
             msg.id = 'crm-closed-message';
-            msg.className = "p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl text-center mt-4";
-            msg.innerHTML = '<p class="text-slate-500 font-black uppercase tracking-widest text-sm mb-1">Ticket Closed</p><p class="text-xs text-slate-400 font-bold">This interaction has already been logged and archived. No further action can be taken.</p>';
+            msg.className = "p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-center mt-4 shadow-inner transition-colors";
+            msg.innerHTML = '<p class="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-sm mb-1">Ticket Closed</p><p class="text-xs text-slate-400 dark:text-slate-500 font-bold">This interaction has already been logged and archived. No further action can be taken.</p>';
             formContainer.parentNode.insertBefore(msg, formContainer.nextSibling);
         } else if (existingClosedMsg) {
             existingClosedMsg.classList.remove('hidden');
@@ -181,15 +219,17 @@ window.crmOpenInlineProfile = async function(cpn) {
         if (existingClosedMsg) existingClosedMsg.classList.add('hidden');
     }
     
-    // 2. Call the Universal 360 Component in Inline Mode and capture context
     let ctx360 = null;
     if (typeof window.openCustomer360 === 'function') {
         ctx360 = await window.openCustomer360(cpn, true);
     } else {
-        document.getElementById('crm-inline-profile').innerHTML = '<p class="text-rose-500 font-bold p-4">Error: 360 Module not loaded.</p>';
+        document.getElementById('crm-inline-profile').innerHTML = '<p class="text-rose-500 font-bold p-4">Error: Universal 360 Module not loaded.</p>';
     }
 
-    // 3. Handle Quick Close button visibility natively inside the CRM based on returned context!
+    if (ctx360 && ctx360.profile) {
+        document.getElementById('crm-hidden-prev-status').value = ctx360.profile.final_status || "Unknown";
+    }
+
     var qcBtn = document.getElementById('crm-quick-close-btn');
     if (qcBtn) {
         if (ctx360 && ctx360.activeOrder && window.crmCurrentTab !== 'completed') {
@@ -199,38 +239,21 @@ window.crmOpenInlineProfile = async function(cpn) {
         }
     }
 
-    // 4. Load Interaction Form Dropdowns
-    var callStatusDropdown = document.getElementById('crm-call-status');
-    if (callStatusDropdown && callStatusDropdown.options.length === 0) {
-        const { data: setupOptions } = await window.supabase1.from('setup').select('key, value').in('key', ['call_statuses', 'final_status_options', 'dormancy_reasons']);
-        if(setupOptions) {
-            setupOptions.forEach(s => {
-                var arr = s.value.split(',').map(x => x.trim());
-                var optionsHtml = arr.map(x => `<option value="${x}">${x}</option>`).join('');
-                if(s.key === 'call_statuses') callStatusDropdown.innerHTML = optionsHtml;
-                if(s.key === 'final_status_options') document.getElementById('crm-cust-status').innerHTML = optionsHtml;
-                if(s.key === 'dormancy_reasons') document.getElementById('crm-dorm-reason').innerHTML = optionsHtml;
-            });
-        }
-    }
-
-    // 5. Pre-fill Form from Latest Log
     if (window.crmCurrentTab !== 'completed') {
         const { data: latestLog } = await window.supabase1.from('crm_dormant_call_logs').select('*').eq('cpn_no', cpn).order('last_updated', {ascending: false}).limit(1).maybeSingle();
         
+        var callStatusDropdown = document.getElementById('crm-call-status');
+        var reasonDrop = document.getElementById('crm-dorm-reason');
+        var remarkTxt = document.getElementById('crm-remark');
+        var escalateChk = document.getElementById('crm-admin-escalate');
+
         if (latestLog) {
             if (callStatusDropdown && latestLog.call_status) callStatusDropdown.value = latestLog.call_status;
-            var reasonDrop = document.getElementById('crm-dorm-reason');
             if (reasonDrop && latestLog.reason_for_dormancy) reasonDrop.value = latestLog.reason_for_dormancy;
-            var remarkTxt = document.getElementById('crm-remark');
-            if (remarkTxt) {
-                remarkTxt.value = (latestLog.telecaller_feedback || "").replace("⚠️ [ADMIN REVIEW] ", "");
-            }
+            if (remarkTxt) remarkTxt.value = (latestLog.telecaller_feedback || "").replace("⚠️ [ADMIN REVIEW] ", "");
         } else {
-            var remarkTxt = document.getElementById('crm-remark');
             if (remarkTxt) remarkTxt.value = "";
         }
-        var escalateChk = document.getElementById('crm-admin-escalate');
         if (escalateChk) escalateChk.checked = false;
     }
 };
@@ -240,13 +263,14 @@ window.crmSubmitInteraction = async function() {
     if(!cpn) return window.showToast ? window.showToast("Please select a lead first.", "warning") : alert("Select a lead first.");
 
     var btn = document.getElementById('btn-save-interaction');
-    btn.innerText = "Processing..."; btn.disabled = true;
+    btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...'; 
+    btn.disabled = true;
 
     try {
         var payload = {
             call_status: document.getElementById('crm-call-status').value,
             new_customer_status: document.getElementById('crm-cust-status').value,
-            previous_customer_status: document.getElementById('crm-hidden-prev-status').value,
+            previous_customer_status: document.getElementById('crm-hidden-prev-status').value || "Unknown",
             reason_for_dormancy: document.getElementById('crm-dorm-reason').value,
             telecaller_feedback: document.getElementById('crm-remark').value,
             action_taken_by: window.activeAdminSession ? window.activeAdminSession.username : 'Telecaller',
@@ -271,7 +295,8 @@ window.crmSubmitInteraction = async function() {
     } catch(e) {
         if (window.showToast) window.showToast("Save Error: " + e.message, "error");
     } finally {
-        btn.innerText = "Save Log"; btn.disabled = false;
+        btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Save Log'; 
+        btn.disabled = false;
     }
 };
 
@@ -311,6 +336,7 @@ window.quickCloseInteraction = async function(cpn) {
     }
 };
 
-window.tabActions['crm-workspace'] = function() {
+window.tabActions['crm-workspace'] = async function() {
+    await window.crmInitDropdowns();
     window.crmLoadQueues();
 };

@@ -1,109 +1,74 @@
 <div id="tab-dormant" class="hidden space-y-4 fade-in pb-20">
-  <!-- HEADER: Title, Total Count, Export, and CRM Push -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 transition-colors">
     <div class="flex items-center gap-3">
-      <h2 class="text-2xl font-black uppercase text-slate-800">Dormant Analysis</h2>
+      <h2 class="text-2xl font-black uppercase text-slate-800 dark:text-white transition-colors">Dormant Analysis</h2>
       <span id="dormant-total-count"
-        class="ml-4 text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-full border-2 border-slate-200 font-bold empty:hidden"></span>
+        class="ml-4 text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full border-2 border-slate-200 dark:border-slate-700 font-bold empty:hidden transition-colors"></span>
       <button onclick="window.toggleDormantControls()"
-        class="ml-4 text-slate-400 p-1 hover:bg-slate-100 rounded-lg transition-colors">
-        <svg id="dormant-icon" class="w-8 h-8 transition-transform" fill="none" stroke="currentColor"
-          viewBox="0 0 24 24">
+        class="ml-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors outline-none">
+        <svg id="dormant-icon" class="w-8 h-8 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path>
         </svg>
       </button>
     </div>
 
     <div class="flex flex-wrap items-center gap-4">
-      <!-- NEW: Force Push Checkbox -->
-      <label
-        class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer hover:text-indigo-600 transition">
-        <input type="checkbox" id="force-push-crm"
-          class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer">
+      <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <input type="checkbox" id="force-push-crm" class="w-4 h-4 text-indigo-600 dark:text-indigo-500 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-indigo-500 cursor-pointer transition-colors">
         Include Pending
       </label>
 
-      <button id="btn-push-crm" onclick="window.pushDormantListToCRM()"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-4 py-2 rounded-xl text-sm transition-colors">Push
-        to CRM</button>
-      <button onclick="window.exportDormantCSV()"
-        class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl 
-        text-sm transition-colors">CSV</button>
-      <button onclick="window.exportDormantPDF()"
-        class="bg-rose-600 hover:bg-rose-700 text-white font-black px-4 py-2 rounded-xl 
-        text-sm transition-colors">PDF</button>
+      <button id="btn-push-crm" onclick="window.pushDormantListToCRM()" class="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-black px-4 py-2 rounded-xl text-sm shadow-md transition-colors active:scale-95">Push to CRM</button>
+      <button onclick="window.exportDormantCSV()" class="bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-black px-4 py-2 rounded-xl text-sm shadow-md transition-colors active:scale-95">CSV</button>
+      <button onclick="window.exportDormantPDF()" class="bg-rose-600 dark:bg-rose-700 hover:bg-rose-700 dark:hover:bg-rose-600 text-white font-black px-4 py-2 rounded-xl text-sm shadow-md transition-colors active:scale-95">PDF</button>
     </div>
   </div>
 
-  <!-- CONTROLS: Hidden by default -->
-  <div id="dormant-controls" class="hidden pt-6 border-t-2 border-slate-100">
-
-    <!-- TOP ROW: Status Filters (Left) & Custom Range (Right) -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-6 pb-6 border-b-2 border-slate-100">
-      
-      <!-- Status Filter Container (Now shares the row!) -->
-      <div id="dormant-status-filters" class="flex flex-wrap gap-2 w-full md:w-auto">
-        <!-- JS injects the "Filter by Status" title and buttons here -->
-      </div>
-
-      <!-- Custom Range Block (Moved up to use the empty space) -->
-      <div class="w-full md:w-[22rem] flex flex-col justify-center bg-slate-50 p-2.5 rounded-2xl border-2 border-slate-200 shadow-inner shrink-0">
-        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 w-full text-center">Custom Range</span>
+  <div id="dormant-controls" class="hidden pt-6 border-t-2 border-slate-100 dark:border-slate-800 transition-colors">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-6 pb-6 border-b-2 border-slate-100 dark:border-slate-800 transition-colors">
+      <div id="dormant-status-filters" class="flex flex-wrap gap-2 w-full md:w-auto"></div>
+      <div class="w-full md:w-[22rem] flex flex-col justify-center bg-slate-50 dark:bg-slate-800 p-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-inner shrink-0 transition-colors">
+        <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 w-full text-center">Custom Range</span>
         <div class="flex gap-2 w-full mb-2">
-          <input type="number" id="custom-dormant-from" placeholder="Min: 3" min="3" class="w-full p-2 font-black text-center text-sm rounded-xl border-2 border-slate-200 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
-          <input type="number" id="custom-dormant-to" placeholder="Max: 999" max="999" class="w-full p-2 font-black text-center text-sm rounded-xl border-2 border-slate-200 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
+          <input type="number" id="custom-dormant-from" placeholder="Min: 3" min="3" class="w-full p-2 font-black text-center text-sm rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 shadow-sm transition-colors color-scheme-dark">
+          <input type="number" id="custom-dormant-to" placeholder="Max: 999" max="999" class="w-full p-2 font-black text-center text-sm rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:border-indigo-400 dark:focus:border-indigo-500 shadow-sm transition-colors color-scheme-dark">
         </div>
-        <button onclick="window.fetchCustomDormantRange()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black px-4 py-2 rounded-xl text-sm transition-colors shadow-md active:scale-95 flex justify-center items-center gap-2">
+        <button onclick="window.fetchCustomDormantRange()" class="w-full bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-black px-4 py-2 rounded-xl text-sm transition-colors shadow-md active:scale-95 flex justify-center items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           Fetch Custom
         </button>
       </div>
-
     </div>
 
-    <!-- BOTTOM ROW: 8 Preset Buttons (Now spans the full width of the screen!) -->
     <div class="w-full grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-      <button id="btn-dorm-3-7" onclick="window.loadDormantData(3,7)" class="dorm-range-btn w-full px-2 py-3 bg-amber-100 text-amber-800 rounded-xl text-sm font-black hover:bg-amber-200 transition-all">3 to 7 Days</button>
-      <!--<button id="btn-dorm-7-7" onclick="window.loadDormantData(7,7)" class="dorm-range-btn w-full px-2 py-3 bg-amber-100 text-amber-800 rounded-xl text-sm font-black hover:bg-amber-200 transition-all">Exactly 7 Days</button>-->
-      <button id="btn-dorm-7-10" onclick="window.loadDormantData(7,10)" class="dorm-range-btn w-full px-2 py-3 bg-orange-100 text-orange-800 rounded-xl text-sm font-black hover:bg-orange-200 transition-all">7 to 10 Days</button>
-      <button id="btn-dorm-7-15" onclick="window.loadDormantData(7,15)" class="dorm-range-btn w-full px-2 py-3 bg-rose-100 text-rose-800 rounded-xl text-sm font-black hover:bg-rose-200 transition-all">7 to 15 Days</button>
-      <button id="btn-dorm-7-30" onclick="window.loadDormantData(7,30)" class="dorm-range-btn w-full px-2 py-3 bg-red-100 text-red-800 rounded-xl text-sm font-black hover:bg-red-200 transition-all">7 to 30 Days</button>
-      <button id="btn-dorm-7-9999" onclick="window.loadDormantData(7,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 text-slate-700 border-2 border-slate-200 rounded-xl text-sm font-black hover:bg-slate-200 transition-all">7+ Days</button>
-      <button id="btn-dorm-10-9999" onclick="window.loadDormantData(10,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 text-slate-700 border-2 border-slate-200 rounded-xl text-sm font-black hover:bg-slate-200 transition-all">10+ Days</button>
-      <button id="btn-dorm-15-9999" onclick="window.loadDormantData(15,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 text-slate-700 border-2 border-slate-200 rounded-xl text-sm font-black hover:bg-slate-200 transition-all">15+ Days</button>
-      <button id="btn-dorm-30-9999" onclick="window.loadDormantData(30,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 text-slate-700 border-2 border-slate-200 rounded-xl text-sm font-black hover:bg-slate-200 transition-all">30+ Days</button>
+      <button id="btn-dorm-3-7" onclick="window.loadDormantData(3,7)" class="dorm-range-btn w-full px-2 py-3 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 rounded-xl text-sm font-black border-2 border-transparent hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-all">3 to 7 Days</button>
+      <button id="btn-dorm-7-10" onclick="window.loadDormantData(7,10)" class="dorm-range-btn w-full px-2 py-3 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-400 rounded-xl text-sm font-black border-2 border-transparent hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-all">7 to 10 Days</button>
+      <button id="btn-dorm-7-15" onclick="window.loadDormantData(7,15)" class="dorm-range-btn w-full px-2 py-3 bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-400 rounded-xl text-sm font-black border-2 border-transparent hover:bg-rose-200 dark:hover:bg-rose-900/60 transition-all">7 to 15 Days</button>
+      <button id="btn-dorm-7-30" onclick="window.loadDormantData(7,30)" class="dorm-range-btn w-full px-2 py-3 bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400 rounded-xl text-sm font-black border-2 border-transparent hover:bg-red-200 dark:hover:bg-red-900/60 transition-all">7 to 30 Days</button>
+      <button id="btn-dorm-7-9999" onclick="window.loadDormantData(7,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">7+ Days</button>
+      <button id="btn-dorm-10-9999" onclick="window.loadDormantData(10,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">10+ Days</button>
+      <button id="btn-dorm-15-9999" onclick="window.loadDormantData(15,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">15+ Days</button>
+      <button id="btn-dorm-30-9999" onclick="window.loadDormantData(30,9999)" class="dorm-range-btn w-full px-2 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">30+ Days</button>
     </div>
-
   </div>
 
-
-  <!-- TABLE -->
-  <!--<div class="bg-white rounded-3xl shadow-xl border-4 border-slate-200 overflow-hidden">-->
-  <div class="w-full overflow-x-auto rounded-lg shadow-sm">
+  <div class="w-full overflow-x-auto rounded-lg shadow-sm border-4 border-slate-200 dark:border-slate-700 transition-colors">
     <table class="w-full text-left whitespace-nowrap text-lg border-collapse min-w-max">
-      <thead class="bg-slate-100 text-slate-500 font-black uppercase tracking-widest border-b-4 border-slate-200">
+      <thead class="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest border-b-4 border-slate-200 dark:border-slate-700 transition-colors">
         <tr>
           <th class="px-6 py-5 w-12 text-center">
-            <input type="checkbox" id="selectAllDormant" onclick="window.toggleAllDormant(this)"
-              class="w-5 h-5 cursor-pointer rounded text-indigo-600 border-slate-300">
+            <input type="checkbox" id="selectAllDormant" onclick="window.toggleAllDormant(this)" class="w-5 h-5 cursor-pointer rounded text-indigo-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600">
           </th>
           <th class="px-6 py-5">Profile</th>
           <th class="px-6 py-5">Location</th>
-          <!--<th class="px-6 py-5">Last Order</th>-->
-          <th class="cursor-pointer hover:text-blue-600" onclick="window.loadDormantData(0,0,'lastOrder')">
-            Last Order
-          </th>
-          <!--<th class="px-6 py-5 text-center">Days</th>-->
-          <th class="cursor-pointer hover:text-blue-600" onclick="window.loadDormantData(0,0,'daysDormant')">
-            Days ▲▼
-          </th>
+          <th class="px-6 py-5 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="window.loadDormantData(0,0,'lastOrder')">Last Order</th>
+          <th class="px-6 py-5 text-center cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onclick="window.loadDormantData(0,0,'daysDormant')">Days ▲▼</th>
           <th class="px-6 py-5 text-center">Status</th>
         </tr>
       </thead>
-      <tbody id="dormant-tbody" class="divide-y-4 divide-slate-100 font-semibold text-slate-800">
+      <tbody id="dormant-tbody" class="divide-y-4 divide-slate-100 dark:divide-slate-700/50 font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 transition-colors">
         <tr>
-          <td colspan="5" class="text-center p-12 text-slate-400 font-black">Select a filter range to view customers.
-          </td>
+          <td colspan="6" class="text-center p-12 text-slate-400 dark:text-slate-500 font-black transition-colors">Select a filter range to view customers.</td>
         </tr>
       </tbody>
     </table>

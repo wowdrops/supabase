@@ -1,5 +1,5 @@
 // ==========================================
-// MODULE: MANAGE ORDERS (SUPABASE DIRECT - ORDERS & DELIVERIES)
+// MODULE: MANAGE ORDERS (SUPABASE DIRECT)
 // ==========================================
 
 const ORD2_FETCH_MODE = "LiveSearch"; 
@@ -15,7 +15,7 @@ window.activeOrd2TimerInterval = null;
 window.ord2StartTime = 0;
 
 // --- MATH PROTECTOR: AUTO-FILL ORD D ---
-function handlePendAutoFill() {
+window.handlePendAutoFill = function() {
   const pendVal = Number(document.getElementById('ord2-inp-pend').value) || 0;
   const ordDInput = document.getElementById('ord2-inp-ordD');
   const currOrdD = Number(ordDInput.value) || 0;
@@ -23,7 +23,7 @@ function handlePendAutoFill() {
   if (pendVal > currOrdD) {
      ordDInput.value = pendVal;
   }
-}
+};
 
 // --- UNIVERSAL TIMER ENGINE ---
 window.startOrd2Timer = function(actionLabel) {
@@ -75,9 +75,8 @@ window.loadTranOrdersData = async function() {
   
   try {
     const supa = window.supabase1;
-    if (!supa) throw new Error("Supabase client not initialized.");
+    if (!supa) throw new Error("Database not connected.");
 
-    // 1. Fetch setup capacity metrics
     const { data: setupData } = await supa.from('setup').select('key, value');
     let setupConfig = { totalAllowed: 0, restrictQty: 0, minQty: 0 };
     (setupData || []).forEach(row => {
@@ -89,7 +88,6 @@ window.loadTranOrdersData = async function() {
     });
     ord2SetupConfig = setupConfig;
 
-    // 2. Fetch active/new orders from orders table
     const { data: ordersData, error: ordersErr } = await supa
       .from('orders')
       .select('*')
@@ -97,10 +95,7 @@ window.loadTranOrdersData = async function() {
 
     if (ordersErr) throw ordersErr;
 
-    // 3. Fetch outstanding from v_customer_outstanding view
-    const { data: outData, error: outErr } = await supa
-      .from('v_customer_outstanding')
-      .select('*');
+    const { data: outData, error: outErr } = await supa.from('v_customer_outstanding').select('*');
 
     const outDict = {};
     if (!outErr && outData) {
@@ -164,6 +159,7 @@ window.loadTranOrdersData = async function() {
 
   } catch (err) {
     window.stopOrd2Timer('Failed', true);
+    if(window.showToast) window.showToast("Load Error: " + err.message, "error");
     tbody.innerHTML = `<tr><td colspan="18" class="text-center py-10 text-red-500 font-bold">Error: ${err.message}</td></tr>`;
   }
 };
@@ -174,55 +170,58 @@ function renderOrd2Table(data) {
   tbody.innerHTML = '';
   let sumD = 0, sumE = 0, sumEst = 0, sumPend = 0, sumRep = 0, sumDeposit = 0;
 
-  data.forEach(order => {
-    sumD += order.ordD;
-    sumE += order.ordE;
-    sumPend += order.pendQty;
-    sumRep += order.repQty;
-    sumEst += order.estAmt;
-    sumDeposit += (order.canDeposit || 0);
+  if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="18" class="text-center py-12 text-slate-400 font-bold">No active orders found.</td></tr>';
+  } else {
+      data.forEach(order => {
+        sumD += order.ordD;
+        sumE += order.ordE;
+        sumPend += order.pendQty;
+        sumRep += order.repQty;
+        sumEst += order.estAmt;
+        sumDeposit += (order.canDeposit || 0);
 
-    const row = document.createElement('tr');
-    row.className = "hover:bg-slate-50 transition border-b border-slate-100";
-    
-    let locHtml = `<p class="font-bold text-slate-500 text-xs tracking-widest uppercase">${order.apt}</p><p class="text-slate-800 font-black">${order.blk} / ${order.door}</p>`;
-    //let custHtml = `<p class="font-black text-indigo-700 text-base">${order.cpn}</p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;
-    let custHtml = `<p class="font-black text-indigo-700 text-base"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${order.cpn}')">
-                      ${order.cpn}
-                      <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                      </span>
-                    </p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;  
-    let reasonStr = order.repReason ? `<br><span class="text-[9px] text-rose-500 font-bold uppercase tracking-widest">${order.repReason}</span>` : '';
+        const row = document.createElement('tr');
+        row.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        
+        let locHtml = `<p class="font-bold text-slate-500 text-xs tracking-widest uppercase">${order.apt}</p><p class="text-slate-800 font-black">${order.blk} / ${order.door}</p>`;
+        let custHtml = `<p class="font-black text-indigo-700 text-base"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-100 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${order.cpn}')">
+                          ${order.cpn}
+                          <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                          </span>
+                        </p><p class="text-xs font-bold text-slate-500 truncate max-w-[150px]">${order.name}</p><p class="text-[10px] text-slate-400 tracking-widest">${order.phone}</p>`;  
+        let reasonStr = order.repReason ? `<br><span class="text-[9px] text-rose-500 font-bold uppercase tracking-widest">${order.repReason}</span>` : '';
 
-    row.innerHTML = `
-      <td class="p-4 text-center"><input type="checkbox" class="w-5 h-5 rounded border-slate-300 ord-batch-chk cursor-pointer" value="${order.id}"></td>
-      <td class="p-4"><p class="text-sm font-black text-slate-700">${order.date}</p><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${order.time}</p></td>
-      <td class="p-4">${locHtml}</td>
-      <td class="p-4">${custHtml}</td>
-      <td class="p-4 text-center"><span class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-lg font-black text-slate-700">${order.ordD}</span></td>
-      <td class="p-4 text-center"><span class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-lg font-black text-slate-700">${order.ordE}</span></td>
-      <td class="p-4 text-center"><span class="bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg text-base font-black text-amber-700">${order.pendQty}</span></td>
-      <td class="p-4 text-center leading-tight"><span class="bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg text-base font-black text-rose-700">${order.repQty}</span>${reasonStr}</td>
-      <td class="p-4 text-right text-emerald-600 text-lg font-black">₹${order.estAmt}</td>
-      <td class="p-4 text-right text-amber-600 text-lg font-black">₹${order.canDeposit || 0}</td>
-      <td class="p-4 text-right bg-slate-50 border-l border-slate-100 font-black text-lg ${order.outTotal > 0 ? 'text-red-500' : 'text-slate-400'}">₹${order.outTotal}</td>
-      <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAB}</td>
-      <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAC}</td>
-      <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAD}</td>
-      <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 font-black text-rose-600">${order.outAE}</td>
-      <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 font-black text-amber-600">${order.outAF}</td>
-      <td class="p-4 text-xs text-slate-500 font-bold max-w-[150px] truncate"><div class="bg-slate-100 px-2 py-1 rounded border border-slate-200" title="${order.cmt}">${order.cmt || '-'}</div></td>
-      <td class="p-4 text-center space-x-2">
-        <button onclick="window.triggerOrd2Edit('${order.id}')" class="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-1.5 rounded transition" title="Edit Order">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-        </button>
-        <button onclick="window.triggerOrd2Delete('${order.id}')" class="text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded transition" title="Delete Order">
-           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-        </button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
+        row.innerHTML = `
+          <td class="p-4 text-center"><input type="checkbox" class="w-5 h-5 rounded border-slate-300 ord-batch-chk cursor-pointer" value="${order.id}"></td>
+          <td class="p-4"><p class="text-sm font-black text-slate-700">${order.date}</p><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${order.time}</p></td>
+          <td class="p-4">${locHtml}</td>
+          <td class="p-4">${custHtml}</td>
+          <td class="p-4 text-center"><span class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-lg font-black text-slate-700">${order.ordD}</span></td>
+          <td class="p-4 text-center"><span class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-lg font-black text-slate-700">${order.ordE}</span></td>
+          <td class="p-4 text-center"><span class="bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg text-base font-black text-amber-700">${order.pendQty}</span></td>
+          <td class="p-4 text-center leading-tight"><span class="bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg text-base font-black text-rose-700">${order.repQty}</span>${reasonStr}</td>
+          <td class="p-4 text-right text-emerald-600 text-lg font-black">₹${order.estAmt}</td>
+          <td class="p-4 text-right text-amber-600 text-lg font-black">₹${order.canDeposit || 0}</td>
+          <td class="p-4 text-right bg-slate-50 border-l border-slate-100 font-black text-lg ${order.outTotal > 0 ? 'text-red-500' : 'text-slate-400'}">₹${order.outTotal}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAB}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAC}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 text-slate-500 text-xs">${order.outAD}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 font-black text-rose-600">${order.outAE}</td>
+          <td class="p-4 text-right hidden ord2-ext-col bg-slate-50 font-black text-amber-600">${order.outAF}</td>
+          <td class="p-4 text-xs text-slate-500 font-bold max-w-[150px] truncate"><div class="bg-slate-100 px-2 py-1 rounded border border-slate-200" title="${order.cmt}">${order.cmt || '-'}</div></td>
+          <td class="p-4 text-center space-x-2">
+            <button onclick="window.triggerOrd2Edit('${order.id}')" class="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-1.5 rounded transition" title="Edit Order">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </button>
+            <button onclick="window.triggerOrd2Delete('${order.id}')" class="text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded transition" title="Delete Order">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+  }
 
   document.getElementById('ord2-txt-totOrdD').innerText = sumD;
   document.getElementById('ord2-txt-totOrdE').innerText = sumE;
@@ -236,7 +235,7 @@ function renderOrd2Table(data) {
   document.getElementById('ord2-top-totEst').innerText = '₹' + sumEst;
 
   var allowed = ord2SetupConfig.totalAllowed;
-  var physicalDemand = sumD; //sumD - sumPend; 
+  var physicalDemand = sumD; 
   var available = allowed - physicalDemand; 
   
   document.getElementById('dash-tot-allowed').innerText = allowed;
@@ -251,6 +250,7 @@ function renderOrd2Table(data) {
 window.toggleOrd2OutstandingCols = function() {
   const extCols = document.querySelectorAll('.ord2-ext-col');
   const icon = document.getElementById('ord2-txt-toggleIcon');
+  if(!extCols.length) return;
   let isHidden = extCols[0].classList.contains('hidden');
   extCols.forEach(col => {
     if (isHidden) col.classList.remove('hidden');
@@ -358,6 +358,7 @@ window.executeOrd2CpnFetch = async function(cpn) {
       document.getElementById('ord2-txt-infoName').innerHTML = `<span class="text-rose-600 font-black">⚠️ INACTIVE${reasonText}:</span> ${ord2CachedProfile.name || 'Unknown'}`;
       document.getElementById('ord2-txt-infoAptBlkDoor').innerText = `${ord2CachedProfile.apt || '-'} | ${ord2CachedProfile.blk || '-'} | ${ord2CachedProfile.door || '-'}`;
       submitBtn.disabled = true;
+      if(window.showToast) window.showToast("Cannot place order. Customer is INACTIVE.", "warning");
     } else {
       document.getElementById('ord2-txt-infoName').innerText = ord2CachedProfile.name || 'Unknown';
       document.getElementById('ord2-txt-infoAptBlkDoor').innerText = `${ord2CachedProfile.apt || '-'} | ${ord2CachedProfile.blk || '-'} | ${ord2CachedProfile.door || '-'}`;
@@ -366,7 +367,7 @@ window.executeOrd2CpnFetch = async function(cpn) {
 
   } catch (err) {
     window.stopOrd2Timer('Failed', true);
-    alert("Error finding CPN: " + err.message);
+    if(window.showToast) window.showToast("Search Error: " + err.message, "error");
   }
 };
 
@@ -422,10 +423,9 @@ window.resetOrd2Form = function() {
 };
 
 // --- SUBMIT / UPDATE LOGIC ---
-// --- SUBMIT / UPDATE LOGIC ---
 window.submitOrd2Order = async function() {
   const cpn = document.getElementById('ord2-inp-cpn').value.trim();
-  let ordD = Number(document.getElementById('ord2-inp-ordD').value) || 0; // Uses let so we can mutate it
+  let ordD = Number(document.getElementById('ord2-inp-ordD').value) || 0; 
   const ordE = Number(document.getElementById('ord2-inp-ordE').value) || 0;
   const pendQty = Number(document.getElementById('ord2-inp-pend').value) || 0;
   const repQty = Number(document.getElementById('ord2-inp-rep').value) || 0;
@@ -437,23 +437,23 @@ window.submitOrd2Order = async function() {
   const adminName = (window.activeAdminSession && window.activeAdminSession.username) ? window.activeAdminSession.username : 'Admin';
 
   if (!ord2CachedProfile || !ord2CachedProfile.name) {
-     return alert("Please wait for the customer profile to fully load before submitting.");
+     return window.showToast ? window.showToast("Wait for profile to load.", "warning") : alert("Wait for profile.");
   }
 
-  if (!cpn) return alert("Please provide a CPN.");
+  if (!cpn) return window.showToast ? window.showToast("Provide a CPN.", "warning") : alert("Provide a CPN.");
   
   if (ordD === 0 && ordE === 0 && pendQty === 0 && repQty === 0) {
-     return alert("You must provide an amount for ORD D, ORD E, PEND, or REP.");
+     return window.showToast ? window.showToast("Provide an amount for D, E, PEND, or REP.", "warning") : alert("Provide quantities.");
   }
 
-  if (ord2CachedProfile.status === 'INACTIVE') return alert("Cannot place order. Customer is INACTIVE. Reason : " + ord2CachedProfile.statusReason);
+  if (ord2CachedProfile.status === 'INACTIVE') {
+      return window.showToast ? window.showToast("Cannot place order. Customer is INACTIVE.", "error") : alert("Customer is INACTIVE.");
+  }
 
-  // ==========================================
-  // BACKEND MATH PROTECTOR (From GAS)
-  // ==========================================
+  // MATH PROTECTOR
   if (pendQty > ordD) { 
     ordD = pendQty; 
-    document.getElementById('ord2-inp-ordD').value = ordD; // Update UI so admin sees the correction
+    document.getElementById('ord2-inp-ordD').value = ordD; 
   }
 
   ord2CachedProfile.rate = Number(rateOverride) || 0;
@@ -465,7 +465,7 @@ window.submitOrd2Order = async function() {
     const supa = window.supabase1;
     const cleanCpn = cpn.toUpperCase();
 
-    // STRICT DATABASE-LEVEL DUPLICATE CHECK
+    // DUPLICATE CHECK
     if (!ord2CurrentEditId) {
       const { data: duplicateCheck, error: dupErr } = await supa
         .from('orders')
@@ -478,15 +478,14 @@ window.submitOrd2Order = async function() {
       if (duplicateCheck) {
         btn.disabled = false;
         window.stopOrd2Timer('Declined', true);
-        return alert(`Order Error:\nAn active order already exists for ${cleanCpn}.\n\nTo prevent duplicate records, please locate the customer in the Live Orders table below and click the Edit (pencil) icon to modify their quantities.`);
+        if(window.showToast) window.showToast("Active order already exists for " + cleanCpn + ".", "error");
+        return;
       }
     }
 
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
     const uniqueID = "ORD2_" + now.getTime();
-    
-    // estAmt is calculated AFTER the Math Protector ensures ordD is valid
     const estAmt = ordD * ord2CachedProfile.rate;
 
     const payload = {
@@ -498,7 +497,7 @@ window.submitOrd2Order = async function() {
       contact: ord2CachedProfile.contact,
       default_rate: ord2CachedProfile.rate,
       can_deposit: ord2CachedProfile.advanceDepositAmount,
-      order_date: todayStr,
+      order_date: todayStr, 
       ord_d: ordD,
       ord_e: ordE,
       pending_qty: pendQty,
@@ -513,30 +512,24 @@ window.submitOrd2Order = async function() {
     };
 
     if (ord2CurrentEditId) {
-      const { error } = await supa
-        .from('orders')
-        .update(payload)
-        .eq('id', ord2CurrentEditId);
-
+      const { error } = await supa.from('orders').update(payload).eq('id', ord2CurrentEditId);
       if (error) throw error;
       window.stopOrd2Timer('Saved', false);
-      alert("Order updated successfully.");
+      if(window.showToast) window.showToast("Order updated.", "success");
       window.resetOrd2Form();
       window.loadTranOrdersData();
     } else {
-      const { error } = await supa
-        .from('orders')
-        .insert([payload]);
-
+      const { error } = await supa.from('orders').insert([payload]);
       if (error) throw error;
       window.stopOrd2Timer('Saved', false);
+      if(window.showToast) window.showToast("Order placed successfully.", "success");
       window.resetOrd2Form();
       window.loadTranOrdersData();
     }
   } catch (err) {
     btn.disabled = false;
     window.stopOrd2Timer('Failed', true);
-    alert("Server Error: " + err.message);
+    if(window.showToast) window.showToast("Save Error: " + err.message, "error");
   }
 };
 
@@ -546,22 +539,19 @@ window.triggerOrd2Delete = async function(uniqueNo) {
      window.startOrd2Timer('Deleting');
      try {
        const supa = window.supabase1;
-       const { error } = await supa
-         .from('orders')
-         .delete()
-         .eq('id', uniqueNo);
-
+       const { error } = await supa.from('orders').delete().eq('id', uniqueNo);
        if (error) throw error;
        window.stopOrd2Timer('Deleted', false);
+       if(window.showToast) window.showToast("Order deleted.", "success");
        window.loadTranOrdersData();
      } catch (err) {
        window.stopOrd2Timer('Failed', true);
-       alert("Server Error: " + err.message);
+       if(window.showToast) window.showToast("Delete Error: " + err.message, "error");
      }
   }
 };
 
-// --- BATCH TRANSFER LOGIC (ORDERS -> DELIVERIES) ---
+// --- BATCH TRANSFER LOGIC ---
 window.executeBatchTransferToDel2 = async function() {
   var btn = document.getElementById('ord2-btn-batchTransfer');
   var checkboxes = document.querySelectorAll('.ord-batch-chk:checked');
@@ -569,7 +559,9 @@ window.executeBatchTransferToDel2 = async function() {
 
   checkboxes.forEach(chk => selectedIds.push(chk.value)); 
 
-  if (selectedIds.length === 0) return alert("Select at least one order to transfer.");
+  if (selectedIds.length === 0) {
+      return window.showToast ? window.showToast("Select at least one order to transfer.", "warning") : alert("Select orders.");
+  }
  
   if (confirm("Transfer " + selectedIds.length + " orders to deliveries stage?")) {
     btn.disabled = true;
@@ -579,34 +571,20 @@ window.executeBatchTransferToDel2 = async function() {
       const supa = window.supabase1;
       const adminName = (window.activeAdminSession && window.activeAdminSession.username) ? window.activeAdminSession.username : 'Admin';
 
-      // ==========================================
-      // CRITICAL PIPELINE BLOCKER: Check if Deliveries table is empty
-      // ==========================================
-      const { data: activeDeliveries, error: delCheckErr } = await supa
-        .from('deliveries')
-        .select('id')
-        .limit(1); // We only need to know if at least 1 exists
-
+      // CRITICAL PIPELINE BLOCKER
+      const { data: activeDeliveries, error: delCheckErr } = await supa.from('deliveries').select('id').limit(1);
       if (delCheckErr) throw delCheckErr;
 
       if (activeDeliveries && activeDeliveries.length > 0) {
         btn.disabled = false;
         window.stopOrd2Timer('Declined', true);
-        return alert("CRITICAL ERROR: Deliveries queue is not empty.\n\nYou must complete 'Delivery QC' and transfer the existing records to Sales before transferring new orders into the delivery queue.");
+        return window.showToast ? window.showToast("Deliveries queue is not empty. Clear Delivery QC first.", "error") : alert("Deliveries queue not empty.");
       }
 
-      // 1. Fetch orders to be transferred
-      const { data: ordersToTransfer, error: fetchErr } = await supa
-        .from('orders')
-        .select('*')
-        .in('id', selectedIds);
-
+      const { data: ordersToTransfer, error: fetchErr } = await supa.from('orders').select('*').in('id', selectedIds);
       if (fetchErr) throw fetchErr;
-      if (!ordersToTransfer || ordersToTransfer.length === 0) {
-        throw new Error("Selected orders could not be found.");
-      }
+      if (!ordersToTransfer || ordersToTransfer.length === 0) throw new Error("Selected orders not found.");
 
-      // 2. Map fields to match deliveries table schema
       const deliveryPayloads = ordersToTransfer.map(ord => ({
         unique_no: ord.unique_no,
         cpn_no: ord.cpn_no,
@@ -632,29 +610,20 @@ window.executeBatchTransferToDel2 = async function() {
         created_by: adminName
       }));
 
-      // 3. Insert records into deliveries table
-      const { error: insertErr } = await supa
-        .from('deliveries')
-        .insert(deliveryPayloads);
-
+      const { error: insertErr } = await supa.from('deliveries').insert(deliveryPayloads);
       if (insertErr) throw insertErr;
 
-      // 4. Remove successfully transferred records from orders table
-      const { error: deleteErr } = await supa
-        .from('orders')
-        .delete()
-        .in('id', selectedIds);
-
+      const { error: deleteErr } = await supa.from('orders').delete().in('id', selectedIds);
       if (deleteErr) throw deleteErr;
 
       window.stopOrd2Timer('Transferred', false);
       btn.disabled = false;
-      alert(selectedIds.length + " records moved successfully to deliveries.");
+      if(window.showToast) window.showToast(selectedIds.length + " records moved to deliveries.", "success");
       window.loadTranOrdersData(); 
     } catch (err) {
       btn.disabled = false;
       window.stopOrd2Timer('Failed', true);
-      alert("Server Error: " + err.message);
+      if(window.showToast) window.showToast("Transfer Error: " + err.message, "error");
     }
   }
 };
@@ -664,13 +633,8 @@ window.toggleAllOrdChk = function(mainChk) {
   checkboxes.forEach(chk => chk.checked = mainChk.checked);
 };
 
-setTimeout(() => {
-  if (document.getElementById('ord2-tbl-body')) {
-    window.loadTranOrdersData();
-  }
-}, 300);
-
+// Router Hook: Clean state & Fetch on tab switch
 window.tabActions['tran-order'] = function() { 
     if(typeof window.resetOrd2Form === 'function') window.resetOrd2Form();
-    if(typeof window.loadTranOrdersData === 'function') window.loadTranOrdersData(); 
+    window.loadTranOrdersData(); 
 };

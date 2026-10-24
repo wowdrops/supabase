@@ -1,11 +1,11 @@
 <div id="tab-orders" class="hidden space-y-4 fade-in pb-20 relative">
   <!-- STICKY HEADER -->
-  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-blue-200 pt-2 pb-4 shadow-sm">
+  <div class="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur border-b-4 border-blue-200 dark:border-blue-800 pt-2 pb-4 shadow-sm transition-colors">
     <div class="flex justify-between items-center px-2">
-      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase flex items-center gap-3">
         Live Orders
         <span id="liveord-live-timer" class="hidden"></span>
-        <button onclick="window.toggleLiveOrdHeader()" class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none ml-auto">
+        <button onclick="window.toggleLiveOrdHeader()" class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg shadow-inner outline-none ml-auto">
           <svg id="liveord-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
         </button>
       </h2>
@@ -13,7 +13,7 @@
     
     <div id="liveord-header-collapsible" class="transition-all duration-300 origin-top">
        <div class="flex justify-end px-2 mt-4">
-         <button onclick="window.loadOrdersData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-black shadow transition uppercase flex items-center gap-2">
+         <button onclick="window.loadOrdersData()" class="bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-black shadow transition-colors uppercase flex items-center gap-2">
            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
            Refresh
          </button>
@@ -22,9 +22,9 @@
   </div>
 
   <!-- TABLE AREA -->
-  <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative mt-4 mx-2">
-    <table class="w-full text-left whitespace-nowrap text-sm md:text-base">
-      <thead class="bg-slate-800 text-white font-black uppercase tracking-widest sticky top-0 z-20 shadow-md">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative mt-4 mx-2 scroll-smooth transition-colors">
+    <table class="w-full text-left whitespace-nowrap text-sm md:text-base border-collapse">
+      <thead class="bg-slate-800 text-white font-black uppercase tracking-widest sticky top-0 z-20 shadow-md transition-colors">
         <tr>
           <th class="px-6 py-4">Ordered On</th>
           <th class="px-6 py-4 text-blue-300">Customer</th>
@@ -35,15 +35,15 @@
           <th class="px-6 py-4 text-right text-emerald-300">Est. Amount</th>
         </tr>
       </thead>
-      <tbody id="orders-tbody" class="divide-y divide-slate-100 font-semibold text-slate-700"></tbody>
-      <tfoot class="bg-slate-50 border-t-4 border-slate-200 sticky bottom-0 z-10">
+      <tbody id="orders-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/50 font-semibold text-slate-700 dark:text-slate-300 transition-colors"></tbody>
+      <tfoot class="bg-slate-50 dark:bg-slate-900/50 border-t-4 border-slate-200 dark:border-slate-700 sticky bottom-0 z-10 transition-colors">
         <tr>
-          <td colspan="2" class="px-6 py-4 text-right font-black text-slate-500 uppercase tracking-widest">Totals:</td>
-          <td id="liveord-tot-d" class="px-6 py-4 text-center font-black text-slate-800 text-xl">0</td>
-          <td id="liveord-tot-e" class="px-6 py-4 text-center font-black text-slate-800 text-xl">0</td>
-          <td id="liveord-tot-p" class="px-6 py-4 text-center font-black text-amber-600 text-xl">0</td>
-          <td id="liveord-tot-r" class="px-6 py-4 text-center font-black text-rose-600 text-xl">0</td>
-          <td id="liveord-tot-amt" class="px-6 py-4 text-right font-black text-emerald-600 text-xl">₹0</td>
+          <td colspan="2" class="px-6 py-4 text-right font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Totals:</td>
+          <td id="liveord-tot-d" class="px-6 py-4 text-center font-black text-slate-800 dark:text-white text-xl">0</td>
+          <td id="liveord-tot-e" class="px-6 py-4 text-center font-black text-slate-800 dark:text-white text-xl">0</td>
+          <td id="liveord-tot-p" class="px-6 py-4 text-center font-black text-amber-600 dark:text-amber-400 text-xl">0</td>
+          <td id="liveord-tot-r" class="px-6 py-4 text-center font-black text-rose-600 dark:text-rose-400 text-xl">0</td>
+          <td id="liveord-tot-amt" class="px-6 py-4 text-right font-black text-emerald-600 dark:text-emerald-400 text-xl">₹0</td>
         </tr>
       </tfoot>
     </table>

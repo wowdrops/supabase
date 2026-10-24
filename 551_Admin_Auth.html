@@ -1,48 +1,71 @@
-<div id="view-auth" class="flex-1 flex items-center justify-center p-4 fade-in z-50 bg-slate-100 relative">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
+<div id="view-auth" class="flex-1 flex items-center justify-center p-4 fade-in z-50 bg-slate-100 dark:bg-slate-950 relative min-h-screen transition-colors">
+    <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-800 transition-colors">
+      
+      <!-- LOGIN VIEW -->
       <div id="auth-login">
         <div class="text-center flex flex-col items-center mb-6">
-          <div class="flex justify-center mb-3"><div class="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></div></div>
-          <h2 class="text-2xl font-black tracking-tight text-slate-800">WOWDROPS Admin</h2>
+          <div class="flex justify-center mb-3">
+             <div class="w-12 h-12 bg-slate-900 dark:bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-inner transition-colors">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+             </div>
+          </div>
+          <h2 class="text-2xl font-black tracking-tight text-slate-800 dark:text-white transition-colors">WOWDROPS Admin</h2>
         </div>
         <div class="space-y-4">
-          <div><label class="block text-xs font-bold text-slate-600 uppercase">Username / Email</label><input type="text" id="admin-id" class="w-full mt-1 p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none font-medium focus:ring-2 focus:ring-slate-900"></div>
-          <div><label class="block text-xs font-bold text-slate-600 uppercase">Password</label><input type="password" id="admin-pass" class="w-full mt-1 p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none font-medium focus:ring-2 focus:ring-slate-900"></div>
-          <button onclick="window.handleAdminLogin()" id="btn-login" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold p-3.5 rounded-xl shadow transition">Sign In</button>
+          <div>
+             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Username / Email</label>
+             <input type="text" id="admin-id" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl outline-none font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-colors shadow-inner">
+          </div>
+          <div>
+             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Password</label>
+             <input type="password" id="admin-pass" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl outline-none font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-colors shadow-inner">
+          </div>
+          <button onclick="window.handleAdminLogin()" id="btn-login" class="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-black uppercase tracking-widest p-3.5 rounded-xl shadow-lg transition-colors active:scale-95 mt-2">Sign In</button>
+          
           <div class="text-center mt-4">
-            <button onclick="window.openForgotPasswordView()" class="text-xs font-bold text-indigo-600 hover:underline">Forgot / Setup Password?</button>
+            <button onclick="window.openForgotPasswordView()" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors">Forgot / Setup Password?</button>
           </div>
-          <p id="login-err" class="text-sm text-center font-bold hidden p-2.5 rounded-lg border"></p>
+          <p id="login-err" class="text-sm text-center font-bold hidden p-2.5 rounded-lg border transition-colors"></p>
         </div>
       </div>
-      <div id="auth-forgot" class="hidden">
+
+      <!-- FORGOT PASSWORD / SETUP VIEW -->
+      <div id="auth-forgot" class="hidden fade-in">
         <div class="text-center mb-6">
-          <h2 class="text-2xl font-black text-slate-800 tracking-tight">Access Activation</h2>
-          <p class="text-slate-500 text-sm mt-1">Verify identity via secure token.</p>
+          <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Access Activation</h2>
+          <p class="text-slate-500 dark:text-slate-400 text-sm mt-1 transition-colors">Verify identity via secure token.</p>
         </div>
         <div class="space-y-4">
+          
+          <!-- STEP 1: EMAIL -->
           <div id="otp-step-1">
-            <label class="block text-xs font-bold text-slate-600 uppercase">Registered Email</label>
-            <input type="email" id="reset-email" class="w-full mt-1 p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none font-medium focus:ring-2 focus:ring-indigo-600">
-            <button onclick="window.requestOTP()" id="btn-otp" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-3.5 rounded-xl mt-3 shadow transition">Send OTP Code</button>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Registered Email</label>
+            <input type="email" id="reset-email" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl outline-none font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-colors shadow-inner color-scheme-dark">
+            <button onclick="window.requestOTP()" id="btn-otp" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest p-3.5 rounded-xl mt-3 shadow-lg transition-colors active:scale-95">Send OTP Code</button>
           </div>
-          <div id="otp-step-2" class="hidden space-y-3">
-            <div id="first-time-notice" class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800 font-bold hidden">First-time activation required.</div>
+          
+          <!-- STEP 2: OTP & NEW PASSWORD -->
+          <div id="otp-step-2" class="hidden space-y-4 fade-in">
+            <div id="first-time-notice" class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-3 rounded-xl text-xs text-amber-800 dark:text-amber-400 font-bold hidden shadow-sm transition-colors">First-time activation required.</div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 uppercase">6-Digit OTP</label>
-              <input type="number" id="reset-otp" class="w-full mt-1 p-3 bg-slate-50 border border-slate-300 rounded-xl text-center tracking-[0.5em] font-black text-xl text-indigo-600 outline-none">
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">6-Digit OTP</label>
+              <input type="number" id="reset-otp" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center tracking-[0.5em] font-black text-2xl text-indigo-600 dark:text-indigo-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-colors shadow-inner color-scheme-dark">
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 uppercase">New Secure Password</label>
-              <input type="password" id="reset-new-pass" class="w-full mt-1 p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none font-medium">
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">New Secure Password</label>
+              <input type="password" id="reset-new-pass" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl outline-none font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-colors shadow-inner">
             </div>
-            <button onclick="window.confirmPasswordReset()" id="btn-reset" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3.5 rounded-xl mt-2 shadow transition">Apply Password</button>
+            <button onclick="window.confirmPasswordReset()" id="btn-reset" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest p-3.5 rounded-xl mt-2 shadow-lg transition-colors active:scale-95">Apply Password</button>
           </div>
-          <div class="text-center mt-2">
-            <button onclick="window.backToLoginState()" class="text-xs font-bold text-slate-500 hover:text-slate-800 underline">Back to Login Screen</button>
+          
+          <!-- BACK NAVIGATION -->
+          <div class="text-center mt-4">
+            <button onclick="window.backToLoginState()" class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline transition-colors">Back to Login Screen</button>
           </div>
-          <p id="reset-msg" class="text-sm text-center font-bold hidden p-2.5 rounded-xl border"></p>
+          <p id="reset-msg" class="text-sm text-center font-bold hidden p-2.5 rounded-xl border transition-colors"></p>
+        
         </div>
       </div>
+
     </div>
-  </div> 
+</div>

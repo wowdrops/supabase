@@ -16,39 +16,35 @@
   };
 
   window.loadOutstandingData = async function () {
-    document.getElementById('outstanding-tbody').innerHTML = "<tr><td colspan='10' class='px-6 py-12 text-center text-slate-500 font-black text-2xl animate-pulse'>Syncing outstanding ledger & waivers...</td></tr>";
+    document.getElementById('outstanding-tbody').innerHTML = "<tr><td colspan='10' class='px-6 py-12 text-center text-slate-500 dark:text-slate-400 font-black text-2xl animate-pulse'>Syncing outstanding ledger & waivers...</td></tr>";
     document.getElementById('apartment-dashboard-grid').innerHTML = "<p class='text-slate-400 text-2xl font-bold animate-pulse'>Building visual dashboard...</p>";
     
     try {
-      // Fetch dynamic dates/headers config
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const now = new Date();
       const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const olderMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1);
       
       const mHeaders = {
-        m1: olderMonth.toLocaleString('default', { month: 'long', year: 'numeric' }) + " (Older)", // pend1 / Very Old
-        m2: olderMonth.toLocaleString('default', { month: 'long', year: 'numeric' }), // pend2 / Older
-        m3: prevMonth.toLocaleString('default', { month: 'long', year: 'numeric' }),  // pend3 / Previous
-        m4: now.toLocaleString('default', { month: 'long', year: 'numeric' })         // pend4 / Current
+        m1: olderMonth.toLocaleString('default', { month: 'long', year: 'numeric' }) + " (Older)",
+        m2: olderMonth.toLocaleString('default', { month: 'long', year: 'numeric' }),
+        m3: prevMonth.toLocaleString('default', { month: 'long', year: 'numeric' }), 
+        m4: now.toLocaleString('default', { month: 'long', year: 'numeric' })        
       };
 
-      // Concurrent fetch from Outanding View and Customers table
       const [outRes, custRes] = await Promise.all([
-        supabase1.from('v_customer_outstanding').select('*'),
-        supabase1.from('ac_customers').select('cpn_no, waiver_request, waiver_date, overdue_waiver')
+        window.supabase1.from('v_customer_outstanding').select('*'),
+        window.supabase1.from('ac_customers').select('cpn_no, waiver_request, waiver_date, overdue_waiver')
       ]);
 
       if (outRes.error) throw outRes.error;
       if (custRes.error) throw custRes.error;
 
-      // Create a quick lookup map for customer waivers
       const custWaiverMap = {};
       (custRes.data || []).forEach(c => {
          if (c.cpn_no) custWaiverMap[c.cpn_no.toUpperCase()] = c;
       });
 
-      // Map Supabase data to old memory structure to preserve the exact UI math
       const reportData = [];
       (outRes.data || []).forEach(row => {
           const p1 = Number(row.old_pending) || 0;
@@ -58,7 +54,7 @@
           const depositAdv = Number(row.advance_amount) || 0;
 
           const totalOutstanding = p1 + p2 + p3 + p4 + depositAdv;
-          if (totalOutstanding === 0) return; // Skip if completely zero
+          if (totalOutstanding === 0) return;
 
           const cpn = String(row.cpn_no || "").trim().toUpperCase();
           const cust = custWaiverMap[cpn];
@@ -76,7 +72,6 @@
             cans: Number(row.cans) || 0,
             advance: depositAdv,
             payType: String(row.pay_type || "").trim().toUpperCase(),
-            // Waiver fields from ac_customers
             waiverReq: cust ? (cust.waiver_request === true || cust.waiver_request === 'TRUE') : false,
             waiverDate: cust ? (Number(cust.waiver_date) || 15) : 15,
             overdueWaiver: cust ? (cust.overdue_waiver === true || cust.overdue_waiver === 'TRUE') : false
@@ -115,6 +110,7 @@
     if (aptDrop) aptDrop.value = 'ALL';
     window.updateBlockDropdown();
     window.setRowMonthFilter(monthKey);
+    document.getElementById('outstanding-tbody').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   window.setRowMonthFilter = function (filterKey) {
@@ -124,14 +120,14 @@
     for (var i = 0; i < keys.length; i++) {
       var btn = document.getElementById("flt-row-" + keys[i]);
       if (btn) {
-        if (keys[i] === filterKey) btn.className = "shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-slate-800 text-white border-slate-800";
-        else btn.className = "shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition bg-white text-slate-600 border-slate-300 hover:bg-slate-100";
+        if (keys[i] === filterKey) btn.className = "shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition-colors bg-slate-800 dark:bg-slate-600 text-white border-slate-800 dark:border-slate-600";
+        else btn.className = "shrink-0 px-6 py-3 rounded-full text-sm md:text-lg font-black border-2 transition-colors bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700";
       }
       
       var kpiRow = document.getElementById("kpi-row-" + keys[i]);
       if (kpiRow) {
-        if (keys[i] === filterKey) kpiRow.className = "flex justify-between items-center cursor-pointer transition p-2 -mx-2 rounded-lg bg-indigo-50 border-2 border-indigo-300 shadow-sm";
-        else kpiRow.className = "flex justify-between items-center cursor-pointer hover:bg-slate-100 transition p-2 -mx-2 rounded-lg border-2 border-transparent";
+        if (keys[i] === filterKey) kpiRow.className = "flex justify-between items-center cursor-pointer transition-colors p-2 -mx-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-300 dark:border-indigo-700 shadow-sm";
+        else kpiRow.className = "flex justify-between items-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 -mx-2 rounded-lg border-2 border-transparent";
       }
     }
     
@@ -141,8 +137,14 @@
   
   window.toggleColumn = function (colKey) {
     window.visCols[colKey] = !window.visCols[colKey]; var btn = document.getElementById("tgl-col-" + colKey);
-    if (window.visCols[colKey]) { btn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300'); btn.classList.remove('bg-white', 'text-slate-400', 'border-slate-300', 'line-through'); }
-    else { btn.classList.remove('bg-emerald-100', 'text-emerald-800', 'border-emerald-300'); btn.classList.add('bg-white', 'text-slate-400', 'border-slate-300', 'line-through'); }
+    if (window.visCols[colKey]) { 
+        btn.classList.add('bg-emerald-100', 'dark:bg-emerald-900/40', 'text-emerald-800', 'dark:text-emerald-400', 'border-emerald-300', 'dark:border-emerald-700'); 
+        btn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-400', 'dark:text-slate-500', 'border-slate-300', 'dark:border-slate-600', 'line-through'); 
+    }
+    else { 
+        btn.classList.remove('bg-emerald-100', 'dark:bg-emerald-900/40', 'text-emerald-800', 'dark:text-emerald-400', 'border-emerald-300', 'dark:border-emerald-700'); 
+        btn.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-400', 'dark:text-slate-500', 'border-slate-300', 'dark:border-slate-600', 'line-through'); 
+    }
     window.renderDetailTable();
   };
   
@@ -233,7 +235,7 @@
           var m2Bg = (isActiveBlock && window.activeRowMonthFilter === 'm2') ? "bg-indigo-900/80 shadow-inner ring-2 ring-indigo-400" : "hover:bg-slate-700/80";
           var m3Bg = (isActiveBlock && window.activeRowMonthFilter === 'm3') ? "bg-indigo-900/80 shadow-inner ring-2 ring-indigo-400" : "hover:bg-slate-700/80";
 
-          blockHtml += "<div class='flex justify-between items-center p-2.5 md:p-4 rounded-xl cursor-pointer transition " + blockBgClass + "' onclick=\"window.applyFilterFromCard('" + apt + "', '" + blk + "', 'ALL')\">" +
+          blockHtml += "<div class='flex justify-between items-center p-2.5 md:p-4 rounded-xl cursor-pointer transition-colors " + blockBgClass + "' onclick=\"window.applyFilterFromCard('" + apt + "', '" + blk + "', 'ALL')\">" +
             "<span class='text-slate-300 font-black text-sm md:text-lg w-10 md:w-16 shrink-0 pointer-events-none'>B: " + blk + "</span>" +
             "<div class='flex flex-1 justify-between text-right px-1 md:px-2 gap-1 md:gap-2'>";
 
@@ -246,7 +248,7 @@
         blockHtml += "</div>";
       }
 
-      htmlOutput += "<div class='bg-slate-800 border-4 border-slate-700 hover:border-slate-500 transition rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col shadow-lg'>" +
+      htmlOutput += "<div class='bg-slate-800 border-4 border-slate-700 hover:border-slate-500 transition-colors rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col shadow-lg'>" +
         "<div class='flex justify-between items-center cursor-pointer' onclick=\"window.toggleAccordion('" + uniqueId + "', 'icon-" + uniqueId + "')\">" +
         "<div><h4 class='text-xl md:text-2xl font-black text-white leading-tight'>" + apt + "</h4>" +
         "<p class='text-xs md:text-sm text-slate-400 uppercase tracking-widest mt-1'><span class='text-red-400 font-bold'>" + dueLabel + ": ₹" + aptData.totalPend.toLocaleString('en-IN') + "</span></p></div>" +
@@ -310,10 +312,9 @@
 
     if (filtered.length === 0) { 
         thead.innerHTML = "";
-        return tbody.innerHTML = "<tr><td colspan='10' class='px-6 py-12 text-center text-slate-400 font-bold text-2xl'>No records found.</td></tr>"; 
+        return tbody.innerHTML = "<tr><td colspan='10' class='px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-bold text-2xl'>No records found.</td></tr>"; 
     }
 
-    // Header Building
     var headHtml = "<tr class='bg-slate-800 text-white shadow-md'>";
     headHtml += "<th colspan='2' class='px-6 py-4 border-r border-slate-700'><div class='flex items-center gap-3'>";
     headHtml += "<div class='text-xs font-bold tracking-widest text-slate-400'>FILTERED: <span class='text-white bg-slate-700 px-2 py-1 rounded-md'>" + filtered.length + "</span></div>";
@@ -332,49 +333,46 @@
     headHtml += "<th class='px-6 py-4'></th></tr>";
 
     headHtml += "<tr>";
-    headHtml += "<th class='px-6 py-5 bg-slate-100 border-b-4 border-slate-200'>Apt / Blk / Door</th>";
-    headHtml += "<th class='px-6 py-5 bg-slate-100 border-b-4 border-slate-200'>Customer Profile</th>";
-    if (window.visCols.m1) headHtml += "<th class='px-6 py-5 text-right text-red-600 bg-red-50/50 border-b-4 border-slate-200'>" + window.monthHeadersConfig.m1 + "</th>";
-    if (window.visCols.m2) headHtml += "<th class='px-6 py-5 text-right text-red-600 bg-slate-100 border-b-4 border-slate-200'>" + window.monthHeadersConfig.m2 + "</th>";
-    if (window.visCols.m3) headHtml += "<th class='px-6 py-5 text-right text-red-600 bg-slate-100 border-b-4 border-slate-200'>" + window.monthHeadersConfig.m3 + "</th>";
-    if (window.visCols.m4) headHtml += "<th class='px-6 py-5 text-right text-red-600 bg-slate-100 border-b-4 border-slate-200'>" + window.monthHeadersConfig.m4 + "</th>";
-    headHtml += "<th class='px-6 py-5 text-right text-slate-900 bg-slate-200/90 border-b-4 border-slate-300'>Total Due</th>";
-    if (window.visCols.adv) headHtml += "<th class='px-6 py-5 text-right text-emerald-600 bg-slate-100 border-b-4 border-slate-200'>Advance</th>";
-    headHtml += "<th class='px-6 py-5 text-center text-blue-600 bg-slate-100 border-b-4 border-slate-200'>Cans</th>";
-    headHtml += "<th class='px-6 py-5 text-center text-slate-600 bg-slate-100 border-b-4 border-slate-200'>Waivers</th></tr>";
+    headHtml += "<th class='px-6 py-5 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>Apt / Blk / Door</th>";
+    headHtml += "<th class='px-6 py-5 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>Customer Profile</th>";
+    if (window.visCols.m1) headHtml += "<th class='px-6 py-5 text-right text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-900/10 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>" + window.monthHeadersConfig.m1 + "</th>";
+    if (window.visCols.m2) headHtml += "<th class='px-6 py-5 text-right text-red-600 dark:text-red-400 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>" + window.monthHeadersConfig.m2 + "</th>";
+    if (window.visCols.m3) headHtml += "<th class='px-6 py-5 text-right text-red-600 dark:text-red-400 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>" + window.monthHeadersConfig.m3 + "</th>";
+    if (window.visCols.m4) headHtml += "<th class='px-6 py-5 text-right text-red-600 dark:text-red-400 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>" + window.monthHeadersConfig.m4 + "</th>";
+    headHtml += "<th class='px-6 py-5 text-right text-slate-900 dark:text-slate-100 bg-slate-200/90 dark:bg-slate-800 border-b-4 border-slate-300 dark:border-slate-600 transition-colors'>Total Due</th>";
+    if (window.visCols.adv) headHtml += "<th class='px-6 py-5 text-right text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>Advance</th>";
+    headHtml += "<th class='px-6 py-5 text-center text-blue-600 dark:text-blue-400 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>Cans</th>";
+    headHtml += "<th class='px-6 py-5 text-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border-b-4 border-slate-200 dark:border-slate-700 transition-colors'>Waivers</th></tr>";
     
     thead.innerHTML = headHtml;
 
-    // Row Building
     var html = '';
     for (var j = 0; j < filtered.length; j++) {
       var r = filtered[j], totalDue = r.pend1 + r.pend2 + r.pend3 + r.pend4;
-      var advBadge = r.advance > 0 ? "<span class='bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl border-2 border-emerald-300 text-xl font-black'>₹" + r.advance + "</span>" : "<span class='text-slate-300 font-bold'>-</span>";
-      var totalDueHtml = totalDue > 0 ? "<span class='font-black text-red-600 text-2xl md:text-3xl'>₹" + totalDue.toLocaleString('en-IN') + "</span>" : "<span class='text-slate-400 font-bold text-xl'>₹0</span>";
+      var advBadge = r.advance > 0 ? "<span class='bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 px-4 py-2 rounded-xl border-2 border-emerald-300 dark:border-emerald-700 text-xl font-black transition-colors'>₹" + r.advance + "</span>" : "<span class='text-slate-300 dark:text-slate-600 font-bold'>-</span>";
+      var totalDueHtml = totalDue > 0 ? "<span class='font-black text-red-600 dark:text-red-400 text-2xl md:text-3xl transition-colors'>₹" + totalDue.toLocaleString('en-IN') + "</span>" : "<span class='text-slate-400 dark:text-slate-500 font-bold text-xl transition-colors'>₹0</span>";
       
-      // Dynamic Waiver Badge
       var waiverBadge = '';
-      if (r.overdueWaiver) waiverBadge += '<span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-black mr-1 uppercase shadow-sm">M2 ON</span>';
-      if (r.waiverReq) waiverBadge += '<span class="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[9px] font-black uppercase shadow-sm">M1 ON</span>';
-      if (!r.overdueWaiver && !r.waiverReq) waiverBadge = '<span class="text-slate-300 font-bold text-[10px] uppercase">None Active</span>';
+      if (r.overdueWaiver) waiverBadge += '<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 px-1.5 py-0.5 rounded text-[9px] font-black mr-1 uppercase shadow-sm transition-colors">M2 ON</span>';
+      if (r.waiverReq) waiverBadge += '<span class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-1.5 py-0.5 rounded text-[9px] font-black uppercase shadow-sm transition-colors">M1 ON</span>';
+      if (!r.overdueWaiver && !r.waiverReq) waiverBadge = '<span class="text-slate-300 dark:text-slate-600 font-bold text-[10px] uppercase transition-colors">None Active</span>';
 
-      var rowHtml = "<tr class='hover:bg-slate-100 transition border-b-4 border-slate-50'>" +
-        "<td class='px-6 py-5'><div class='text-lg font-bold text-slate-500 uppercase tracking-widest'>" + r.apartment + "</div><div class='font-black text-slate-800 text-2xl md:text-3xl'>" + (r.block || '-') + " / " + (r.door || '-') + "</div></td>" +
-        "<td class='px-6 py-5'><div class='font-black text-slate-800 text-2xl md:text-3xl truncate max-w-[250px]'>" + r.name + "</div><div class='text-xl text-blue-600 font-black tracking-widest'>" + r.cpn + "</div></td>";
+      var rowHtml = "<tr class='hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors border-b-4 border-slate-50 dark:border-slate-800/30'>" +
+        "<td class='px-6 py-5'><div class='text-lg font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest'>" + r.apartment + "</div><div class='font-black text-slate-800 dark:text-white text-2xl md:text-3xl'>" + (r.block || '-') + " / " + (r.door || '-') + "</div></td>" +
+        "<td class='px-6 py-5'><div class='font-black text-slate-800 dark:text-white text-2xl md:text-3xl truncate max-w-[250px]'>" + r.name + "</div><div class='text-xl text-blue-600 dark:text-blue-400 font-black tracking-widest cursor-pointer hover:underline' onclick='window.openCustomer360(\"" + r.cpn + "\")'>" + r.cpn + "</div></td>";
       
-      if (window.visCols.m1) rowHtml += "<td class='px-6 py-5 text-right bg-red-50/30 text-2xl md:text-3xl font-black " + (r.pend1 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend1 || '-') + "</td>";
-      if (window.visCols.m2) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black " + (r.pend2 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend2 || '-') + "</td>";
-      if (window.visCols.m3) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black " + (r.pend3 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend3 || '-') + "</td>";
-      if (window.visCols.m4) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black " + (r.pend4 > 0 ? 'text-red-500' : 'text-slate-300') + "'>" + (r.pend4 || '-') + "</td>";
+      if (window.visCols.m1) rowHtml += "<td class='px-6 py-5 text-right bg-red-50/30 dark:bg-red-900/10 text-2xl md:text-3xl font-black transition-colors " + (r.pend1 > 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-300 dark:text-slate-600') + "'>" + (r.pend1 || '-') + "</td>";
+      if (window.visCols.m2) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black transition-colors " + (r.pend2 > 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-300 dark:text-slate-600') + "'>" + (r.pend2 || '-') + "</td>";
+      if (window.visCols.m3) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black transition-colors " + (r.pend3 > 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-300 dark:text-slate-600') + "'>" + (r.pend3 || '-') + "</td>";
+      if (window.visCols.m4) rowHtml += "<td class='px-6 py-5 text-right text-2xl md:text-3xl font-black transition-colors " + (r.pend4 > 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-300 dark:text-slate-600') + "'>" + (r.pend4 || '-') + "</td>";
       
-      rowHtml += "<td class='px-6 py-5 text-right bg-slate-50'>" + totalDueHtml + "</td>";
+      rowHtml += "<td class='px-6 py-5 text-right bg-slate-50 dark:bg-slate-800/30 transition-colors'>" + totalDueHtml + "</td>";
       if (window.visCols.adv) rowHtml += "<td class='px-6 py-5 text-right'>" + advBadge + "</td>";
-      rowHtml += "<td class='px-6 py-5 text-center'><span class='inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl " + (r.cans > 0 ? 'bg-blue-100 text-blue-800 font-black border-4 border-blue-200' : 'bg-slate-100 text-slate-400 font-bold') + "'>" + r.cans + "</span></td>";
+      rowHtml += "<td class='px-6 py-5 text-center'><span class='inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl transition-colors " + (r.cans > 0 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-400 font-black border-4 border-blue-200 dark:border-blue-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold') + "'>" + r.cans + "</span></td>";
       
-      // Action Cell
       rowHtml += "<td class='px-6 py-5 text-center'>" +
                  "<div class='mb-2 flex justify-center gap-1'>" + waiverBadge + "</div>" +
-                 "<button onclick='window.openWaiverModal(\"" + r.cpn + "\")' class='bg-white hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition border-2 border-slate-200 active:scale-95'>⚙️ Manage</button>" +
+                 "<button onclick='window.openWaiverModal(\"" + r.cpn + "\")' class='bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition-colors border-2 border-slate-200 dark:border-slate-600 active:scale-95'>⚙️ Manage</button>" +
                  "</td></tr>";
       
       html += rowHtml;
@@ -382,11 +380,9 @@
     tbody.innerHTML = html;
   };
 
-  // =====================================
-  // WAIVER MODAL LOGIC
-  // =====================================
   window.openWaiverModal = function(cpn) {
-    // FIX: Force modal to the absolute root of the browser so it stays in the viewport
+    if (typeof window.toggleScrollLock === 'function') window.toggleScrollLock(true);
+
     var modal = document.getElementById('waiver-modal');
     if (modal && modal.parentNode !== document.body) {
         document.body.appendChild(modal);
@@ -395,12 +391,10 @@
     const data = window.masterOutstandingData.find(d => d.cpn === cpn);
     if (!data) return;
 
-    // Set Context
     document.getElementById('waiver-cpn').innerText = data.cpn;
     document.getElementById('waiver-name').innerText = data.name;
     document.getElementById('waiver-loc').innerText = `${data.apartment} / ${data.block} / Door ${data.door}`;
 
-    // Debt Snapshot Math
     const m1Debt = data.pend3; 
     const m2PlusDebt = data.pend1 + data.pend2; 
     const totDebt = m1Debt + m2PlusDebt + data.pend4;
@@ -409,7 +403,6 @@
     document.getElementById('waiver-m2-debt').innerText = "₹" + m2PlusDebt.toLocaleString('en-IN');
     document.getElementById('waiver-tot-debt').innerText = "₹" + totDebt.toLocaleString('en-IN');
 
-    // Controls
     const reqToggle = document.getElementById('inp-waiver-req');
     const dateInp = document.getElementById('inp-waiver-date');
     const overToggle = document.getElementById('inp-overdue-waiver');
@@ -424,6 +417,7 @@
 
   window.closeWaiverModal = function() {
     document.getElementById('waiver-modal').classList.add('hidden');
+    if (typeof window.toggleScrollLock === 'function') window.toggleScrollLock(false);
   };
 
   window.toggleWaiverDate = function(checkbox) {
@@ -437,7 +431,6 @@
     let date = parseInt(document.getElementById('inp-waiver-date').value) || 1;
     const over = document.getElementById('inp-overdue-waiver').checked;
 
-    // Backend guardrail for dates
     if (date < 1) date = 1;
     if (date > 28) date = 28;
 
@@ -445,7 +438,7 @@
     btn.innerText = "Saving...";
 
     try {
-        const { error } = await supabase1
+        const { error } = await window.supabase1
             .from('ac_customers')
             .update({
                 waiver_request: req,
@@ -456,7 +449,6 @@
 
         if (error) throw error;
 
-        // Update active memory so we don't have to resync the whole ledger
         const data = window.masterOutstandingData.find(d => d.cpn === cpn);
         if (data) {
             data.waiverReq = req;
@@ -476,9 +468,6 @@
     }
   };
 
-  // =====================================
-  // EXPORT OUTSTANDING LEDGER
-  // =====================================
   window.exportOutstandingCSV = function () {
     var apt = document.getElementById('filter-apt').value;
     var blk = document.getElementById('filter-blk').value;

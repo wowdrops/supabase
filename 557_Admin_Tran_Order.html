@@ -75,7 +75,7 @@
         
         <div class="flex flex-col lg:flex-row items-center gap-2 w-full">
             <div class="relative w-full lg:w-40 flex items-center gap-1">
-              <input type="text" id="ord2-inp-cpn" placeholder="Search CPN"  oninput="this.value = this.value.toUpperCase()" onkeyup="handleOrd2CpnTyping()" class="uppercase w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-bold uppercase outline-none focus:border-indigo-500 transition shadow-inner text-sm">
+              <input type="text" id="ord2-inp-cpn" placeholder="Search CPN"  oninput="this.value = this.value.toUpperCase()" onkeyup="window.handleOrd2CpnTyping()" class="uppercase w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-bold uppercase outline-none focus:border-indigo-500 transition shadow-inner text-sm">
             </div>
             
             <div class="w-full lg:w-16">
@@ -85,7 +85,7 @@
               <input type="number" id="ord2-inp-ordE" placeholder="E" title="ORD E" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-indigo-500 transition shadow-inner text-sm">
             </div>
             <div class="w-full lg:w-20">
-              <input type="number" id="ord2-inp-pend" placeholder="PEND" title="Pending Quantity" oninput="handlePendAutoFill()" class="w-full bg-amber-50 border border-amber-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-amber-500 transition shadow-inner text-amber-700 text-sm">
+              <input type="number" id="ord2-inp-pend" placeholder="PEND" title="Pending Quantity" oninput="window.handlePendAutoFill()" class="w-full bg-amber-50 border border-amber-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-amber-500 transition shadow-inner text-amber-700 text-sm">
             </div>
             <div class="w-full lg:w-20">
               <input type="number" id="ord2-inp-rep" placeholder="REP" title="Replacement Quantity" class="w-full bg-rose-50 border border-rose-200 p-2.5 rounded-lg font-black text-center outline-none focus:border-rose-500 transition shadow-inner text-rose-700 text-sm">
@@ -102,10 +102,10 @@
             
             <!-- COMPACT BUTTONS -->
             <div class="w-full lg:w-auto flex justify-end gap-1">
-              <button id="ord2-btn-submit" onclick="submitOrd2Order()" title="Submit Order" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black p-2.5 rounded-lg shadow-lg transition active:scale-95 flex justify-center items-center h-full aspect-square disabled:opacity-50">
+              <button id="ord2-btn-submit" onclick="window.submitOrd2Order()" title="Submit Order" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black p-2.5 rounded-lg shadow-lg transition active:scale-95 flex justify-center items-center h-full aspect-square disabled:opacity-50">
                 <svg id="ord2-icon-submit" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
               </button>
-              <button id="ord2-btn-cancelEdit" onclick="resetOrd2Form()" title="Cancel Edit" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-600 font-black p-2.5 rounded-lg shadow transition active:scale-95 flex justify-center items-center h-full aspect-square">
+              <button id="ord2-btn-cancelEdit" onclick="window.resetOrd2Form()" title="Cancel Edit" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-600 font-black p-2.5 rounded-lg shadow transition active:scale-95 flex justify-center items-center h-full aspect-square">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
@@ -156,7 +156,7 @@
           <th class="p-4 font-black text-center text-rose-300" title="Replacement">Rep</th>
           <th class="p-4 font-black text-right text-emerald-300">Est Amt</th>
           <th class="p-4 font-black text-right text-amber-300">Can Deposit</th>
-          <th class="p-4 font-black text-right bg-slate-900 border-l border-slate-700 cursor-pointer hover:bg-slate-700 transition group" onclick="toggleOrd2OutstandingCols()">
+          <th class="p-4 font-black text-right bg-slate-900 border-l border-slate-700 cursor-pointer hover:bg-slate-700 transition group" onclick="window.toggleOrd2OutstandingCols()">
             Outstanding <span id="ord2-txt-toggleIcon" class="ml-1 bg-slate-600 text-white px-1.5 py-0.5 rounded group-hover:bg-slate-500">+</span>
           </th>
           <th class="p-4 font-black text-right hidden ord2-ext-col bg-slate-900" id="ord2-hdr-ab">Very Old</th>
@@ -169,6 +169,7 @@
         </tr>
       </thead>
       <tbody id="ord2-tbl-body" class="text-sm font-bold text-slate-700 divide-y divide-slate-100">
+          <tr><td colspan="18" class="text-center py-10 text-indigo-500 font-bold animate-pulse">Syncing orders...</td></tr>
       </tbody>
       <tfoot class="bg-slate-50 border-t-2 border-slate-200 sticky bottom-0 z-10">
         <tr>

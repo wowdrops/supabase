@@ -1,64 +1,63 @@
 <!-- NEW TAB: SALES CALENDAR -->
-        <div id="tab-sales-cal" class="hidden space-y-8 fade-in pb-12">
-          
-          <div class="border-b-4 border-indigo-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-            <div><h2 class="text-3xl md:text-4xl font-black text-slate-800 tracking-tight uppercase">Sales Heatmap</h2></div>
-            
-            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <!-- Segmented Control for Display Type -->
-              <div class="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
-                <button id="btn-cal-cans" onclick="window.setSalesCalView('CANS')" class="flex-1 px-4 py-2 rounded-lg text-xs md:text-sm font-black text-slate-500 hover:text-slate-800 transition">CANS</button>
-                <button id="btn-cal-amt" onclick="window.setSalesCalView('AMT')" class="flex-1 px-4 py-2 rounded-lg text-xs md:text-sm font-black text-slate-500 hover:text-slate-800 transition">AMOUNT</button>
-                <button id="btn-cal-both" onclick="window.setSalesCalView('BOTH')" class="flex-1 px-4 py-2 rounded-lg text-xs md:text-sm font-black bg-white shadow-sm text-indigo-700 transition">BOTH</button>
-              </div>
-              
-              <!-- Timeframe Fetcher -->
-              <div class="flex gap-2">
-                <select id="sales-cal-weeks" class="p-2.5 bg-slate-50 border-2 border-slate-300 rounded-xl font-black outline-none text-slate-700">
-                  <option value="4">4 Weeks</option>
-                  <option value="8">8 Weeks</option>
-                  <option value="12">12 Weeks</option>
-                </select>
-                <button onclick="window.loadSalesCalendar()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm md:text-base font-black shadow transition shrink-0">Fetch</button>
-              </div>
-            </div>
-          </div>
+<div id="tab-sales-cal" class="hidden space-y-8 fade-in pb-12">
+  
+  <div class="border-b-4 border-indigo-200 dark:border-indigo-800 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 transition-colors">
+    <div><h2 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Sales Heatmap</h2></div>
+    
+    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+      <!-- Segmented Control for Display Type -->
+      <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto transition-colors">
+        <button id="btn-cal-cans" onclick="window.setSalesCalView('CANS')" class="flex-1 px-4 py-2 rounded-lg text-xs md:text-sm font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">CANS</button>
+        <button id="btn-cal-amt" onclick="window.setSalesCalView('AMT')" class="flex-1 px-4 py-2 rounded-lg text-xs md:text-sm font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">AMOUNT</button>
+        <button id="btn-cal-both" onclick="window.setSalesCalView('BOTH')" class="flex-1 px-4 py-2 rounded-lg text-xs md:text-sm font-black bg-white dark:bg-slate-600 shadow-sm text-indigo-700 dark:text-indigo-300 transition-colors">BOTH</button>
+      </div>
+      
+      <!-- Timeframe Fetcher -->
+      <div class="flex gap-2">
+        <select id="sales-cal-weeks" class="p-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-black outline-none text-slate-700 dark:text-white color-scheme-dark transition-colors">
+          <option value="4">4 Weeks</option>
+          <option value="8">8 Weeks</option>
+          <option value="12">12 Weeks</option>
+        </select>
+        <button onclick="window.loadSalesCalendar()" class="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm md:text-base font-black shadow transition-colors shrink-0">Fetch</button>
+      </div>
+    </div>
+  </div>
 
-          <div id="cal-loading" class="hidden text-center text-indigo-600 font-black text-3xl animate-pulse py-12">Mapping History...</div>
+  <div id="cal-loading" class="hidden text-center text-indigo-600 dark:text-indigo-500 font-black text-3xl animate-pulse py-12 transition-colors">Mapping History...</div>
 
-          <!-- Calendar Visual Grid -->
-          <!-- Added max-w-5xl mx-auto to constrain the overall width on big screens -->
-          <div class="bg-white p-2 md:p-6 rounded-3xl border-4 border-slate-200 shadow-xl overflow-x-auto max-w-5xl mx-auto">
-            <div class="min-w-[550px]"> <!-- Reduced from 600px to allow slightly narrower cards -->
-              <div class="grid grid-cols-7 gap-2 mb-2 text-center text-slate-400 font-black tracking-widest uppercase text-xs">
-                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-              </div>
-              <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 md:gap-2">
-                 <!-- JavaScript will inject the boxes here -->
-              </div>
-            </div>
-          </div>
+  <!-- Calendar Visual Grid -->
+  <div class="bg-white dark:bg-slate-800 p-2 md:p-6 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl overflow-x-auto max-w-5xl mx-auto transition-colors hide-scrollbar">
+    <div class="min-w-[550px]">
+      <div class="grid grid-cols-7 gap-2 mb-2 text-center text-slate-400 dark:text-slate-500 font-black tracking-widest uppercase text-xs transition-colors">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 md:gap-2">
+         <!-- JavaScript will inject the boxes here -->
+      </div>
+    </div>
+  </div>
 
-          <!-- Drill-Down Detailed Table -->
-          <div id="cal-detail-section" class="hidden bg-white rounded-3xl shadow-xl border-4 border-slate-200 overflow-hidden mt-8 fade-in">
-            <div class="p-4 md:p-6 bg-slate-50 border-b-4 border-slate-200 flex justify-between items-center">
-              <h3 id="cal-detail-title" class="text-xl md:text-2xl font-black text-slate-800 tracking-widest uppercase">Sales Details</h3>
-              <button onclick="document.getElementById('cal-detail-section').classList.add('hidden')" class="bg-slate-200 text-slate-600 px-4 py-2 font-bold rounded-lg hover:bg-red-100 hover:text-red-700 transition">Close</button>
-            </div>
-            <div class="overflow-x-auto" style="max-height: 55vh;">
-              <table class="w-full text-left whitespace-nowrap text-lg">
-                <thead class="bg-slate-100 text-slate-500 font-black uppercase tracking-widest sticky top-0 border-b-4 border-slate-200 z-10">
-                  <tr>
-                    <th class="px-4 py-3">Customer</th>
-                    <th class="px-4 py-3">Location</th>
-                    <th class="px-4 py-3 text-center">Status</th>
-                    <th class="px-4 py-3 text-center">Cans</th>
-                    <th class="px-4 py-3 text-right">Amount</th>
-                    <th class="px-4 py-3 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="cal-detail-tbody" class="divide-y-4 divide-slate-100"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+  <!-- Drill-Down Detailed Table -->
+  <div id="cal-detail-section" class="hidden bg-white dark:bg-slate-800 rounded-3xl shadow-xl border-4 border-slate-200 dark:border-slate-700 overflow-hidden mt-8 fade-in transition-colors">
+    <div class="p-4 md:p-6 bg-slate-50 dark:bg-slate-900/50 border-b-4 border-slate-200 dark:border-slate-700 flex justify-between items-center transition-colors">
+      <h3 id="cal-detail-title" class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-widest uppercase transition-colors">Sales Details</h3>
+      <button onclick="document.getElementById('cal-detail-section').classList.add('hidden')" class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2 font-bold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 dark:hover:text-red-400 transition-colors">Close</button>
+    </div>
+    <div class="overflow-x-auto hide-scrollbar" style="max-height: 55vh;">
+      <table class="w-full text-left whitespace-nowrap text-lg border-collapse">
+        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest sticky top-0 border-b-4 border-slate-200 dark:border-slate-700 z-10 transition-colors">
+          <tr>
+            <th class="px-4 py-3">Customer</th>
+            <th class="px-4 py-3">Location</th>
+            <th class="px-4 py-3 text-center">Status</th>
+            <th class="px-4 py-3 text-center">Cans</th>
+            <th class="px-4 py-3 text-right">Amount</th>
+            <th class="px-4 py-3 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody id="cal-detail-tbody" class="divide-y-4 divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900 transition-colors"></tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,12 +1,12 @@
 <div id="tab-tran-delivery" class="hidden space-y-4 fade-in pb-20 relative">
 
-  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-emerald-200 pt-2 pb-4">
+  <div class="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur border-b-4 border-emerald-200 dark:border-emerald-800 pt-2 pb-4 transition-colors">
     <div class="flex justify-between items-center px-2">
-      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase flex items-center gap-3">
         Quality Control <span class="hidden md:inline"> - Delivery</span>
         <span id="qc-live-timer" class="hidden"></span>
         <button onclick="window.toggleQCHeader()"
-          class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none">
+          class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg shadow-inner outline-none">
           <svg id="qc-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none"
             stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
@@ -19,28 +19,24 @@
       <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2 mt-4">
         <div class="flex items-center gap-2 md:gap-4 flex-wrap">
           <span
-            class="text-[10px] md:text-xs font-black bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-widest">Total:
-            <b id="qc-count-total" class="text-slate-900">0</b></span>
+            class="text-[10px] md:text-xs font-black bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-1.5 rounded-lg uppercase tracking-widest transition-colors">Total:
+            <b id="qc-count-total" class="text-slate-900 dark:text-white">0</b></span>
           <span
-            class="text-[10px] md:text-xs font-black bg-emerald-100 text-emerald-700 px-2.5 py-1.5 rounded-lg uppercase tracking-widest">Finished:
-            <b id="qc-count-finished" class="text-emerald-900">0</b></span>
+            class="text-[10px] md:text-xs font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2.5 py-1.5 rounded-lg uppercase tracking-widest transition-colors">Finished:
+            <b id="qc-count-finished" class="text-emerald-900 dark:text-emerald-300">0</b></span>
           <span
-            class="text-[10px] md:text-xs font-black bg-amber-100 text-amber-700 px-2.5 py-1.5 rounded-lg uppercase tracking-widest">Pending:
-            <b id="qc-count-pending" class="text-amber-900">0</b></span>
+            class="text-[10px] md:text-xs font-black bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg uppercase tracking-widest transition-colors">Pending:
+            <b id="qc-count-pending" class="text-amber-900 dark:text-amber-300">0</b></span>
         </div>
 
-
-
         <div class="flex gap-2 w-full lg:w-auto items-center">
-
-          <!-- NEW: OTP GENERATOR BUTTON -->
           <button id="btn-generate-otp" onclick="window.requestEodPin()"
-            class="flex-1 lg:flex-none bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-2.5 rounded-xl text-sm font-black shadow-sm transition flex justify-center items-center gap-1.5">
+            class="flex-1 lg:flex-none bg-indigo-100 dark:bg-indigo-900/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 px-3 py-2.5 rounded-xl text-sm font-black shadow-sm transition-colors flex justify-center items-center gap-1.5">
             🔑 Generate PIN
           </button>
 
           <button onclick="window.autoVerifyPerfectBlocks()"
-            class="flex-1 lg:flex-none bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2.5 rounded-xl text-sm font-black shadow-sm transition flex justify-center items-center gap-1.5">
+            class="flex-1 lg:flex-none bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-3 py-2.5 rounded-xl text-sm font-black shadow-sm transition-colors flex justify-center items-center gap-1.5">
             <svg class="w-4 h-4 md:w-5 md:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
               </path>
@@ -49,18 +45,18 @@
           </button>
 
           <button onclick="window.openExceptionReview()"
-            class="flex-1 lg:flex-none bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2.5 rounded-xl text-sm font-black shadow-sm transition flex justify-center items-center gap-1.5 relative">
+            class="flex-1 lg:flex-none bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-400 px-3 py-2.5 rounded-xl text-sm font-black shadow-sm transition-colors flex justify-center items-center gap-1.5 relative">
             ⚠️ <span class="hidden sm:inline">Exceptions</span>
             <span id="qc-exception-badge"
               class="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow hidden">0</span>
           </button>
 
           <input type="checkbox" id="qc-select-all-chk" onchange="window.toggleAllVerifiedBlocks(this)"
-            class="w-8 h-8 rounded border-slate-400 text-emerald-600 cursor-pointer shadow-sm shrink-0 mx-1"
+            class="w-8 h-8 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-500 cursor-pointer shadow-sm shrink-0 mx-1 transition-colors"
             title="Select/Deselect All Visible Verified Blocks">
 
           <button onclick="window.executeTransferToSales()" id="btn-transfer-sales" disabled
-            class="flex-1 lg:flex-none bg-slate-400 text-white px-3 py-2.5 rounded-xl text-sm font-black shadow transition flex justify-center items-center gap-1.5 cursor-not-allowed">
+            class="flex-1 lg:flex-none bg-slate-400 dark:bg-slate-600 text-white px-3 py-2.5 rounded-xl text-sm font-black shadow transition-colors flex justify-center items-center gap-1.5 cursor-not-allowed">
             <svg class="w-4 h-4 md:w-5 md:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -71,39 +67,39 @@
       </div>
 
       <div class="px-2 mt-4 space-y-3">
-        <div class="flex bg-slate-200/70 p-1 rounded-xl w-full">
+        <div class="flex bg-slate-200/70 dark:bg-slate-800/70 p-1 rounded-xl w-full transition-colors">
           <button id="btn-flt-all" onclick="window.setStatusFilter('ALL')"
-            class="flex-1 text-[10px] md:text-xs font-black py-2.5 rounded-lg bg-white text-slate-800 shadow-sm transition tracking-widest uppercase">ALL</button>
+            class="flex-1 text-[10px] md:text-xs font-black py-2.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm transition tracking-widest uppercase">ALL</button>
           <button id="btn-flt-pend" onclick="window.setStatusFilter('PENDING')"
-            class="flex-1 text-[10px] md:text-xs font-black py-2.5 rounded-lg text-slate-500 hover:text-slate-800 transition tracking-widest uppercase">PENDING</button>
+            class="flex-1 text-[10px] md:text-xs font-black py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition tracking-widest uppercase">PENDING</button>
           <button id="btn-flt-fin" onclick="window.setStatusFilter('VERIFIED')"
-            class="flex-1 text-[10px] md:text-xs font-black py-2.5 rounded-lg text-slate-500 hover:text-slate-800 transition tracking-widest uppercase">FINISHED</button>
+            class="flex-1 text-[10px] md:text-xs font-black py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition tracking-widest uppercase">FINISHED</button>
         </div>
         <div class="flex flex-row gap-3">
-          <div class="flex flex-row gap-3">
+          <div class="flex flex-row gap-3 w-full">
             <div class="w-1/3">
               <label
-                class="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Filter
+                class="text-[9px] md:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Filter
                 Apartment</label>
               <select id="qc-flt-apt" onchange="window.updateQCBlockDropdown()"
-                class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-[10px] md:text-sm outline-none focus:border-emerald-500">
+                class="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-900 dark:text-white text-[10px] md:text-sm outline-none focus:border-emerald-500 color-scheme-dark transition-colors">
                 <option value="ALL">ALL APARTMENTS</option>
               </select>
             </div>
             <div class="w-1/3">
               <label
-                class="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Filter
+                class="text-[9px] md:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Filter
                 Block</label>
               <select id="qc-flt-blk" onchange="window.applyQCFilter()"
-                class="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold text-[10px] md:text-sm outline-none focus:border-emerald-500">
+                class="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-900 dark:text-white text-[10px] md:text-sm outline-none focus:border-emerald-500 color-scheme-dark transition-colors">
                 <option value="ALL">ALL BLOCKS</option>
               </select>
             </div>
             <div class="w-1/3">
               <label
-                class="text-[9px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1">Exceptions</label>
+                class="text-[9px] md:text-[10px] font-black text-rose-500 dark:text-rose-400 uppercase tracking-widest block mb-1">Exceptions</label>
               <select id="qc-flt-exc" onchange="window.applyQCFilter()"
-                class="w-full p-2.5 bg-rose-50 border border-rose-300 text-rose-800 rounded-xl font-black text-[10px] md:text-sm outline-none focus:border-rose-500 shadow-inner">
+                class="w-full p-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300 rounded-xl font-black text-[10px] md:text-sm outline-none focus:border-rose-500 shadow-inner color-scheme-dark transition-colors">
                 <option value="ALL">SHOW ALL</option>
                 <option value="EXCEPTIONS">EXCEPTIONS ONLY</option>
               </select>
@@ -113,22 +109,22 @@
       </div>
     </div>
 
-    <div id="qc-blocks-container" class="space-y-6"></div>
+    <!-- SPA STANDARD: Added Local Scrollbox -->
+    <div id="qc-blocks-container" class="space-y-6 max-h-[70vh] overflow-y-auto hide-scrollbar mt-4 scroll-smooth"></div>
     <input type="file" id="admin-qc-upload-input" accept="image/*"
       class="opacity-0 absolute w-[1px] h-[1px] overflow-hidden -z-50" style="left: -9999px;">
   </div>
 
-  <!-- FIXED: Floating Scroll Buttons using window.scrollAdminTo -->
   <div class="fixed bottom-8 right-6 z-[100] flex flex-col gap-3">
     <button onclick="window.scrollAdminTo('top')"
-      class="w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 transition opacity-80 hover:opacity-100 outline-none"
+      class="w-12 h-12 bg-slate-800 dark:bg-slate-700 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors opacity-80 hover:opacity-100 outline-none"
       title="Scroll to Top">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path>
       </svg>
     </button>
     <button onclick="window.scrollAdminTo('bottom')"
-      class="w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 transition opacity-80 hover:opacity-100 outline-none"
+      class="w-12 h-12 bg-slate-800 dark:bg-slate-700 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors opacity-80 hover:opacity-100 outline-none"
       title="Scroll to Bottom">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path>
@@ -140,17 +136,17 @@
   <div id="admin-exception-modal"
     class="fixed inset-0 z-[250] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
     <div
-      class="bg-white w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
-      <div class="p-5 bg-amber-50 border-b border-amber-200 flex justify-between items-center shadow-sm z-20">
-        <h3 class="text-xl font-black text-amber-900 flex items-center gap-3 tracking-tight">⚠️ Variance & Exception
+      class="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700 transition-colors">
+      <div class="p-5 bg-amber-50 dark:bg-amber-900/40 border-b border-amber-200 dark:border-amber-800 flex justify-between items-center shadow-sm z-20 transition-colors">
+        <h3 class="text-xl font-black text-amber-900 dark:text-amber-400 flex items-center gap-3 tracking-tight">⚠️ Variance & Exception
           Review</h3>
         <button onclick="window.closeExceptionReview()"
-          class="text-amber-700 hover:text-amber-900 transition font-black text-2xl leading-none outline-none">&times;</button>
+          class="text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-300 transition-colors font-black text-2xl leading-none outline-none">&times;</button>
       </div>
-      <div class="p-0 overflow-y-auto flex-1 bg-slate-50" id="exception-table-container"></div>
-      <div class="p-4 border-t border-slate-200 bg-white z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div class="p-0 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900 transition-colors" id="exception-table-container"></div>
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-colors">
         <button onclick="window.closeExceptionReview()"
-          class="w-full bg-slate-800 text-white font-black py-4 text-lg tracking-widest uppercase rounded-xl shadow-lg hover:bg-slate-900 transition active:scale-[0.98]">Done
+          class="w-full bg-slate-800 dark:bg-blue-600 text-white font-black py-4 text-lg tracking-widest uppercase rounded-xl shadow-lg hover:bg-slate-900 dark:hover:bg-blue-700 transition-colors active:scale-[0.98]">Done
           Reviewing</button>
       </div>
     </div>

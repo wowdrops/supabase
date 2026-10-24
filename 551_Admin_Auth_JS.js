@@ -1,11 +1,14 @@
-window.onerror = function (msg, url, line) { alert("App Error: " + msg + " (Line " + line + ")"); return false; };
+window.onerror = function (msg, url, line) {
+    if (window.showToast) window.showToast("App Error: " + msg, "error");
+    else alert("App Error: " + msg + " (Line " + line + ")");
+    return false;
+};
 window.windowWidthBabu = 1024;
 window.activeAdminSession = null;
 window.isSidebarOpen = window.innerWidth >= window.windowWidthBabu;
 window._sessionHeartbeatTimer = null;
-window.sysPagesMap = []; // Holds the dynamic file_paths from Supabase
+window.sysPagesMap = [];
 
-// Global Data Caches
 window.activeReportData = { delivery: [] };
 window.masterOutstandingData = [];
 window.monthHeadersConfig = {};
@@ -50,7 +53,7 @@ window.verifyLiveUserStatus = async function () {
             .eq('username', window.activeAdminSession.username)
             .maybeSingle();
 
-        if (error || !userData) return true; 
+        if (error || !userData) return true;
 
         var currentStatus = String(userData.status || 'ACTIVE').toUpperCase();
         var appRoles = userData.app_roles || {};
@@ -89,14 +92,13 @@ window.assertWorkspaceDeployment = async function () {
 
     window.startSessionHeartbeat();
     await window.applyRolePermissions();
-    
+
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
     var firstTab = (allowed.includes('ALL') || allowed.includes('dashboard')) ? 'dashboard' : allowed[0];
     firstTab = firstTab || 'password';
 
-    // NEW: Check if the user refreshed while on a specific tab via the URL Hash
     var hashTab = window.location.hash.replace('#', '');
-    
+
     if (hashTab && (allowed.includes('ALL') || allowed.includes(hashTab))) {
         window.goToReport(hashTab);
     } else {
@@ -109,18 +111,13 @@ window.applyRolePermissions = async function () {
     var allowed = window.activeAdminSession.allowedTabs || [];
     var isSuper = allowed.includes("ALL");
 
-    // Fetch the architecture for the ADMIN module (No show_in_sidebar filter yet, we need all file paths!)
     const [menusRes, pagesRes] = await Promise.all([
         window.supabase1.from('sys_menus').select('*').eq('module_name', 'ADMIN'),
         window.supabase1.from('sys_pages').select('*').eq('module_name', 'ADMIN')
     ]);
 
-    // Store globally for the Lazy Load Router
     window.sysPagesMap = pagesRes.data || [];
-
     var menus = (menusRes.data || []).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.id - b.id);
-    
-    // Filter strictly for the visual sidebar rendering
     var sidebarPages = window.sysPagesMap.filter(p => p.show_in_sidebar === true).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || (a.page_title || '').localeCompare(b.page_title || ''));
 
     var navContainer = document.querySelector('#app-sidebar nav');
@@ -133,31 +130,29 @@ window.applyRolePermissions = async function () {
         var directPages = sidebarPages.filter(p => String(p.menu_id) === String(m.id) && (isSuper || allowed.includes(p.page_id)));
         var subMenus = menus.filter(sub => String(sub.parent_menu_id) === String(m.id));
         var subMenuHtml = "";
-        
+
         subMenus.forEach(sub => {
             var subPages = sidebarPages.filter(p => String(p.menu_id) === String(sub.id) && (isSuper || allowed.includes(p.page_id)));
             if (subPages.length > 0) {
                 var defaultSubIcon = '<svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
                 subMenuHtml += `
-                  <div onclick="window.toggleSubAccordion('sub-menu-${sub.id}', 'icon-sub-${sub.id}')" class="flex justify-between items-center px-2 py-1.5 mt-1 cursor-pointer rounded-lg hover:bg-slate-800/50 transition">
+                  <div onclick="window.toggleSubAccordion('sub-menu-${sub.id}', 'icon-sub-${sub.id}')" class="flex justify-between items-center px-2 py-1.5 mt-1 cursor-pointer rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800/50 transition">
                     <div class="flex items-center gap-1.5">
                       ${sub.icon_svg || defaultSubIcon}
-                      <span class="text-[12px] font-bold text-emerald-400 uppercase tracking-wide">${sub.menu_label}</span>
+                      <span class="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">${sub.menu_label}</span>
                     </div>
                     <svg id="icon-sub-${sub.id}" class="w-3.5 h-3.5 shrink-0 transition-transform duration-200 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                   </div>
                   <div id="sub-menu-${sub.id}" class="hidden">
-                    <div class="flex flex-col pl-4 space-y-1">
+                    <div class="flex flex-col pl-4 space-y-1 mt-1">
                       ${subPages.map(p => {
-                        var clickAction = p.page_id === 'phonepe-dash'
-                            ? `window.open('https://business.phonepe.com/dashboard', '_blank')`
-                            : `window.goToReport('${p.page_id}')`;
-                        return `
-                        <button onclick="${clickAction}" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                    var clickAction = p.page_id === 'phonepe-dash' ? `window.open('https://business.phonepe.com/dashboard', '_blank')` : `window.goToReport('${p.page_id}')`;
+                    return `
+                        <button onclick="${clickAction}" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-slate-800/50 transition">
                           ${p.icon_svg ? `<span class="shrink-0 flex items-center">${p.icon_svg}</span>` : ''}
                           <span class="truncate">${p.page_title}</span>
                         </button>`;
-                      }).join('')}
+                }).join('')}
                     </div>
                   </div>
                 `;
@@ -167,13 +162,14 @@ window.applyRolePermissions = async function () {
         if (directPages.length > 0 || subMenuHtml !== "") {
             var isFirstOpen = index === 0 ? "open" : "";
             var isFirstRotate = index === 0 ? "rotate-180" : "";
-            var defaultMainIcon = '<svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>';
+            var defaultMainIcon = '<svg class="w-5 h-5 shrink-0 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012-2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012-2h-2a2 2 0 01-2-2v-2z"></path></svg>';
+            
             html += `
             <div>
-              <button onclick="window.toggleAccordion('acc-main-${m.id}', 'icon-main-${m.id}')" class="w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
+              <button onclick="window.toggleAccordion('acc-main-${m.id}', 'icon-main-${m.id}')" class="w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white transition">
                 <div class="flex items-center gap-2">
                   ${m.icon_svg || defaultMainIcon}
-                  <span class="truncate">${m.menu_label}</span>
+                  <span class="sidebar-text whitespace-nowrap overflow-hidden transition-all duration-300">${m.menu_label}</span>
                 </div>
                 <svg id="icon-main-${m.id}" class="w-4 h-4 shrink-0 transition-transform duration-200 ${isFirstRotate}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               </button>
@@ -181,15 +177,13 @@ window.applyRolePermissions = async function () {
                 <div class="overflow-hidden">
                   <div class="flex flex-col pl-6 pr-2 py-1 space-y-1">
                     ${directPages.map(p => {
-                        var clickAction = p.page_id === 'phonepe-dash'
-                            ? `window.open('https://business.phonepe.com/dashboard', '_blank')`
-                            : `window.goToReport('${p.page_id}')`;
-                        return `
-                        <button onclick="${clickAction}" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                var clickAction = p.page_id === 'phonepe-dash' ? `window.open('https://business.phonepe.com/dashboard', '_blank')` : `window.goToReport('${p.page_id}')`;
+                return `
+                        <button onclick="${clickAction}" id="nav-tab-${p.page_id}" class="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-lg text-[13px] font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-slate-800/50 transition">
                           ${p.icon_svg ? `<span class="shrink-0 flex items-center">${p.icon_svg}</span>` : ''}
                           <span class="truncate">${p.page_title}</span>
                         </button>`;
-                    }).join('')}
+            }).join('')}
                     ${subMenuHtml}
                   </div>
                 </div>
@@ -236,10 +230,12 @@ window.applySidebarState = function () {
     var bd = document.getElementById('sidebar-backdrop');
     if (!sb || !bd) return;
     if (window.isSidebarOpen) {
+        sb.classList.remove('sidebar-collapsed');
         sb.classList.remove('-translate-x-full', 'w-0', 'lg:w-0');
         sb.classList.add('w-64', 'lg:w-64');
         if (window.innerWidth < window.windowWidthBabu) bd.classList.remove('opacity-0', 'pointer-events-none', 'hidden');
     } else {
+        sb.classList.add('sidebar-collapsed');
         sb.classList.add('-translate-x-full');
         if (window.innerWidth >= window.windowWidthBabu) {
             sb.classList.remove('w-64', 'lg:w-64');
@@ -253,43 +249,81 @@ window.applySidebarState = function () {
 window.showNotif = function (el, msg, success) {
     if (!el) return;
     el.innerText = msg; el.classList.remove('hidden');
-    el.className = "text-sm md:text-lg text-center font-bold mt-4 p-4 rounded-xl border-2 block " + (success ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200') + " fade-in";
+    el.className = "text-sm md:text-lg text-center font-bold mt-4 p-4 rounded-xl border-2 block transition-colors " + (success ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800') + " fade-in";
+};
+
+// =====================================
+// GLOBAL TOAST NOTIFICATION (SPA Dark Mode)
+// =====================================
+window.showToast = function (msg, type = 'success') {
+    var container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none';
+        document.body.appendChild(container);
+    }
+
+    var bgColor = type === 'success' ? 'bg-emerald-600 dark:bg-emerald-700' : (type === 'warning' ? 'bg-amber-500 dark:bg-amber-600' : 'bg-rose-600 dark:bg-rose-700');
+    var icon = type === 'success'
+        ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>'
+        : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+
+    var toast = document.createElement('div');
+    toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 font-black text-sm tracking-widest uppercase pointer-events-auto transform transition-all duration-300 translate-y-10 opacity-0`;
+    toast.innerHTML = `${icon} <span>${msg}</span>`;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+    });
+
+    setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-10', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 };
 
 window.toggleScrollLock = function (isLocked) {
-  var scrollArea = document.getElementById('scroll-area');
-  if (scrollArea) {
-    if (isLocked) scrollArea.classList.add('overflow-hidden');
-    else scrollArea.classList.remove('overflow-hidden');
-  }
+    var scrollArea = document.getElementById('scroll-area');
+    if (scrollArea) {
+        if (isLocked) scrollArea.classList.add('overflow-hidden');
+        else scrollArea.classList.remove('overflow-hidden');
+    }
 };
 
-window.closeModal = function (id) { 
-  var modal = document.getElementById(id);
-  if (modal) modal.classList.add('hidden'); 
-  window.toggleScrollLock(false);
+window.closeModal = function (id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.add('hidden');
+    window.toggleScrollLock(false);
 };
+
+// =====================================
+// GLOBAL NAVIGATION CONTROLLER
+// =====================================
+window.activeDashboardModule = 'dashboard';
 
 window.goToReport = function (tabName, filterArg) {
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
-    
+
     if (brand) brand.classList.remove('hidden');
     if (backBtn) backBtn.classList.add('hidden');
-    
+
     if (tabName === 'dashboard' && !filterArg) {
         window.dashboardReturnState = 1;
         if (typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
     }
-    
+
     window._executeRouting(tabName, filterArg);
 };
 
-window.activeDashboardModule = 'dashboard';
-
-window.navigateFromDashboard = function (reportId, filterArg) {
+window.navigateFromDashboard = function (reportId, filterArg, sourceDashLabel) {
     var isCRM = document.getElementById('tab-dormant-crm') && !document.getElementById('tab-dormant-crm').classList.contains('hidden');
-    
+
     if (isCRM) {
         window.activeDashboardModule = 'dormant-crm';
         var crmDash2 = document.getElementById('crm-dash-content-2');
@@ -299,7 +333,7 @@ window.navigateFromDashboard = function (reportId, filterArg) {
         var dash1 = document.getElementById('dash-content-1');
         var dash2 = document.getElementById('dash-content-2');
         var dash3 = document.getElementById('dash-content-3');
-        
+
         if (dash1 && !dash1.classList.contains('hidden')) window.dashboardReturnState = 1;
         else if (dash2 && !dash2.classList.contains('hidden')) window.dashboardReturnState = 2;
         else if (dash3 && !dash3.classList.contains('hidden')) window.dashboardReturnState = 3;
@@ -307,34 +341,40 @@ window.navigateFromDashboard = function (reportId, filterArg) {
     }
 
     window.dashboardLeaveTime = new Date().getTime();
-    
+
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
+    var backBtnText = document.getElementById('lbl-back-dashboard');
+
     if (brand) brand.classList.add('hidden');
-    if (backBtn) backBtn.classList.remove('hidden');
-    
+    if (backBtn) {
+        backBtn.classList.remove('hidden'); 
+        if (backBtnText) backBtnText.innerText = "Back to " + (sourceDashLabel || (isCRM ? "CRM" : "Operations"));
+    }
+
     window._executeRouting(reportId, filterArg);
-    
+
     if (reportId === 'sales' || reportId === 'pays') {
         var targetDate = (filterArg === 'latest') ? window._latestActionDate1 : window._latestActionDate2;
         if (targetDate) {
-            var sStart = document.getElementById(reportId + '-start'); if(sStart) sStart.value = targetDate;
-            var sEnd = document.getElementById(reportId + '-end'); if(sEnd) sEnd.value = targetDate;
+            var sStart = document.getElementById(reportId + '-start'); if (sStart) sStart.value = targetDate;
+            var sEnd = document.getElementById(reportId + '-end'); if (sEnd) sEnd.value = targetDate;
             if (reportId === 'sales' && typeof window.loadSalesData === 'function') window.loadSalesData();
             if (reportId === 'pays' && typeof window.loadPaysData === 'function') window.loadPaysData();
         }
-    } 
+    }
 };
 
 window.returnToDashboard = function () {
     var brand = document.getElementById('header-brand-area');
     var backBtn = document.getElementById('btn-back-dashboard');
+
     if (brand) brand.classList.remove('hidden');
     if (backBtn) backBtn.classList.add('hidden');
-    
+
     var targetDash = window.activeDashboardModule || 'dashboard';
     window._executeRouting(targetDash);
-    
+
     if (targetDash === 'dashboard' && typeof window.switchDashTab === 'function') {
         window.switchDashTab(window.dashboardReturnState || 1);
         if ((new Date().getTime() - window.dashboardLeaveTime) > 60000 && typeof window.loadDashboardData === 'function') window.loadDashboardData(true);
@@ -344,19 +384,15 @@ window.returnToDashboard = function () {
     }
 };
 
-// =====================================
-// THE NEW DATABASE-DRIVEN LAZY ROUTER
-// =====================================
 window._executeRouting = async function (tabName, filterArg) {
     window.verifyLiveUserStatus();
 
     var allowed = window.activeAdminSession ? (window.activeAdminSession.allowedTabs || []) : [];
-    
     if (!allowed.includes('ALL') && !allowed.includes(tabName) && tabName !== 'password') {
-        return alert("Access Denied: Your role does not have permission to view this module.");
+        if (window.showToast) return window.showToast("Access Denied: Your role does not have permission.", "error");
+        else return alert("Access Denied.");
     }
 
-    // NEW: Silently update the browser URL and History so Refresh and Back/Forward work
     if (window.location.hash !== '#' + tabName) {
         history.pushState({ tab: tabName, arg: filterArg }, '', '#' + tabName);
     }
@@ -364,32 +400,31 @@ window._executeRouting = async function (tabName, filterArg) {
     var workspace = document.getElementById('dynamic-module-workspace');
     var targetTab = document.getElementById('tab-' + tabName);
 
-    // Dynamic Database Lookup
     var pageRecord = window.sysPagesMap ? window.sysPagesMap.find(p => p.page_id === tabName) : null;
     var filePath = pageRecord ? pageRecord.file_path : null;
 
     if (!targetTab && filePath) {
         var loadingMsg = document.createElement('div');
         loadingMsg.id = 'lazy-load-msg';
-        loadingMsg.className = "text-center py-12 font-black text-indigo-400 animate-pulse tracking-widest uppercase text-xl";
+        loadingMsg.className = "text-center py-12 font-black text-indigo-400 dark:text-indigo-500 animate-pulse tracking-widest uppercase text-xl";
         loadingMsg.innerText = "Loading " + (pageRecord.page_title || "Module") + "...";
-        if(workspace) workspace.appendChild(loadingMsg);
+        if (workspace) workspace.appendChild(loadingMsg);
 
         try {
             const response = await fetch(filePath);
             if (!response.ok) throw new Error("File not found on server");
             const html = await response.text();
-            
+
             var tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
-            
+
             while (tempDiv.firstChild) {
-                if(workspace) workspace.appendChild(tempDiv.firstChild);
+                if (workspace) workspace.appendChild(tempDiv.firstChild);
             }
             targetTab = document.getElementById('tab-' + tabName);
         } catch (e) {
             console.error("Lazy Load Error:", e);
-            alert("Failed to load module. Check your file_path in the database for: " + filePath);
+            if (window.showToast) window.showToast("Failed to load module: " + filePath, "error");
         } finally {
             var msg = document.getElementById('lazy-load-msg');
             if (msg) msg.remove();
@@ -401,16 +436,20 @@ window._executeRouting = async function (tabName, filterArg) {
 
     var allNavBtns = document.querySelectorAll('button[id^="nav-tab-"]');
     allNavBtns.forEach(btn => {
-        btn.classList.remove('text-white', 'bg-slate-800/50');
-        btn.classList.add('text-slate-400');
+        // Remove active state classes
+        btn.classList.remove('text-indigo-700', 'bg-indigo-50', 'dark:text-white', 'dark:bg-indigo-900/50');
+        // Add inactive state classes
+        btn.classList.add('text-slate-500', 'dark:text-slate-400');
     });
 
     if (targetTab) targetTab.classList.remove('hidden');
 
     var aBtn = document.getElementById('nav-tab-' + tabName);
     if (aBtn) {
-        aBtn.classList.remove('text-slate-400');
-        aBtn.classList.add('text-white', 'bg-slate-800/50');
+        // Remove inactive state classes
+        aBtn.classList.remove('text-slate-500', 'dark:text-slate-400');
+        // Add active state classes (Indigo in Light mode, White on Dark Blue in Dark mode)
+        aBtn.classList.add('text-indigo-700', 'bg-indigo-50', 'dark:text-white', 'dark:bg-indigo-900/50');
     }
 
     if (window.innerWidth < window.windowWidthBabu && window.isSidebarOpen) {
@@ -461,7 +500,7 @@ window.handleAdminLogin = async function () {
     document.getElementById('btn-login').innerText = "Verifying...";
     try {
         const inputHash = await window.hashPassword(pass);
-        const { data: userData, error } = await supabase1
+        const { data: userData, error } = await window.supabase1
             .from('users')
             .select('*')
             .or(`username.eq.${id},mail_id.eq.${id}`)
@@ -498,7 +537,7 @@ window.handleAdminLogin = async function () {
                 return window.showNotif(errBox, "Access Denied: No Admin Portal roles assigned.", false);
             }
 
-            const { data: perms } = await supabase1
+            const { data: perms } = await window.supabase1
                 .from('sys_role_permissions')
                 .select('page_id, can_edit')
                 .eq('module_name', 'ADMIN')
@@ -526,7 +565,7 @@ window.handleAdminLogin = async function () {
                 allowedTabs: allowedTabs,
                 readOnlyTabs: readOnlyTabs
             };
-            
+
             document.getElementById('btn-login').innerText = "Sign In";
             localStorage.setItem('wowdrops_admin_session_payload', JSON.stringify(window.activeAdminSession));
             window.assertWorkspaceDeployment();
@@ -550,14 +589,14 @@ window.requestOTP = async function () {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiry = new Date(new Date().getTime() + (10 * 60 * 1000)).toISOString();
 
-        const { error } = await supabase1
+        const { error } = await window.supabase1
             .from('users')
             .update({ otp: otp, otp_expiry: expiry })
             .eq('mail_id', mail);
 
         if (error) throw error;
 
-        await fetch(GAS_WEBHOOK_URL, {
+        await fetch(window.GAS_WEBHOOK_URL, {
             method: 'POST',
             body: JSON.stringify({ email: mail, otp: otp }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
@@ -584,7 +623,7 @@ window.confirmPasswordReset = async function () {
 
     document.getElementById('btn-reset').innerText = "Configuring...";
     try {
-        const { data: userData, error } = await supabase1
+        const { data: userData, error } = await window.supabase1
             .from('users')
             .select('otp, otp_expiry')
             .eq('mail_id', email)
@@ -600,7 +639,7 @@ window.confirmPasswordReset = async function () {
         }
 
         const hashedPass = await window.hashPassword(pass);
-        const { error: updateErr } = await supabase1
+        const { error: updateErr } = await window.supabase1
             .from('users')
             .update({ password_hash: hashedPass, otp: null, otp_expiry: null })
             .eq('mail_id', email);
@@ -616,60 +655,109 @@ window.confirmPasswordReset = async function () {
     }
 };
 
-// =====================================
-// GLOBAL INFINITE SCROLL MANAGER
-// =====================================
-window.handleGlobalScroll = function() {
+window.handleGlobalScroll = function () {
     var scrollArea = document.getElementById('scroll-area');
     if (!scrollArea) return;
-    
-    // Check if the user has scrolled to the bottom
+
     if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 100) {
-        
-        // Find exactly which tab is currently visible
         var activeTab = document.querySelector('div[id^="tab-"]:not(.hidden)');
         if (!activeTab) return;
-        
-        // Route the infinite scroll to the correct module's function
+
         if (activeTab.id === 'tab-master-customer' && typeof window.loadMoreCustomers === 'function') {
             if (window.customerDisplayLimit < window.filteredCustomers.length) {
                 window.loadMoreCustomers();
             }
         }
-        // You can easily add future modules here!
-        // else if (activeTab.id === 'tab-sales') window.loadMoreSales();
     }
 };
 
-// =====================================
-// BROWSER BACK / FORWARD BUTTON SUPPORT
-// =====================================
-window.addEventListener('popstate', function(event) {
-    if (!window.activeAdminSession) return; // Ignore if logged out
-    
+window.addEventListener('popstate', function (event) {
+    if (!window.activeAdminSession) return;
     var hashTab = window.location.hash.replace('#', '');
     if (hashTab) {
         var arg = event.state ? event.state.arg : null;
-        window._executeRouting(hashTab, arg); // Route backwards/forwards instantly!
+        var backBtn = document.getElementById('btn-back-dashboard');
+        var brand = document.getElementById('header-brand-area');
+        if (backBtn) backBtn.classList.add('hidden');
+        if (brand) brand.classList.remove('hidden');
+
+        window._executeRouting(hashTab, arg);
     }
 });
 
-// Attach the listener exactly once when the core app boots
-setTimeout(function() {
+setTimeout(function () {
     var mainScrollArea = document.getElementById('scroll-area');
     if (mainScrollArea) {
         mainScrollArea.addEventListener('scroll', window.handleGlobalScroll);
     }
 }, 1000);
 
-window.initAdminAuth = function () {
-    var storedSession = localStorage.getItem('wowdrops_admin_session_payload');
-    if (storedSession) { 
-        window.activeAdminSession = JSON.parse(storedSession); 
-        window.assertWorkspaceDeployment(); 
+// =====================================
+// UI PREFERENCES (THEME & FONT SIZE)
+// =====================================
+window.currentFontSize = localStorage.getItem('wowdrops_fontsize') || 'normal';
+
+window.initUIPreferences = function() {
+    var savedTheme = localStorage.getItem('wowdrops_theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
     }
 
-    var today = new Date(); 
+    var savedFontSize = localStorage.getItem('wowdrops_fontsize') || 'normal';
+    var htmlRoot = document.documentElement;
+    if (savedFontSize === 'large') {
+        htmlRoot.style.fontSize = '18px';
+    } else if (savedFontSize === 'xlarge') {
+        htmlRoot.style.fontSize = '20px';
+    } else {
+        htmlRoot.style.fontSize = '16px'; 
+    }
+};
+
+window.cycleThemeMode = function() {
+    var htmlRoot = document.documentElement; 
+    var isNowDark = htmlRoot.classList.toggle('dark'); 
+    
+    if (isNowDark) {
+        localStorage.setItem('wowdrops_theme', 'dark');
+        if(window.showToast) window.showToast("Dark Mode Enabled", "success");
+    } else {
+        localStorage.setItem('wowdrops_theme', 'light');
+        if(window.showToast) window.showToast("Light Mode Enabled", "success");
+    }
+};
+
+window.cycleFontSize = function() {
+    var htmlRoot = document.documentElement;
+    var current = localStorage.getItem('wowdrops_fontsize') || 'normal';
+    
+    if (current === 'normal') {
+        localStorage.setItem('wowdrops_fontsize', 'large');
+        htmlRoot.style.fontSize = '18px';
+        if(window.showToast) window.showToast("Large Text Enabled", "success");
+    } else if (current === 'large') {
+        localStorage.setItem('wowdrops_fontsize', 'xlarge');
+        htmlRoot.style.fontSize = '20px';
+        if(window.showToast) window.showToast("Extra Large Text Enabled", "success");
+    } else {
+        localStorage.setItem('wowdrops_fontsize', 'normal');
+        htmlRoot.style.fontSize = '16px';
+        if(window.showToast) window.showToast("Normal Text Enabled", "success");
+    }
+};
+
+window.initAdminAuth = function () {
+    window.initUIPreferences(); 
+
+    var storedSession = localStorage.getItem('wowdrops_admin_session_payload');
+    if (storedSession) {
+        window.activeAdminSession = JSON.parse(storedSession);
+        window.assertWorkspaceDeployment();
+    }
+
+    var today = new Date();
     var todayStr = today.toISOString().split('T')[0];
     var monthStr = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, '0');
 
@@ -679,7 +767,7 @@ window.initAdminAuth = function () {
     var elPaysStart = document.getElementById('pays-start'); if (elPaysStart) elPaysStart.value = todayStr;
     var elPaysEnd = document.getElementById('pays-end'); if (elPaysEnd) elPaysEnd.value = todayStr;
 
-    var lastWeek = new Date(); 
+    var lastWeek = new Date();
     lastWeek.setDate(today.getDate() - 7);
     var elLogStart = document.getElementById('log-start'); if (elLogStart) elLogStart.value = lastWeek.toISOString().split('T')[0];
     var elLogEnd = document.getElementById('log-end'); if (elLogEnd) elLogEnd.value = todayStr;
@@ -689,7 +777,7 @@ window.initAdminAuth = function () {
     d.setDate(d.getDate() - 30);
     var elCrmStart = document.getElementById('crm-rep-start'); if (elCrmStart) elCrmStart.value = d.toISOString().split('T')[0];
 
-    window.handleSidebarResize(true); 
+    window.handleSidebarResize(true);
     window.addEventListener('resize', window.handleSidebarResize);
 };
 

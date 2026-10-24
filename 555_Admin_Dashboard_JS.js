@@ -7,21 +7,15 @@ window.switchDashTab = function (tabNum) {
     let contentEl = document.getElementById('dash-content-' + i);
     let btnEl = document.getElementById('btn-dash-tab-' + i);
     if (contentEl) contentEl.classList.add('hidden');
-    if (btnEl) btnEl.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap";
+    if (btnEl) btnEl.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center whitespace-nowrap";
   }
 
   let activeContent = document.getElementById('dash-content-' + tabNum);
   let activeBtn = document.getElementById('btn-dash-tab-' + tabNum);
   if (activeContent) activeContent.classList.remove('hidden');
-  if (activeBtn) activeBtn.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap";
+  if (activeBtn) activeBtn.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 dark:bg-blue-600 text-white shadow-md transition-colors text-center whitespace-nowrap";
+  window.dashboardReturnState = tabNum;
 };
-
-/*window.navigateFromDashboard = function (targetTab, filterArg) {
-  if (typeof window.goToReport === 'function') {
-    window.goToReport(targetTab, filterArg);
-  }
-};
-*/
 
 window.formatDateForInput = function (dateStr) {
   if (!dateStr) return "";
@@ -45,28 +39,34 @@ function formatDisplayDate(dateStr) {
 window.switchDefaulterView = function (viewType) {
   var btnHigh = document.getElementById('btn-def-highest');
   var btnOld = document.getElementById('btn-def-oldest');
-  if (btnHigh) btnHigh.className = "flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black transition " + (viewType === 'highest' ? 'bg-white shadow-sm text-red-700' : 'text-slate-500 hover:text-slate-800');
-  if (btnOld) btnOld.className = "flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black transition " + (viewType === 'oldest' ? 'bg-white shadow-sm text-red-700' : 'text-slate-500 hover:text-slate-800');
+  if (btnHigh) btnHigh.className = "flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black transition-colors " + (viewType === 'highest' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white');
+  if (btnOld) btnOld.className = "flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black transition-colors " + (viewType === 'oldest' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white');
 
   var list = (window.defaultersData && window.defaultersData[viewType]) ? window.defaultersData[viewType] : [];
   var tableHtml = '';
   if (list.length === 0) {
-    tableHtml = "<tr><td colspan='4' class='px-6 py-12 text-center text-slate-400 font-bold text-xl'>No outstanding debts found.</td></tr>";
+    tableHtml = "<tr><td colspan='4' class='px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-bold text-xl transition-colors'>No outstanding debts found.</td></tr>";
   } else {
     for (var i = 0; i < list.length; i++) {
       var c = list[i];
       var waNum = String(c.contact || '').replace(/\D/g, '');
       var actionLinks = "";
       if (c.contact) {
-        actionLinks += "<a href='tel:" + c.contact + "' target='_top' class='inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-sm font-black border-2 border-blue-200 shadow-sm mr-2'>Call</a>";
-        actionLinks += "<a href='https://wa.me/" + waNum + "' target='_blank' class='inline-block bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl text-sm font-black border-2 border-emerald-200 shadow-sm'>WA</a>";
+        actionLinks += "<a href='tel:" + c.contact + "' target='_top' class='inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-xl text-sm font-black border-2 border-blue-200 dark:border-blue-800 shadow-sm mr-2 transition-colors'>Call</a>";
+        actionLinks += "<a href='https://wa.me/" + waNum + "' target='_blank' class='inline-block bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm font-black border-2 border-emerald-200 dark:border-emerald-800 shadow-sm transition-colors'>WA</a>";
       } else { 
-        actionLinks = "<span class='text-sm text-slate-400 font-bold'>No Number</span>"; 
+        actionLinks = "<span class='text-sm text-slate-400 dark:text-slate-500 font-bold transition-colors'>No Number</span>"; 
       }
-      tableHtml += "<tr class='hover:bg-slate-50 transition border-b-4 border-slate-100'>" +
-        "<td class='px-6 py-5 font-black text-slate-800 text-xl md:text-2xl'>" + (c.name || 'Unknown') + "</td>" +
-        "<td class='px-6 py-5 text-sm md:text-lg font-bold text-slate-500 uppercase'>" + (c.apt || '') + (c.blk ? " - " + c.blk : "") + "</td>" +
-        "<td class='px-6 py-5 text-right font-black text-red-600 text-2xl md:text-3xl'>₹" + (Number(c.due || 0)).toLocaleString('en-IN') + "</td>" +
+      
+      let cpnBadgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${c.cpn || ''}')">
+        ${c.cpn || 'UNKNOWN'}
+        <svg class="w-3.5 h-3.5 text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+      </span>`;
+
+      tableHtml += "<tr class='hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b-4 border-slate-100 dark:border-slate-700/50'>" +
+        "<td class='px-6 py-5'><p class='font-black text-slate-800 dark:text-white text-xl md:text-2xl'>" + (c.name || 'Unknown') + "</p>" + (c.cpn ? cpnBadgeHtml : "") + "</td>" +
+        "<td class='px-6 py-5 text-sm md:text-lg font-bold text-slate-500 dark:text-slate-400 uppercase'>" + (c.apt || '') + (c.blk ? " - " + c.blk : "") + "</td>" +
+        "<td class='px-6 py-5 text-right font-black text-red-600 dark:text-red-400 text-2xl md:text-3xl transition-colors'>₹" + (Number(c.due || 0)).toLocaleString('en-IN') + "</td>" +
         "<td class='px-6 py-5 text-center'>" + actionLinks + "</td>" +
         "</tr>";
     }
@@ -78,6 +78,8 @@ window.switchDefaulterView = function (viewType) {
 // ==========================================
 // 2. SUPABASE METRICS ENGINE
 // ==========================================
+window.activeDashTimerInterval = null;
+
 window.loadDashboardData = async function (forceRefresh) {
   var startTime = performance.now();
   var loadBadge = document.getElementById('dash-load-time');
@@ -96,6 +98,12 @@ window.loadDashboardData = async function (forceRefresh) {
   if (content2) content2.classList.add('hidden');
   if (content3) content3.classList.add('hidden');
 
+  if (window.activeDashTimerInterval) clearInterval(window.activeDashTimerInterval);
+  window.activeDashTimerInterval = setInterval(function() {
+      var curr = ((performance.now() - startTime) / 1000).toFixed(2);
+      if (loadingEl) loadingEl.innerText = "Querying Supabase... (" + curr + "s)";
+  }, 100);
+
   try {
     const supa = window.supabase1;
     if (!supa) throw new Error("window.supabase1 is not initialized. Please check supabase_config.js.");
@@ -103,7 +111,6 @@ window.loadDashboardData = async function (forceRefresh) {
     var now = new Date();
     var todayStartStr = now.toISOString().split('T')[0];
 
-    // Calculate strict 30-day window string for PostgreSQL comparison
     var thirtyDaysAgoDate = new Date();
     thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
     var thirtyDaysAgoStr = thirtyDaysAgoDate.toISOString();
@@ -113,12 +120,11 @@ window.loadDashboardData = async function (forceRefresh) {
     ] = await Promise.all([
       supa.from('orders').select('cpn_no, ord_d, ord_e, rate, amount, pending_qty, replace_qty'),
       supa.from('setup').select('key, value').in('key', ['PER_DAY_COUNT', 'RESTRICT_QTY', 'MIN_ENTRY_QTY', 'SUPPLY_STATUS']),
-      // NEW: Added raw fallback columns act_d_vj, act_d_nvj, default_rate, etc.
       supa.from('deliveries').select('cpn_no,act_d,act_e,ord_d,rate,default_rate,delivery_entered_at,door_delivery_link,status,door_qc,act_d_vj,act_d_nvj,act_e_vj,act_e_nvj'),
       supa.from('sales').select('cpn_no, del_date, act_d, act_e, amount').lte('del_date', todayStartStr).order('del_date', { ascending: false }).limit(1000),
       supa.from('pays').select('cpn_no, payment_date, amount').lte('payment_date', todayStartStr).order('payment_date', { ascending: false }).limit(1000),
       supa.from('v_customer_outstanding').select('*'),
-      supa.from('ac_customers').select('final_status, pay_type, can_deposit, default_rate, created_at, inactive_reason, waiver_request, overdue_waiver'),
+      supa.from('ac_customers').select('cpn_no, final_status, pay_type, can_deposit, default_rate, created_at, inactive_reason, waiver_request, overdue_waiver'),
       supa.from('crm_dormant_call_logs').select('previous_customer_status, new_customer_status, reason_for_dormancy').gte('created_at', thirtyDaysAgoStr)
     ]);
 
@@ -176,7 +182,6 @@ window.loadDashboardData = async function (forceRefresh) {
       if (!d.cpn_no) return;
       delCustCount++;
       
-      // Fallback: If act_d is null, sum the raw driver inputs!
       var actD = Number(d.act_d) || (Number(d.act_d_vj || 0) + Number(d.act_d_nvj || 0));
       var actE = Number(d.act_e) || (Number(d.act_e_vj || 0) + Number(d.act_e_nvj || 0));
       var rate = Number(d.rate) || Number(d.default_rate) || 0;
@@ -189,7 +194,6 @@ window.loadDashboardData = async function (forceRefresh) {
       delOrdD += Number(d.ord_d || 0);
       delSalesAmt += rowAmt;
 
-      // Ensure robust boolean/string checks for door verification
       var isDone = !!d.delivery_entered_at || !!d.door_delivery_link || String(d.status || '').toUpperCase() === 'DELIVERED' || String(d.door_qc || '').toUpperCase() === 'PASS' || String(d.door_qc || '').toUpperCase() === 'TRUE' || d.door_qc === true;
       
       if (isDone) {
@@ -304,6 +308,7 @@ window.loadDashboardData = async function (forceRefresh) {
 
       if (due > 0) {
         customers.push({
+          cpn: cCpn,
           name: r.name || r.poc1 || r.customer_name || cCpn || "Unknown",
           contact: r.contact || r.con1 || r.phone || "",
           apt: r.apartment || r.block || "",
@@ -409,31 +414,29 @@ window.loadDashboardData = async function (forceRefresh) {
        }
     });
 
-    // Dashboard 3 Rendering Helpers (With Click Routing!)
     function bRow(lbl, typeKey, act, rnd, ina) {
-       return '<div><p class="text-[11px] font-black text-slate-500 uppercase mb-1.5 tracking-wider">' + lbl + '</p>' +
+       return '<div><p class="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1.5 tracking-wider transition-colors">' + lbl + '</p>' +
               '<div class="flex gap-2">' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|' + typeKey + '\')" class="bg-emerald-50 border border-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition active:scale-95">ACT: ' + act + '</button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|' + typeKey + '\')" class="bg-blue-50 border border-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition active:scale-95">RND: ' + rnd + '</button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|' + typeKey + '\')" class="bg-rose-50 border border-rose-100 hover:bg-rose-200 text-rose-700 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition active:scale-95">INA: ' + ina + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|' + typeKey + '\', \'Operations & Ledger\')" class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition-colors active:scale-95">ACT: ' + act + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|' + typeKey + '\', \'Operations & Ledger\')" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition-colors active:scale-95">RND: ' + rnd + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|' + typeKey + '\', \'Operations & Ledger\')" class="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 hover:bg-rose-200 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition-colors active:scale-95">INA: ' + ina + '</button>' +
               '</div></div>';
     }
 
     function bAdv(lbl, data) {
-       return '<div><p class="text-[11px] font-black text-slate-500 uppercase mb-1.5 tracking-wider">' + lbl + '</p>' +
+       return '<div><p class="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1.5 tracking-wider transition-colors">' + lbl + '</p>' +
               '<div class="flex flex-col gap-1.5">' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|ADVANCE\')" class="flex justify-between items-center bg-emerald-50 hover:bg-emerald-200 border border-emerald-100 px-2 py-1 rounded shadow-sm text-[11px] font-black text-emerald-800 transition active:scale-95"><span>ACT (' + data['ACTIVE'].c + ')</span> <span>₹' + data['ACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|ADVANCE\')" class="flex justify-between items-center bg-blue-50 hover:bg-blue-200 border border-blue-100 px-2 py-1 rounded shadow-sm text-[11px] font-black text-blue-800 transition active:scale-95"><span>RND (' + data['ACTIVE RANDOM'].c + ')</span> <span>₹' + data['ACTIVE RANDOM'].s.toLocaleString('en-IN') + '</span></button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|ADVANCE\')" class="flex justify-between items-center bg-rose-50 hover:bg-rose-200 border border-rose-100 px-2 py-1 rounded shadow-sm text-[11px] font-black text-rose-800 transition active:scale-95"><span>INA (' + data['INACTIVE'].c + ')</span> <span>₹' + data['INACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 px-2 py-1 rounded shadow-sm text-[11px] font-black text-emerald-800 dark:text-emerald-400 transition-colors active:scale-95"><span>ACT (' + data['ACTIVE'].c + ')</span> <span>₹' + data['ACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 border border-blue-100 dark:border-blue-800 px-2 py-1 rounded shadow-sm text-[11px] font-black text-blue-800 dark:text-blue-400 transition-colors active:scale-95"><span>RND (' + data['ACTIVE RANDOM'].c + ')</span> <span>₹' + data['ACTIVE RANDOM'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 border border-rose-100 dark:border-rose-800 px-2 py-1 rounded shadow-sm text-[11px] font-black text-rose-800 dark:text-rose-400 transition-colors active:scale-95"><span>INA (' + data['INACTIVE'].c + ')</span> <span>₹' + data['INACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
               '</div></div>';
     }
 
-    // Injecting HTML for Overview Cards
     var eMaster = document.getElementById('ui-dash-master-status');
     if(eMaster) eMaster.innerHTML = 
-       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|CUSTOMER_LIST\')" class="w-full flex justify-between items-center p-3 bg-emerald-50 hover:bg-emerald-200 rounded-xl border border-emerald-200 shadow-sm transition active:scale-95"><span class="font-black text-emerald-700 uppercase tracking-widest text-sm">ACTIVE</span> <span class="text-2xl font-black text-emerald-900">' + masterStatus['ACTIVE'] + '</span></button>' +
-       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|CUSTOMER_LIST\')" class="w-full flex justify-between items-center p-3 bg-blue-50 hover:bg-blue-200 rounded-xl border border-blue-200 shadow-sm transition active:scale-95"><span class="font-black text-blue-700 uppercase tracking-widest text-sm">ACTIVE RANDOM</span> <span class="text-2xl font-black text-blue-900">' + masterStatus['ACTIVE RANDOM'] + '</span></button>' +
-       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|CUSTOMER_LIST\')" class="w-full flex justify-between items-center p-3 bg-rose-50 hover:bg-rose-200 rounded-xl border border-rose-200 shadow-sm transition active:scale-95"><span class="font-black text-rose-700 uppercase tracking-widest text-sm">INACTIVE</span> <span class="text-2xl font-black text-rose-900">' + masterStatus['INACTIVE'] + '</span></button>';
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-sm">ACTIVE</span> <span class="text-2xl font-black text-emerald-900 dark:text-emerald-300">' + masterStatus['ACTIVE'] + '</span></button>' +
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest text-sm">ACTIVE RANDOM</span> <span class="text-2xl font-black text-blue-900 dark:text-blue-300">' + masterStatus['ACTIVE RANDOM'] + '</span></button>' +
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 rounded-xl border border-rose-200 dark:border-rose-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest text-sm">INACTIVE</span> <span class="text-2xl font-black text-rose-900 dark:text-rose-300">' + masterStatus['INACTIVE'] + '</span></button>';
 
     var eJoin = document.getElementById('ui-dash-joined');
     if(eJoin) eJoin.innerHTML = bRow('New Onboarding (30 Days)', 'CUSTOMER_JOINED_LAST30DAYS', joined30['ACTIVE'], joined30['ACTIVE RANDOM'], joined30['INACTIVE']);
@@ -454,11 +457,11 @@ window.loadDashboardData = async function (forceRefresh) {
 
     var eChurn = document.getElementById('ui-dash-churn');
     if(eChurn) {
-       var cHtml = '<div class="flex justify-between items-center mb-3"><span class="text-[11px] font-black text-rose-600 uppercase tracking-widest">Total Churned</span> <button onclick="window.navigateFromDashboard(\'reports-customer\', \'ALL|CHURN_30_DAYS\')" class="bg-rose-600 hover:bg-rose-700 transition border border-rose-700 text-white px-2.5 py-1 rounded-md text-[11px] font-black shadow-inner active:scale-95">' + totalChurn + ' &rarr;</button></div>';
-       if(totalChurn === 0) cHtml += '<p class="text-sm font-bold text-slate-400">No churn detected in last 30 days.</p>';
+       var cHtml = '<div class="flex justify-between items-center mb-3 transition-colors"><span class="text-[11px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Total Churned</span> <button onclick="window.navigateFromDashboard(\'reports-customer\', \'ALL|CHURN_30_DAYS\', \'Operations & Ledger\')" class="bg-rose-600 dark:bg-rose-700 hover:bg-rose-700 dark:hover:bg-rose-600 transition-colors border border-rose-700 dark:border-rose-800 text-white px-2.5 py-1 rounded-md text-[11px] font-black shadow-inner active:scale-95">' + totalChurn + ' &rarr;</button></div>';
+       if(totalChurn === 0) cHtml += '<p class="text-sm font-bold text-slate-400 dark:text-slate-500 transition-colors">No churn detected in last 30 days.</p>';
        else {
           Object.keys(churnReasons).sort(function(a,b){return churnReasons[b]-churnReasons[a]}).forEach(function(rsn) {
-             cHtml += '<div class="flex justify-between items-center bg-rose-50 px-3 py-2.5 rounded-xl border border-rose-100 mb-2 shadow-sm"><span class="text-[11px] font-bold text-rose-700 truncate mr-2 uppercase tracking-wide">' + rsn + '</span><span class="text-sm font-black text-rose-900">' + churnReasons[rsn] + '</span></div>';
+             cHtml += '<div class="flex justify-between items-center bg-rose-50 dark:bg-rose-900/30 px-3 py-2.5 rounded-xl border border-rose-100 dark:border-rose-800 mb-2 shadow-sm transition-colors"><span class="text-[11px] font-bold text-rose-700 dark:text-rose-400 truncate mr-2 uppercase tracking-wide">' + rsn + '</span><span class="text-sm font-black text-rose-900 dark:text-rose-300">' + churnReasons[rsn] + '</span></div>';
           });
        }
        eChurn.innerHTML = cHtml;
@@ -467,10 +470,10 @@ window.loadDashboardData = async function (forceRefresh) {
     var eIna = document.getElementById('ui-dash-ina-reasons');
     if(eIna) {
        var iHtml = '';
-       if(Object.keys(inactiveReasons).length === 0) iHtml = '<p class="text-sm font-bold text-slate-400">No inactive reasons logged.</p>';
+       if(Object.keys(inactiveReasons).length === 0) iHtml = '<p class="text-sm font-bold text-slate-400 dark:text-slate-500 transition-colors">No inactive reasons logged.</p>';
        else {
           Object.keys(inactiveReasons).sort(function(a,b){return inactiveReasons[b]-inactiveReasons[a]}).forEach(function(rsn) {
-             iHtml += '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|INACTIVE_BY_REASON\')" class="w-full flex justify-between items-center bg-slate-50 hover:bg-slate-200 transition active:scale-95 px-3 py-2.5 rounded-xl border border-slate-200 shadow-sm"><span class="text-[10px] md:text-[11px] font-bold text-slate-600 truncate mr-2 uppercase tracking-wide" title="' + rsn + '">' + rsn + '</span><span class="text-sm font-black text-slate-800">' + inactiveReasons[rsn] + '</span></button>';
+             iHtml += '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|INACTIVE_BY_REASON\', \'Operations & Ledger\')" class="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors active:scale-95 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"><span class="text-[10px] md:text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate mr-2 uppercase tracking-wide" title="' + rsn + '">' + rsn + '</span><span class="text-sm font-black text-slate-800 dark:text-white">' + inactiveReasons[rsn] + '</span></button>';
           });
        }
        eIna.innerHTML = iHtml;
@@ -479,8 +482,9 @@ window.loadDashboardData = async function (forceRefresh) {
     // ----------------------------------------------------
     // WRAP UP
     // ----------------------------------------------------
+    clearInterval(window.activeDashTimerInterval);
     if (loadingEl) loadingEl.classList.add('hidden');
-    window.switchDashTab(window.dashboardReturnState || 1); // Respect the saved tab state!
+    window.switchDashTab(window.dashboardReturnState || 1); 
 
     var endTime = performance.now();
     var timeTaken = ((endTime - startTime) / 1000).toFixed(2);
@@ -491,10 +495,13 @@ window.loadDashboardData = async function (forceRefresh) {
 
   } catch (err) {
     console.error("Dashboard Fatal Error:", err);
-    if (loadingEl) loadingEl.innerText = "Error: " + err.message;
+    clearInterval(window.activeDashTimerInterval);
+    if (loadingEl) loadingEl.innerText = "Error Loading Dashboard. Please Refresh.";
+    if (window.showToast) window.showToast("Dashboard Error: " + err.message, "error");
   }
 };
 
 window.tabActions['dashboard'] = function () { 
+    window.loadDashboardData(true);
     if (typeof window.switchDashTab === 'function') window.switchDashTab(window.dashboardReturnState || 1);
 };

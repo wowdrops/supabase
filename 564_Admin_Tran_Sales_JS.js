@@ -10,12 +10,12 @@ window.escapeHTML = function (str) {
 };
 
 window.handleServerError = function (error) {
-  window.showToast("Connection Error: " + (error.message || "Failed to communicate with server."), "error");
+  if (window.showToast) window.showToast("Connection Error: " + (error.message || "Failed to communicate with server."), "error");
   var btn = document.getElementById('sc-btn-save');
-  if (btn) { btn.innerText = "Save Sales Record"; btn.disabled = false; }
+  if (btn) { btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Save Sales Record'; btn.disabled = false; }
   var tbody = document.getElementById('sales-crud-tbody');
   if (tbody && tbody.innerHTML.includes("Loading")) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-rose-400 font-bold">Failed to load data. Please retry.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-rose-500 font-bold uppercase tracking-widest">Failed to load data. Please retry.</td></tr>';
   }
 };
 
@@ -36,10 +36,10 @@ window.loadSalesCrudData = async function () {
   var start = document.getElementById('sc-flt-start').value;
   var end = document.getElementById('sc-flt-end').value;
   var tbody = document.getElementById('sales-crud-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-indigo-400 animate-pulse font-bold">Loading Sales Records...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-indigo-500 animate-pulse font-black uppercase tracking-widest">Loading Sales Records...</td></tr>';
 
   try {
-    const { data, error } = await supabase1
+    const { data, error } = await window.supabase1
       .from('sales')
       .select('*')
       .gte('del_date', start)
@@ -49,7 +49,11 @@ window.loadSalesCrudData = async function () {
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-slate-500 font-bold">No sales records found for this date range.</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-slate-400 font-bold uppercase tracking-widest">No sales records found for this date range.</td></tr>';
+      
+      var resetEls = ['sum-records', 'sum-act-d', 'sum-act-e', 'sum-amount'];
+      resetEls.forEach(id => { var el = document.getElementById(id); if(el) el.innerText = "0"; });
+      
       return;
     }
 
@@ -70,7 +74,6 @@ window.loadSalesCrudData = async function () {
       nvjEmp: Number(row.act_e_nvj) || 0
     }));
 
-    // NEW: Calculate the totals and push them to the sticky grid header
     var totalActD = 0;
     var totalActE = 0;
     var totalAmount = 0;
@@ -88,20 +91,27 @@ window.loadSalesCrudData = async function () {
 
     var html = '';
     window.currentSalesRecords.forEach(function (r, index) {
-      html += `<tr class="hover:bg-slate-800/40 transition">
-                <td class="p-4"><button onclick="window.openCustomer360('${r.cpn}')" class="text-indigo-400 font-black hover:underline">${r.cpn}</button></td>
-                <td class="p-4 text-slate-300">${r.delDate}</td>
-                <td class="p-4 text-center font-black text-indigo-300">${r.actD} <span class="text-[10px] font-normal text-slate-500">(VJ:${r.vjFull}/NVJ:${r.nvjFull})</span></td>
-                <td class="p-4 text-center font-black text-amber-300">${r.actE} <span class="text-[10px] font-normal text-slate-500">(VJ:${r.vjEmp}/NVJ:${r.nvjEmp})</span></td>
-                <td class="p-4 text-right text-slate-300">₹${r.rate}</td>
-                <td class="p-4 text-right text-emerald-400 font-black text-base">₹${r.amount}</td>
-                <td class="p-4 text-xs text-slate-400 max-w-[200px] truncate">${r.delComment || '-'}</td>
-                <td class="p-4 text-center space-x-2">
-                <button onclick="window.editSalesRecord(${index})" class="text-indigo-400 hover:text-indigo-300 p-1 bg-slate-800 rounded-lg">✏️</button>
-                <button onclick="window.deleteSalesRecord('${window.escapeHTML(r.uniqueNo)}')" class="text-rose-400 hover:text-rose-300 p-1 bg-slate-800 rounded-lg">🗑️</button>
+      var cleanCpn = String(r.cpn || '').trim().toUpperCase();
+      
+      html += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-4 pl-6">
+                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${cleanCpn}')">
+                      <span class="font-black tracking-widest text-xs">${cleanCpn}</span>
+                      <svg class="w-3 h-3 text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                   </span>
+                </td>
+                <td class="p-4 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-widest">${r.delDate}</td>
+                <td class="p-4 text-center font-black text-indigo-600 dark:text-indigo-300 text-base">${r.actD} <span class="text-[10px] font-bold text-slate-400 block -mt-1 tracking-widest uppercase">VJ:${r.vjFull} / NVJ:${r.nvjFull}</span></td>
+                <td class="p-4 text-center font-black text-amber-600 dark:text-amber-400 text-base">${r.actE} <span class="text-[10px] font-bold text-slate-400 block -mt-1 tracking-widest uppercase">VJ:${r.vjEmp} / NVJ:${r.nvjEmp}</span></td>
+                <td class="p-4 text-right text-slate-600 dark:text-slate-300 font-black text-xs">₹${r.rate}</td>
+                <td class="p-4 text-right text-emerald-600 dark:text-emerald-400 font-black text-lg drop-shadow-sm">₹${r.amount}</td>
+                <td class="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 max-w-[200px] truncate" title="${r.delComment}">${r.delComment || '-'}</td>
+                <td class="p-4 text-center space-x-1.5">
+                  <button onclick="window.editSalesRecord(${index})" class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-200 hover:shadow-sm p-1.5 rounded-lg transition outline-none" title="Edit Record"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                  <button onclick="window.deleteSalesRecord('${window.escapeHTML(r.uniqueNo)}')" class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-rose-200 hover:shadow-sm p-1.5 rounded-lg transition outline-none" title="Delete Record"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 </td></tr>`;
     });
-    tbody.innerHTML = html;
+    if (tbody) tbody.innerHTML = html;
 
   } catch (err) {
     window.handleServerError(err);
@@ -109,7 +119,6 @@ window.loadSalesCrudData = async function () {
 };
 
 window.openSalesModal = function () {
-  // Note: To ensure perfect CSS absolute positioning on the screen, attach the modal to the body if not already
   var modal = document.getElementById('sales-crud-modal');
   if (modal && modal.parentNode !== document.body) {
     document.body.appendChild(modal);
@@ -129,10 +138,7 @@ window.openSalesModal = function () {
   document.getElementById('sales-modal-title').innerText = "New Sales Record";
   window.calcSalesAmt();
   modal.classList.remove('hidden');
-};
-
-window.closeSalesModal = function () {
-  document.getElementById('sales-crud-modal').classList.add('hidden');
+  if(typeof window.toggleScrollLock === 'function') window.toggleScrollLock(true);
 };
 
 window.calcSalesAmt = function () {
@@ -146,7 +152,7 @@ window.calcSalesAmt = function () {
 window.fetchCpnDefaultRate = async function (cpn) {
   if (!cpn) return;
   try {
-    const { data, error } = await supabase1
+    const { data, error } = await window.supabase1
       .from('ac_customers')
       .select('default_rate')
       .eq('cpn_no', cpn.toUpperCase())
@@ -170,7 +176,7 @@ window.editSalesRecord = function (index) {
 
   var r = window.currentSalesRecords[index];
   if (!r) {
-    window.showToast("Unable to find record details. Please refresh the data.", "error");
+    if (window.showToast) window.showToast("Unable to find record details. Please refresh the data.", "error");
     return;
   }
 
@@ -187,14 +193,18 @@ window.editSalesRecord = function (index) {
   document.getElementById('sc-doorLink').value = r.doorLink;
   window.calcSalesAmt();
   modal.classList.remove('hidden');
+  if(typeof window.toggleScrollLock === 'function') window.toggleScrollLock(true);
 };
 
 window.submitSalesCrud = async function () {
   var cpn = document.getElementById('sc-cpn').value.trim().toUpperCase();
-  if (!cpn) return window.showToast("CPNNO is required to save.", "warning");
+  if (!cpn) {
+      if (window.showToast) window.showToast("CPNNO is required to save.", "warning");
+      return;
+  }
 
   var btn = document.getElementById('sc-btn-save');
-  btn.innerText = "Saving...";
+  btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...'; 
   btn.disabled = true;
 
   var uniqueNo = document.getElementById('sc-uniqueNo').value;
@@ -229,9 +239,9 @@ window.submitSalesCrud = async function () {
 
   try {
     if (uniqueNo) {
-      const { error } = await supabase1.from('sales').update(payload).eq('unique_no', uniqueNo);
+      const { error } = await window.supabase1.from('sales').update(payload).eq('unique_no', uniqueNo);
       if (error) throw error;
-      window.showToast("Sales record updated successfully.", "success");
+      if (window.showToast) window.showToast("Sales record updated successfully.", "success");
     } else {
       var timeStamp = new Date();
       var newUniqueNo = "SALES_" + timeStamp.getFullYear() + String(timeStamp.getMonth() + 1).padStart(2, '0') + String(timeStamp.getDate()).padStart(2, '0') + timeStamp.getHours() + timeStamp.getMinutes() + timeStamp.getSeconds() + "_0_" + Math.random().toString().replace(".", "_");
@@ -240,17 +250,19 @@ window.submitSalesCrud = async function () {
       payload.order_entered_at = payload.delivery_entered_at;
       payload.order_entered_by = currentUser;
 
-      const { error } = await supabase1.from('sales').insert([payload]);
+      const { error } = await window.supabase1.from('sales').insert([payload]);
       if (error) throw error;
-      window.showToast("New Sales entry created successfully.", "success");
+      if (window.showToast) window.showToast("New Sales entry created successfully.", "success");
     }
 
-    window.closeSalesModal();
+    if(typeof window.closeModal === 'function') window.closeModal('sales-crud-modal');
+    else document.getElementById('sales-crud-modal').classList.add('hidden');
+    
     window.loadSalesCrudData();
   } catch (err) {
-    window.showToast("Backend Error: " + err.message, "error");
+    if (window.showToast) window.showToast("Backend Error: " + err.message, "error");
   } finally {
-    btn.innerText = "Save Sales Record";
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Save Sales Record';
     btn.disabled = false;
   }
 };
@@ -259,66 +271,20 @@ window.deleteSalesRecord = async function (uniqueNo) {
   if (!confirm("Are you sure you want to delete this sales entry?")) return;
 
   try {
-    const { error } = await supabase1.from('sales').delete().eq('unique_no', uniqueNo);
+    const { error } = await window.supabase1.from('sales').delete().eq('unique_no', uniqueNo);
     if (error) throw error;
 
     window.loadSalesCrudData();
-    window.showToast("Record deleted successfully.", "success");
+    if (window.showToast) window.showToast("Record deleted successfully.", "success");
   } catch (err) {
-    window.showToast("Delete failed: " + err.message, "error");
+    if (window.showToast) window.showToast("Delete failed: " + err.message, "error");
   }
 };
 
-window.showToast = function (message, type = 'success') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-
-  const toast = document.createElement('div');
-
-  let borderColor = 'border-slate-700';
-  let textColor = 'text-white';
-  let icon = 'ℹ️';
-
-  if (type === 'success') {
-    borderColor = 'border-emerald-500/50';
-    textColor = 'text-emerald-400';
-    icon = '✅';
-  } else if (type === 'error') {
-    borderColor = 'border-rose-500/50';
-    textColor = 'text-rose-400';
-    icon = '🚨';
-  } else if (type === 'warning') {
-    borderColor = 'border-amber-500/50';
-    textColor = 'text-amber-400';
-    icon = '⚠️';
-  }
-
-  toast.className = `flex items-center gap-3 px-5 py-3.5 bg-slate-900 border ${borderColor} rounded-xl shadow-2xl transform transition-all duration-300 translate-y-10 opacity-0 pointer-events-auto backdrop-blur-md`;
-
-  toast.innerHTML = `
-      <span class="text-xl">${icon}</span>
-      <span class="text-sm font-bold tracking-wide ${textColor}">${message}</span>
-    `;
-
-  container.appendChild(toast);
-
-  setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
-  setTimeout(() => {
-    toast.classList.add('translate-y-10', 'opacity-0');
-    setTimeout(() => { toast.remove(); }, 300);
-  }, 3500);
-};
-
-// Triggered dynamically when the router opens the Sales tab
 window.tabActions['tran-sales-crud'] = function () {
   var startEl = document.getElementById('sc-flt-start');
-  var endEl = document.getElementById('sc-flt-end');
-
-  // If the date boxes are empty, fill them with default dates first
   if (startEl && !startEl.value) {
     window.initSalesCrudDates();
   }
-
-  // Now fetch the data safely!
   window.loadSalesCrudData();
 };

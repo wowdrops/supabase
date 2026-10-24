@@ -72,6 +72,7 @@ async function handleLogin() {
         email: data.mail_id || "",
         whatsapp: data.con2 || "",
         defaultRate: Number(data.default_rate) || 0,
+        apartment: data.apartment || "",
         block: data.block || "",
         door: data.door || "",
         maxClientD: Number(data.maximum_ord_d) || 9999

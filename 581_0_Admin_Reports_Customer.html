@@ -1,30 +1,30 @@
 <!-- 5810_Admin_Reports_Customer.html -->
 <div id="tab-reports-customer" class="hidden fade-in space-y-6 pb-12">
   
-  <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+  <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
       <div>
-        <h2 class="text-3xl font-black text-slate-800 tracking-tight uppercase">Customer Analytics</h2>
-        <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Operational & Financial Audits</p>
+        <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Customer Analytics</h2>
+        <p class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Operational & Financial Audits</p>
       </div>
-      <div class="flex gap-2">
-        <button onclick="window.exportCustomerReportCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition text-sm tracking-widest uppercase">CSV Export</button>
-        <button onclick="window.exportCustomerReportPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow transition text-sm tracking-widest uppercase">PDF Export</button>
+      <div class="flex gap-2 w-full md:w-auto">
+        <button onclick="window.exportCustomerReportCSV()" class="flex-1 md:flex-none px-4 py-2 bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold rounded-xl shadow transition-colors text-sm tracking-widest uppercase">CSV Export</button>
+        <button onclick="window.exportCustomerReportPDF()" class="flex-1 md:flex-none px-4 py-2 bg-rose-600 dark:bg-rose-700 hover:bg-rose-700 dark:hover:bg-rose-600 text-white font-bold rounded-xl shadow transition-colors text-sm tracking-widest uppercase">PDF Export</button>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700/50 transition-colors">
       <div>
-        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Master Status Filter</label>
-        <select id="rpt-cust-status" onchange="window.generateCustomerReport()" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-indigo-500 transition">
+        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Master Status Filter</label>
+        <select id="rpt-cust-status" onchange="window.generateCustomerReport()" class="w-full p-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500 dark:focus:border-indigo-400 color-scheme-dark transition-colors">
           <option value="ALL">ALL STATUSES</option>
           <!-- Injected by JS -->
         </select>
       </div>
       <div>
-        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Report Metric (Filter)</label>
-        <select id="rpt-cust-type" onchange="window.generateCustomerReport()" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-indigo-500 transition">
+        <label class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Report Metric (Filter)</label>
+        <select id="rpt-cust-type" onchange="window.generateCustomerReport()" class="w-full p-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500 dark:focus:border-indigo-400 color-scheme-dark transition-colors">
           <option value="ADVANCE">Financial: Active Advance / Deposit Holders</option>
           <option value="NO_ADVANCE">Financial: Zero Advance / No Deposit Paid</option>
           <option value="PAY_CASH">Financial: Cash Collection Customers</option>
@@ -49,19 +49,19 @@
   </div>
 
   <!-- Dynamic KPI Cards -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="rpt-cust-kpis">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 transition-colors" id="rpt-cust-kpis">
     <!-- Injected dynamically by JS -->
   </div>
 
   <!-- Data Table -->
-  <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-    <div class="overflow-x-auto" id="rpt-cust-table-container">
+  <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+    <div class="overflow-x-auto hide-scrollbar" id="rpt-cust-table-container">
       <table class="w-full whitespace-nowrap">
-        <thead class="bg-slate-800 text-white sticky top-0 z-10" id="rpt-cust-thead">
+        <thead class="bg-slate-800 text-white sticky top-0 z-10 transition-colors" id="rpt-cust-thead">
           <!-- Injected dynamically by JS -->
         </thead>
-        <tbody id="rpt-cust-tbody" class="divide-y divide-slate-100">
-          <tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold text-2xl animate-pulse">Select filters to generate report...</td></tr>
+        <tbody id="rpt-cust-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900 transition-colors">
+          <tr><td colspan="6" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-bold text-2xl animate-pulse">Select filters to generate report...</td></tr>
         </tbody>
       </table>
     </div>

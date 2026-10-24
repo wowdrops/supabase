@@ -1,12 +1,12 @@
 <div id="tab-pays" class="hidden space-y-4 fade-in pb-20 relative">
   
   <!-- STICKY HEADER WITH TIMER & COLLAPSE TOGGLE -->
-  <div class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur border-b-4 border-emerald-200 pt-2 pb-4 shadow-sm">
+  <div class="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur border-b-4 border-emerald-200 dark:border-emerald-800 pt-2 pb-4 shadow-sm transition-colors">
     <div class="flex justify-between items-center px-2">
-      <h2 class="text-xl md:text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-3">
+      <h2 class="text-xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase flex items-center gap-3">
         Payments <span class="hidden md:inline">Received</span>
         <span id="pays-live-timer" class="hidden"></span>
-        <button onclick="window.togglePaysHeader()" class="text-slate-500 hover:text-slate-800 transition p-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-inner outline-none ml-auto">
+        <button onclick="window.togglePaysHeader()" class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg shadow-inner outline-none ml-auto">
           <svg id="pays-header-icon" class="w-5 h-5 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
         </button>
       </h2>
@@ -14,20 +14,20 @@
 
     <!-- COLLAPSIBLE FILTER PANEL -->
     <div id="pays-header-collapsible" class="transition-all duration-300 origin-top mt-4 px-2">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-3">
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col gap-3 transition-colors">
         <div class="flex flex-col md:flex-row gap-3">
           <!-- BACKEND FETCH LAYER -->
-          <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200 w-full md:w-auto shrink-0">
-            <input type="date" id="pays-start" class="bg-transparent border-none text-slate-700 text-sm font-bold outline-none focus:ring-0">
-            <span class="font-bold text-slate-400">TO</span>
-            <input type="date" id="pays-end" class="bg-transparent border-none text-slate-700 text-sm font-bold outline-none focus:ring-0">
-            <input type="text" id="target-pays-cpn" placeholder="Target CPN (Opt)" class="bg-white border border-slate-200 text-slate-700 text-sm font-bold outline-none focus:border-emerald-500 rounded-lg px-3 py-1.5 w-36 uppercase shadow-inner placeholder:normal-case transition-all">
-            <button onclick="window.loadPaysData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-black text-sm shadow transition tracking-widest uppercase">Fetch</button>
+          <div class="flex flex-wrap items-center gap-2 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700 w-full md:w-auto shrink-0 transition-colors">
+            <input type="date" id="pays-start" class="bg-transparent border-none text-slate-700 dark:text-white text-sm font-bold outline-none focus:ring-0 color-scheme-dark">
+            <span class="font-bold text-slate-400 dark:text-slate-500">TO</span>
+            <input type="date" id="pays-end" class="bg-transparent border-none text-slate-700 dark:text-white text-sm font-bold outline-none focus:ring-0 color-scheme-dark">
+            <input type="text" id="target-pays-cpn" placeholder="Target CPN (Opt)" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white text-sm font-bold outline-none focus:border-emerald-500 dark:focus:border-emerald-400 rounded-lg px-3 py-1.5 w-36 uppercase shadow-inner placeholder:normal-case transition-colors">
+            <button onclick="window.loadPaysData()" class="bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-black text-sm shadow transition-colors tracking-widest uppercase">Fetch</button>
           </div>
           <!-- FRONTEND SEARCH LAYER -->
           <div class="relative flex-1">
-            <svg class="w-5 h-5 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <input type="text" id="pays-search" placeholder="Search CPN, Ref No, Bank, Comment, Mode..." onkeyup="window.filterPaysData()" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:border-emerald-500 outline-none transition shadow-inner text-sm">
+            <svg class="w-5 h-5 absolute left-3 top-3 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" id="pays-search" placeholder="Search CPN, Ref No, Bank, Comment, Mode..." onkeyup="window.filterPaysData()" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-400 outline-none transition-colors shadow-inner text-sm">
           </div>
         </div>
       </div>
@@ -35,9 +35,9 @@
   </div>
 
   <!-- TABLE AREA WITH FROZEN HEADER AND CPN COLUMN -->
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative hide-scrollbar">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-x-auto overflow-y-auto max-h-[60vh] 2xl:max-h-[70vh] relative hide-scrollbar scroll-smooth transition-colors">
     <table class="w-full text-left border-collapse whitespace-nowrap">
-      <thead class="bg-slate-800 text-white text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-md">
+      <thead class="bg-slate-800 text-white text-[10px] uppercase tracking-widest sticky top-0 z-20 shadow-md transition-colors">
         <!-- TOTALS ROW -->
         <tr class="bg-slate-900 border-b-2 border-slate-700">
           <th class="p-3 sticky left-0 z-30 bg-slate-950 border-r border-slate-700 text-emerald-300 font-black">Filtered: <span id="pays-tot-count">0</span></th>
@@ -47,16 +47,16 @@
         </tr>
         <!-- SORTABLE COLUMN TITLES -->
         <tr>
-          <th class="p-4 sticky left-0 z-30 bg-slate-900 border-r border-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)] cursor-pointer hover:bg-slate-700 transition" onclick="window.sortPays('cpn')">CPN NO</th>
-          <th class="p-4 font-black cursor-pointer hover:bg-slate-700 transition" onclick="window.sortPays('timestamp')">Date & Time</th>
-          <th class="p-4 font-black text-center cursor-pointer hover:bg-slate-700 transition" onclick="window.sortPays('mode')">Mode</th>
-          <th class="p-4 font-black text-right text-emerald-300 cursor-pointer hover:bg-slate-700 transition" onclick="window.sortPays('amt')">Amount</th>
-          <th class="p-4 font-black text-indigo-300 cursor-pointer hover:bg-slate-700 transition" onclick="window.sortPays('refNo')">Ref / Bank</th>
-          <th class="p-4 font-black cursor-pointer hover:bg-slate-700 transition" onclick="window.sortPays('comment')">Comment</th>
+          <th class="p-4 sticky left-0 z-30 bg-slate-900 border-r border-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)] cursor-pointer hover:bg-slate-700 transition-colors" onclick="window.sortPays('cpn')">CPN NO</th>
+          <th class="p-4 font-black cursor-pointer hover:bg-slate-700 transition-colors" onclick="window.sortPays('timestamp')">Date & Time</th>
+          <th class="p-4 font-black text-center cursor-pointer hover:bg-slate-700 transition-colors" onclick="window.sortPays('mode')">Mode</th>
+          <th class="p-4 font-black text-right text-emerald-300 cursor-pointer hover:bg-slate-700 transition-colors" onclick="window.sortPays('amt')">Amount</th>
+          <th class="p-4 font-black text-indigo-300 cursor-pointer hover:bg-slate-700 transition-colors" onclick="window.sortPays('refNo')">Ref / Bank</th>
+          <th class="p-4 font-black cursor-pointer hover:bg-slate-700 transition-colors" onclick="window.sortPays('comment')">Comment</th>
           <th class="p-4 font-black text-center">Actions</th>
         </tr>
       </thead>
-      <tbody id="pays-tbody" class="text-sm font-bold text-slate-700 divide-y divide-slate-100">
+      <tbody id="pays-tbody" class="text-sm font-bold text-slate-700 dark:text-slate-300 divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900 transition-colors">
         <!-- Injected via JS -->
       </tbody>
     </table>
@@ -64,15 +64,15 @@
 
   <!-- DETAILS MODAL (Eye Button) -->
   <div id="pays-details-modal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4 fade-in">
-    <div class="bg-white border border-slate-200 w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-      <div class="p-5 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center shadow-sm z-10">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-colors">
+      <div class="p-5 bg-emerald-50 dark:bg-emerald-900/40 border-b border-emerald-100 dark:border-emerald-800 flex justify-between items-center shadow-sm z-10 transition-colors">
         <div>
-           <h3 class="text-xl font-black text-emerald-900 uppercase tracking-widest flex items-center gap-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Payment Deep Dive</h3>
-           <p id="pays-modal-subtitle" class="text-xs font-bold text-emerald-600 mt-1 uppercase tracking-widest"></p>
+           <h3 class="text-xl font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Payment Deep Dive</h3>
+           <p id="pays-modal-subtitle" class="text-xs font-bold text-emerald-600 dark:text-emerald-500 mt-1 uppercase tracking-widest"></p>
         </div>
-        <button onclick="document.getElementById('pays-details-modal').classList.add('hidden')" class="text-emerald-400 hover:text-emerald-900 text-3xl font-black outline-none transition">&times;</button>
+        <button onclick="window.closePaysDetails()" class="text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 text-3xl font-black outline-none transition-colors">&times;</button>
       </div>
-      <div class="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50 hide-scrollbar" id="pays-details-body">
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50 dark:bg-slate-900 hide-scrollbar transition-colors" id="pays-details-body">
         <!-- Injected via JS -->
       </div>
     </div>

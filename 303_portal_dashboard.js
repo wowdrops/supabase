@@ -7,6 +7,7 @@ function updateHeaderDisplays() {
   var parts = [];
   if (activeUserSession.phone) parts.push(activeUserSession.phone);
   if (activeUserSession.cpn) parts.push(activeUserSession.cpn);
+  if (activeUserSession.apartment) parts.push(activeUserSession.apartment);
   if (activeUserSession.block) parts.push(activeUserSession.block);
   if (activeUserSession.door) parts.push(activeUserSession.door);
 
@@ -85,12 +86,13 @@ async function refreshCustomerSessionData(cpn) {
       .eq('cpn_no', cpn)
       .maybeSingle();
 
-    const { data: canBalData } = await supabase1
+    /*const { data: canBalData } = await supabase1
       .from('customer_can_balance')
       .select('*')
       .eq('cpn_no', cpn)
       .maybeSingle();
-    
+    */
+
     if (custData && String(custData.final_status).trim().toUpperCase() === 'INACTIVE') {
         localStorage.removeItem('wowdrops_customer_session');
         activeUserSession = null;
@@ -108,7 +110,8 @@ async function refreshCustomerSessionData(cpn) {
     activeUserSession.older = outstandingData ? ((Number(outstandingData.m2_pending) || 0) + (Number(outstandingData.old_pending) || 0)) : 0;
     //activeUserSession.advance = outstandingData ? (Number(outstandingData.advance_amount) || Number(outstandingData.can_deposit) || 0) : (custData ? (Number(custData.can_deposit) || 0) : 0);
 
-    activeUserSession.cansWithCustomer = canBalData ? ((canBalData.filled_vj_held || 0) + (canBalData.filled_nvj_held || 0)) : 0;
+    //activeUserSession.cansWithCustomer = canBalData ? ((canBalData.filled_vj_held || 0) + (canBalData.filled_nvj_held || 0)) : 0;
+    activeUserSession.cansWithCustomer = (Number(outstandingData.cans) || 0);
     activeUserSession.advance = custData ? (Number(custData.can_deposit) || 0) : 0;
     activeUserSession.maxClientD = custData && custData.maximum_ord_d !== null ? Number(custData.maximum_ord_d) : 9999;
     activeUserSession.maxClientE = custData && custData.maximum_ord_e !== null ? Number(custData.maximum_ord_e) : 9999;
@@ -495,7 +498,7 @@ async function processOrderSubmission() {
 
     const payload = {
       cpn_no: activeUserSession.cpn,
-      apartment: activeUserSession.block,
+      apartment: activeUserSession.apartment,
       block: activeUserSession.block,
       door: activeUserSession.door,
       name: activeUserSession.name,

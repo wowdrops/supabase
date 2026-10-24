@@ -5,11 +5,11 @@ window.switchCRMDashTab = function (tabNum) {
     document.getElementById('crm-dash-content-1').classList.add('hidden');
     document.getElementById('crm-dash-content-2').classList.add('hidden');
 
-    document.getElementById('btn-crm-tab-1').className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap";
-    document.getElementById('btn-crm-tab-2').className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap";
+    document.getElementById('btn-crm-tab-1').className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center whitespace-nowrap";
+    document.getElementById('btn-crm-tab-2').className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center whitespace-nowrap";
 
     document.getElementById('crm-dash-content-' + tabNum).classList.remove('hidden');
-    document.getElementById('btn-crm-tab-' + tabNum).className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap";
+    document.getElementById('btn-crm-tab-' + tabNum).className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 dark:bg-blue-600 text-white shadow-md transition-colors text-center whitespace-nowrap";
 
     if (tabNum === 2 && !window.crmReportMasterData) {
         window.fetchCRMDashboardStats();
@@ -20,11 +20,11 @@ window.fetchCRMDashboardStats = async function (days) {
     days = parseInt(days) || 7;
 
     var btns = document.querySelectorAll('.crm-days-btn');
-    for (var i = 0; i < btns.length; i++) btns[i].className = "crm-days-btn px-6 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl text-sm font-black transition-all";
+    for (var i = 0; i < btns.length; i++) btns[i].className = "crm-days-btn px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-black transition-all";
 
     var activeBtn = document.getElementById('btn-crm-days-' + days);
     if (activeBtn) {
-        activeBtn.className = "crm-days-btn px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black shadow-md transition-all";
+        activeBtn.className = "crm-days-btn px-6 py-2.5 bg-indigo-600 dark:bg-indigo-700 text-white rounded-xl text-sm font-black shadow-md transition-all";
         document.getElementById('crm-custom-days').value = "";
     }
 
@@ -34,24 +34,22 @@ window.fetchCRMDashboardStats = async function (days) {
     document.getElementById('crm-dash-loading').classList.remove('hidden');
 
     try {
-        // Fetch CRM Setup Statuses
-        const { data: setupData } = await supabase1.from('setup').select('key, value').in('key', ['wip_statuses', 'completed_statuses']);
+        const { data: setupData } = await window.supabase1.from('setup').select('key, value').in('key', ['WIP_Statuses', 'Completed_Statuses']);
         var wipStatuses = [];
         var compStatuses = [];
         if (setupData) {
             setupData.forEach(s => {
-                if (s.key === 'wip_statuses' && s.value) wipStatuses = s.value.split(',').map(x => x.trim().toUpperCase());
-                if (s.key === 'completed_statuses' && s.value) compStatuses = s.value.split(',').map(x => x.trim().toUpperCase());
+                var k = String(s.key).toLowerCase();
+                if (k === 'wip_statuses' && s.value) wipStatuses = s.value.split(',').map(x => x.trim().toUpperCase());
+                if (k === 'completed_statuses' && s.value) compStatuses = s.value.split(',').map(x => x.trim().toUpperCase());
             });
         }
 
-        // Calculate cutoff date
         var cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - days);
         var cutoffIso = cutoff.toISOString();
 
-        // Fetch logs
-        const { data: logs, error } = await supabase1
+        const { data: logs, error } = await window.supabase1
             .from('crm_dormant_call_logs')
             .select('*')
             .gte('last_updated', cutoffIso)
@@ -85,21 +83,17 @@ window.fetchCRMDashboardStats = async function (days) {
                     reason: reason, custRemark: row.customer_remark, tcRemark: row.telecaller_feedback, actionBy: row.action_taken_by, ts: new Date(row.last_updated).getTime()
                 };
 
-                // 1. LOST (Active -> Inactive)
                 if (prevStatus === "ACTIVE" && newStatus === "INACTIVE") {
                     payload.inactive.total++;
                     payload.inactive.splits[reason] = (payload.inactive.splits[reason] || 0) + 1;
                     payload.inactive.rows.push(record);
                 }
-
-                // 2. RETAINED / SAVED 
                 else if (prevStatus === "ACTIVE" && (newStatus === "ACTIVE" || newStatus === "ACTIVE RANDOM")) {
                     payload.retained.total++;
                     payload.retained.splits[newStatus] = (payload.retained.splits[newStatus] || 0) + 1;
                     payload.retained.rows.push(record);
                 }
 
-                // 3. WIP / PENDING
                 var isPending = (callStatus === "" || callStatus === "PENDING");
                 var isWIP = wipStatuses.includes(callStatus);
                 if (isPending || isWIP) {
@@ -109,7 +103,6 @@ window.fetchCRMDashboardStats = async function (days) {
                     payload.wip.rows.push(record);
                 }
 
-                // 4. COMPLETED
                 var isCompleted = compStatuses.includes(callStatus);
                 if (isCompleted) {
                     payload.completed.total++;
@@ -117,8 +110,7 @@ window.fetchCRMDashboardStats = async function (days) {
                     payload.completed.rows.push(record);
                 }
 
-                // 5. ESCALATED
-                if (tcRemark.includes("⚠️ [ADMIN REVIEW REQUESTED]")) {
+                if (tcRemark.includes("⚠️ [ADMIN REVIEW]")) {
                     var caller = row.action_taken_by || "Unknown";
                     payload.escalated.total++;
                     payload.escalated.splits[caller] = (payload.escalated.splits[caller] || 0) + 1;
@@ -133,7 +125,7 @@ window.fetchCRMDashboardStats = async function (days) {
             var arr = [];
             for (var k in splitObj) {
                 var safeKey = String(k).replace(/'/g, "\\'");
-                arr.push("<button onclick=\"window.filterCRMByKeyword('" + filterTarget + "', '" + safeKey + "')\" class='bg-slate-100 hover:bg-indigo-100 hover:text-indigo-800 px-2 rounded cursor-pointer transition shadow-sm'>" + k + ": " + splitObj[k] + "</button>");
+                arr.push("<button onclick=\"window.filterCRMByKeyword('" + filterTarget + "', '" + safeKey + "')\" class='bg-slate-100 dark:bg-slate-900/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-800 dark:hover:text-indigo-300 text-slate-700 dark:text-slate-300 px-2 rounded border border-slate-200 dark:border-slate-700/50 cursor-pointer transition-colors shadow-sm'>" + k + ": <span class='font-black'>" + splitObj[k] + "</span></button>");
             }
             return arr.length > 0 ? arr.join("") : "No activity";
         }
@@ -158,7 +150,7 @@ window.fetchCRMDashboardStats = async function (days) {
         }
 
     } catch (err) {
-        alert("CRM Sync Error: " + err.message);
+        if(window.showToast) window.showToast("CRM Sync Error: " + err.message, "error");
     } finally {
         document.getElementById('crm-dash-loading').classList.add('hidden');
     }
@@ -169,8 +161,7 @@ window.fetchDormantSummaryCards = async function () {
     if (c7) c7.classList.add('animate-pulse');
 
     try {
-        // FIX: Case-insensitive match using .ilike
-        const { data: customers, error: custErr } = await supabase1.from('ac_customers').select('cpn_no').ilike('final_status', 'ACTIVE');
+        const { data: customers, error: custErr } = await window.supabase1.from('ac_customers').select('cpn_no').ilike('final_status', 'ACTIVE');
         if (custErr) throw custErr;
         
         var activeCpns = {};
@@ -178,7 +169,7 @@ window.fetchDormantSummaryCards = async function () {
             customers.forEach(c => activeCpns[c.cpn_no.toUpperCase()] = 0);
         }
 
-        const { data: salesData, error: salesErr } = await supabase1.from('sales').select('cpn_no, del_date');
+        const { data: salesData, error: salesErr } = await window.supabase1.from('sales').select('cpn_no, del_date');
         if (salesErr) throw salesErr;
 
         if (salesData) {
@@ -218,14 +209,14 @@ window.fetchDormantSummaryCards = async function () {
         document.getElementById('dormant-30').innerText = counts.days15to30;
 
     } catch (err) {
-        console.error("Dormant Card Error: ", err.message);
+        if(window.showToast) window.showToast("Dormant Calculation Error: " + err.message, "error");
     } finally {
         if (c7) c7.classList.remove('animate-pulse');
     }
 };
 
 window.filterCRMByKeyword = function (filterTarget, keyword) {
-    event.stopPropagation();
+    if(event) event.stopPropagation();
     document.getElementById('crm-flt-status').value = "";
     document.getElementById('crm-flt-reason').value = "";
     if (filterTarget === 'STATUS') document.getElementById('crm-flt-status').value = keyword;
@@ -248,10 +239,10 @@ window.loadCRMReportData = function (categoryType) {
     document.getElementById('crm-report-title').innerText = titles[categoryType];
 
     var allCards = document.querySelectorAll('.crm-kpi-card');
-    for (var c = 0; c < allCards.length; c++) allCards[c].classList.remove('ring-4', 'ring-indigo-600', 'ring-offset-2', 'scale-[1.02]');
+    for (var c = 0; c < allCards.length; c++) allCards[c].classList.remove('ring-4', 'ring-indigo-600', 'dark:ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-slate-900', 'scale-[1.02]');
 
     var activeCard = document.getElementById('crm-card-container-' + categoryType);
-    if (activeCard) activeCard.classList.add('ring-4', 'ring-indigo-600', 'ring-offset-2', 'scale-[1.02]');
+    if (activeCard) activeCard.classList.add('ring-4', 'ring-indigo-600', 'dark:ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-slate-900', 'scale-[1.02]');
 
     document.getElementById('crm-flt-cpn').value = "";
     document.getElementById('crm-flt-status').value = "";
@@ -259,17 +250,18 @@ window.loadCRMReportData = function (categoryType) {
     document.getElementById('crm-flt-date').value = "";
 
     window.renderCRMTable();
-    // Smooth scroll with a visual focus flash
+    
     setTimeout(function() {
         var repDiv = document.getElementById('crm-detailed-report');
-        repDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        repDiv.classList.add('ring-4', 'ring-indigo-400', 'ring-offset-4', 'transition-all', 'duration-500');
+        if(typeof window.scrollAdminTo === 'function') {
+            repDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        repDiv.classList.add('ring-4', 'ring-indigo-400', 'dark:ring-indigo-600', 'ring-offset-4', 'dark:ring-offset-slate-900', 'transition-all', 'duration-500');
         
         setTimeout(function() {
-            repDiv.classList.remove('ring-4', 'ring-indigo-400', 'ring-offset-4');
+            repDiv.classList.remove('ring-4', 'ring-indigo-400', 'dark:ring-indigo-600', 'ring-offset-4', 'dark:ring-offset-slate-900');
         }, 800);
     }, 50);
-    
 };
 
 window.renderCRMTable = function () {
@@ -314,27 +306,35 @@ window.renderCRMTable = function () {
 
     if (filtered.length === 0) {
         countBadge.innerText = "0 Records";
-        countBadge.className = "bg-rose-100 border border-rose-300 text-rose-800 px-3 py-1 rounded-lg text-sm font-black tracking-widest hidden sm:inline-block";
-        tb.innerHTML = "<tr><td colspan='6' class='text-center p-8 font-bold text-slate-400'>No records match the current filters.</td></tr>";
+        tb.innerHTML = "<tr><td colspan='6' class='text-center py-10 font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest transition-colors'>No records match the current filters.</td></tr>";
         return;
     }
 
     countBadge.innerText = filtered.length + " Record" + (filtered.length > 1 ? "s" : "");
-    countBadge.className = "bg-indigo-100 border border-indigo-300 text-indigo-800 px-3 py-1 rounded-lg text-sm font-black tracking-widest hidden sm:inline-block";
 
     var h = "";
     for (var j = 0; j < filtered.length; j++) {
         var r = filtered[j];
-        var escalateBadge = String(r.tcRemark || "").indexOf("⚠️") > -1 ? "bg-rose-100 border-rose-300" : "bg-white";
+        var escalateBadge = String(r.tcRemark || "").indexOf("⚠️") > -1 ? "bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-400 dark:border-rose-600" : "bg-white dark:bg-slate-800";
         var dispCallStatus = String(r.callStatus).trim() === "" ? "PENDING" : r.callStatus;
+        
+        var cleanCpn = String(r.cpn || '').trim().toUpperCase();
 
-        h += "<tr class='hover:bg-slate-50 border-b border-slate-100 " + escalateBadge + "'>" +
-            "<td class='px-4 py-3 whitespace-normal'><span class='font-bold text-slate-800 block'>" + r.enterDate + "</span><span class='text-xs text-slate-400'>" + r.logId + "</span></td>" +
-            "<td class='px-4 py-3 whitespace-normal'><span class='font-black text-indigo-600 block'>" + r.cpn + "</span><span class='text-sm text-slate-600 font-bold'>" + r.name + "</span></td>" +
-            "<td class='px-4 py-3 whitespace-normal'><span class='line-through text-slate-400 text-xs'>" + r.prevStatus + "</span><br/><span class='font-bold text-emerald-600'>" + r.newStatus + "</span></td>" +
-            "<td class='px-4 py-3'><span class='bg-slate-100 px-3 py-1 rounded-full text-xs font-black uppercase border border-slate-200'>" + dispCallStatus + "</span></td>" +
-            "<td class='px-4 py-3 whitespace-normal min-w-[200px]'><p class='text-sm font-bold text-indigo-600'>" + r.reason + "</p><p class='text-xs font-bold text-slate-700 mt-1'>" + r.tcRemark + "</p></td>" +
-            "<td class='px-4 py-3 whitespace-normal'><span class='text-sm font-black text-slate-800 block'>" + r.actionBy + "</span><span class='text-xs font-bold text-emerald-600'>" + r.lastUpdateDate + "</span></td>" +
+        let cpnBadgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:shadow-sm active:scale-95 transition-all cursor-pointer group mb-1" onclick="window.openCustomer360('${cleanCpn}')">
+          <span class="font-black">${cleanCpn}</span>
+          <svg class="w-3 h-3 text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </span>`;
+
+        h += "<tr class='hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700/50 " + escalateBadge + "'>" +
+            "<td class='px-4 py-3 whitespace-normal min-w-[150px]'><span class='font-black text-slate-800 dark:text-white block transition-colors'>" + r.enterDate + "</span><span class='text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 transition-colors'>Log ID: " + r.logId + "</span></td>" +
+            "<td class='px-4 py-3 whitespace-normal min-w-[180px]'>" +
+                cpnBadgeHtml +
+                "<span class='text-sm text-slate-600 dark:text-slate-300 font-bold block truncate max-w-[200px] transition-colors'>" + r.name + "</span>" +
+            "</td>" +
+            "<td class='px-4 py-3 whitespace-normal'><span class='line-through text-slate-400 dark:text-slate-500 text-[10px] uppercase font-black tracking-widest transition-colors'>" + r.prevStatus + "</span><br/><span class='font-black text-emerald-600 dark:text-emerald-400 transition-colors'>" + r.newStatus + "</span></td>" +
+            "<td class='px-4 py-3'><span class='bg-slate-100 dark:bg-slate-900/50 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 shadow-sm transition-colors'>" + dispCallStatus + "</span></td>" +
+            "<td class='px-4 py-3 whitespace-normal min-w-[250px]'><p class='text-sm font-black text-indigo-600 dark:text-indigo-400 transition-colors'>" + r.reason + "</p><p class='text-xs font-bold text-slate-700 dark:text-slate-300 mt-1 leading-tight transition-colors'>" + r.tcRemark + "</p></td>" +
+            "<td class='px-4 py-3 whitespace-normal'><span class='text-xs font-black text-slate-800 dark:text-white block uppercase tracking-widest transition-colors'>" + r.actionBy + "</span><span class='text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-colors'>" + r.lastUpdateDate + "</span></td>" +
             "</tr>";
     }
     tb.innerHTML = h;

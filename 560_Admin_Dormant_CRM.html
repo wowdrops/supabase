@@ -1,13 +1,14 @@
-<div id="tab-dormant-crm" class="hidden space-y-8 fade-in pb-12">
+<div id="tab-dormant-crm" class="hidden space-y-8 fade-in pb-12 relative h-full">
 
-  <div class="border-b-4 border-slate-200 pb-4">
+  <!-- STICKY TOP NAV -->
+  <div class="border-b-4 border-slate-200 dark:border-slate-800 pb-4 sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur pt-2 transition-colors">
     <div class="flex flex-row justify-between items-center gap-2 md:gap-4">
       <div class="flex items-center gap-2 md:gap-4">
-        <h2 class="text-2xl sm:text-3xl md:text-5xl font-black text-slate-800 tracking-tight uppercase">Dormant & CRM
+        <h2 class="text-2xl sm:text-3xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Dormant & CRM
         </h2>
       </div>
       <button onclick="window.fetchCRMDashboardStats()"
-        class="bg-orange-600 hover:bg-orange-700 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-lg font-black shadow-lg transition active:scale-95 flex items-center gap-1.5 shrink-0">
+        class="bg-orange-600 dark:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-lg font-black shadow-lg transition-colors active:scale-95 flex items-center gap-1.5 shrink-0">
         <svg class="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -20,23 +21,22 @@
 
     <div class="flex flex-row gap-2 mt-6">
       <button id="btn-crm-tab-1" onclick="window.switchCRMDashTab(1)"
-        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 text-white shadow-md transition text-center whitespace-nowrap">Dormant
+        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 dark:bg-blue-600 text-white shadow-md transition-colors text-center whitespace-nowrap">Dormant
         Database</button>
       <button id="btn-crm-tab-2" onclick="window.switchCRMDashTab(2)"
-        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white text-slate-500 hover:bg-slate-100 transition text-center whitespace-nowrap">CRM
+        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center whitespace-nowrap">CRM
         Analytics</button>
     </div>
   </div>
 
-  <div id="crm-dash-loading" class="hidden py-24 text-center text-orange-600 font-black text-3xl animate-pulse">
+  <div id="crm-dash-loading" class="hidden py-24 text-center text-orange-600 dark:text-orange-500 font-black text-3xl animate-pulse transition-colors">
     Synchronizing CRM Logs...</div>
 
-  <!-- TAB 1: DORMANT BLOCKS (Moved from Operations) -->
-  <div id="crm-dash-content-1" class="hidden space-y-10 fade-in">
-    <div class="bg-white rounded-3xl border-4 border-amber-200 p-8 flex flex-col text-center max-w-4xl mx-auto">
-      <h3
-        class="text-3xl font-black text-slate-800 uppercase tracking-widest border-b-4 border-slate-100 pb-6 mb-8 flex justify-center items-center gap-2">
-        <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- TAB 1: DORMANT BLOCKS -->
+  <div id="crm-dash-content-1" class="hidden space-y-10 fade-in mt-6">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl border-4 border-amber-200 dark:border-amber-900/30 p-8 flex flex-col text-center max-w-4xl mx-auto shadow-xl transition-colors">
+      <h3 class="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-widest border-b-4 border-slate-100 dark:border-slate-700/50 pb-6 mb-8 flex justify-center items-center gap-2 transition-colors">
+        <svg class="w-8 h-8 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -44,153 +44,140 @@
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
         <!-- Exactly 7 Days -->
-        <div onclick="window.navigateFromDashboard('dormant', '7,7')" class="bg-amber-50 p-6 rounded-3xl border-4 border-amber-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-amber-100 hover:scale-[1.02] transition-all">
-          <p class="text-2xl md:text-3xl font-black text-amber-800 uppercase mb-4">Exactly 7 Days</p>
-          <p class="text-6xl md:text-8xl font-black text-amber-600 drop-shadow-md" id="dormant-7">0</p>
+        <div onclick="window.navigateFromDashboard('dormant', '7,7' , 'Dormant & CRM')" class="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-3xl border-4 border-amber-200 dark:border-amber-800 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-[1.02] transition-all">
+          <p class="text-2xl md:text-3xl font-black text-amber-800 dark:text-amber-400 uppercase mb-4 transition-colors">Exactly 7 Days</p>
+          <p class="text-6xl md:text-8xl font-black text-amber-600 dark:text-amber-500 drop-shadow-md transition-colors" id="dormant-7">0</p>
         </div>
 
         <!-- 7 - 10 Days -->
-        <div onclick="window.navigateFromDashboard('dormant', '7,10')" class="bg-rose-50 p-6 rounded-3xl border-4 border-rose-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-rose-100 hover:scale-[1.02] transition-all">
-          <p class="text-2xl md:text-3xl font-black text-rose-800 uppercase mb-4">7 - 10 Days</p>
-          <p class="text-6xl md:text-8xl font-black text-rose-600 drop-shadow-md" id="dormant-10">0</p>
+        <div onclick="window.navigateFromDashboard('dormant', '7,10', 'Dormant & CRM')" class="bg-rose-50 dark:bg-rose-900/20 p-6 rounded-3xl border-4 border-rose-200 dark:border-rose-800 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:scale-[1.02] transition-all">
+          <p class="text-2xl md:text-3xl font-black text-rose-800 dark:text-rose-400 uppercase mb-4 transition-colors">7 - 10 Days</p>
+          <p class="text-6xl md:text-8xl font-black text-rose-600 dark:text-rose-500 drop-shadow-md transition-colors" id="dormant-10">0</p>
         </div>
 
         <!-- 10 - 15 Days -->
-        <div onclick="window.navigateFromDashboard('dormant', '10,15')" class="bg-indigo-50 p-6 rounded-3xl border-4 border-indigo-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-indigo-100 hover:scale-[1.02] transition-all">
-          <p class="text-2xl md:text-3xl font-black text-indigo-800 uppercase mb-4">10 - 15 Days</p>
-          <p class="text-6xl md:text-8xl font-black text-indigo-600 drop-shadow-md" id="dormant-15">0</p>
+        <div onclick="window.navigateFromDashboard('dormant', '10,15', 'Dormant & CRM')" class="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-3xl border-4 border-indigo-200 dark:border-indigo-800 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:scale-[1.02] transition-all">
+          <p class="text-2xl md:text-3xl font-black text-indigo-800 dark:text-indigo-400 uppercase mb-4 transition-colors">10 - 15 Days</p>
+          <p class="text-6xl md:text-8xl font-black text-indigo-600 dark:text-indigo-500 drop-shadow-md transition-colors" id="dormant-15">0</p>
         </div>
 
         <!-- 15 - 30 Days -->
-        <div onclick="window.navigateFromDashboard('dormant', '15,30')" class="bg-emerald-50 p-6 rounded-3xl border-4 border-emerald-200 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-emerald-100 hover:scale-[1.02] transition-all">
-          <p class="text-2xl md:text-3xl font-black text-emerald-800 uppercase mb-4">15 - 30 Days</p>
-          <p class="text-6xl md:text-8xl font-black text-emerald-600 drop-shadow-md" id="dormant-30">0</p>
+        <div onclick="window.navigateFromDashboard('dormant', '15,30', 'Dormant & CRM')" class="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 flex flex-col justify-center shadow-inner cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-[1.02] transition-all">
+          <p class="text-2xl md:text-3xl font-black text-emerald-800 dark:text-emerald-400 uppercase mb-4 transition-colors">15 - 30 Days</p>
+          <p class="text-6xl md:text-8xl font-black text-emerald-600 dark:text-emerald-500 drop-shadow-md transition-colors" id="dormant-30">0</p>
         </div>
       </div>
-      <p class="mt-6 font-bold text-slate-400 text-sm tracking-widest uppercase">Click to open full dormant reporting
-        tools</p>
+      <p class="mt-6 font-bold text-slate-400 dark:text-slate-500 text-sm tracking-widest uppercase transition-colors">Click to open full dormant reporting tools</p>
     </div>
   </div>
 
-  <!-- TAB 2: CRM (The 5 New Cards & Reporting Table) -->
-  <div id="crm-dash-content-2" class="hidden space-y-8 fade-in">
+  <!-- TAB 2: CRM -->
+  <div id="crm-dash-content-2" class="hidden space-y-8 fade-in mt-6">
 
-    <!-- CRM Analytics Filters -->
-    <div
-      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-2 border-slate-100 pb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-2 border-slate-100 dark:border-slate-800 pb-6 transition-colors">
       <div class="flex flex-wrap gap-2 w-full md:w-auto">
         <button id="btn-crm-days-7" onclick="window.fetchCRMDashboardStats(7)"
-          class="crm-days-btn px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black shadow-md transition-all">Last
+          class="crm-days-btn px-6 py-2.5 bg-indigo-600 dark:bg-indigo-700 text-white rounded-xl text-sm font-black shadow-md transition-all">Last
           7 Days</button>
         <button id="btn-crm-days-15" onclick="window.fetchCRMDashboardStats(15)"
-          class="crm-days-btn px-6 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl text-sm font-black transition-all">Last
+          class="crm-days-btn px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-black transition-all">Last
           15 Days</button>
         <button id="btn-crm-days-30" onclick="window.fetchCRMDashboardStats(30)"
-          class="crm-days-btn px-6 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl text-sm font-black transition-all">Last
+          class="crm-days-btn px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-black transition-all">Last
           30 Days</button>
       </div>
 
-      <div
-        class="w-full md:w-auto flex items-center bg-slate-50 p-2 rounded-xl border-2 border-slate-200 shadow-inner gap-2 shrink-0">
-        <span
-          class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 hidden sm:inline">Lookback:</span>
+      <div class="w-full md:w-auto flex items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-inner gap-2 shrink-0 transition-colors">
+        <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2 hidden sm:inline transition-colors">Lookback:</span>
         <input type="number" id="crm-custom-days" placeholder="Days" min="1"
-          class="w-20 md:w-24 p-2 font-black text-center text-sm rounded-lg border border-slate-200 outline-none focus:border-indigo-400 transition-all">
-        <button
-          onclick="var d = document.getElementById('crm-custom-days').value; if(d) window.fetchCRMDashboardStats(d);"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-4 py-2 rounded-lg text-sm transition-colors shadow-sm">Fetch</button>
+          class="w-20 md:w-24 p-2 font-black text-center text-slate-800 dark:text-white bg-white dark:bg-slate-800 text-sm rounded-lg border border-slate-200 dark:border-slate-600 outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-all color-scheme-dark">
+        <button onclick="var d = document.getElementById('crm-custom-days').value; if(d) window.fetchCRMDashboardStats(d);"
+          class="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-black px-4 py-2 rounded-lg text-sm transition-colors shadow-sm active:scale-95">Fetch</button>
       </div>
     </div>
 
-    <!-- KPI CARDS GRID (Top Row: 3 Cards, Bottom Row: 2 Cards) -->
+    <!-- KPI CARDS GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- Card 1: Lost -->
-      <div id="crm-card-container-INACTIVE" onclick="window.loadCRMReportData('INACTIVE')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-rose-200 shadow-lg flex flex-col justify-between h-full group">
+      <div id="crm-card-container-INACTIVE" onclick="window.loadCRMReportData('INACTIVE')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition-all bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-rose-200 dark:border-rose-900/30 shadow-lg flex flex-col justify-between h-full group">
         <div class="flex justify-between items-start mb-4">
-          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 group-hover:text-rose-400 transition">Lost (To Inactive)</span>
-          <span class="crm-days-badge bg-rose-100 text-rose-800 text-xs font-black px-2 py-1 rounded tracking-wider">LAST 7 DAYS</span>
+          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-rose-400 dark:group-hover:text-rose-300 transition-colors">Lost (To Inactive)</span>
+          <span class="crm-days-badge bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-400 text-xs font-black px-2 py-1 rounded tracking-wider transition-colors">LAST 7 DAYS</span>
         </div>
-        <h3 id="crm-card-inactive" class="text-6xl font-black text-slate-800 mb-4">0</h3>
-        <div id="crm-split-inactive" class="text-sm font-bold text-slate-400 flex gap-2 flex-wrap">Loading...</div>
+        <h3 id="crm-card-inactive" class="text-6xl font-black text-slate-800 dark:text-white mb-4 transition-colors">0</h3>
+        <div id="crm-split-inactive" class="text-sm font-bold text-slate-400 dark:text-slate-500 flex gap-2 flex-wrap transition-colors">Loading...</div>
       </div>
 
-      <!-- Card 2: Retained -->
-      <div id="crm-card-container-RETAINED" onclick="window.loadCRMReportData('RETAINED')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-emerald-200 shadow-lg flex flex-col justify-between h-full group">
+      <div id="crm-card-container-RETAINED" onclick="window.loadCRMReportData('RETAINED')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition-all bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-emerald-200 dark:border-emerald-900/30 shadow-lg flex flex-col justify-between h-full group">
         <div class="flex justify-between items-start mb-4">
-          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 group-hover:text-emerald-500 transition">Retained / Saved</span>
-          <span class="crm-days-badge bg-emerald-100 text-emerald-800 text-xs font-black px-2 py-1 rounded tracking-wider">LAST 7 DAYS</span>
+          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">Retained / Saved</span>
+          <span class="crm-days-badge bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 text-xs font-black px-2 py-1 rounded tracking-wider transition-colors">LAST 7 DAYS</span>
         </div>
-        <h3 id="crm-card-retained" class="text-6xl font-black text-slate-800 mb-4">0</h3>
-        <div id="crm-split-retained" class="text-sm font-bold text-slate-400 flex gap-2 flex-wrap">Loading...</div>
+        <h3 id="crm-card-retained" class="text-6xl font-black text-slate-800 dark:text-white mb-4 transition-colors">0</h3>
+        <div id="crm-split-retained" class="text-sm font-bold text-slate-400 dark:text-slate-500 flex gap-2 flex-wrap transition-colors">Loading...</div>
       </div>
 
-      <!-- Card 3: Pending & WIP -->
-      <div id="crm-card-container-WIP" onclick="window.loadCRMReportData('WIP')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-amber-200 shadow-lg flex flex-col justify-between h-full group">
+      <div id="crm-card-container-WIP" onclick="window.loadCRMReportData('WIP')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition-all bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-amber-200 dark:border-amber-900/30 shadow-lg flex flex-col justify-between h-full group">
         <div class="flex justify-between items-start mb-4">
-          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 group-hover:text-amber-500 transition">Pending & WIP</span>
-          <span class="crm-days-badge bg-amber-100 text-amber-800 text-xs font-black px-2 py-1 rounded tracking-wider">LAST 7 DAYS</span>
+          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">Pending & WIP</span>
+          <span class="crm-days-badge bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 text-xs font-black px-2 py-1 rounded tracking-wider transition-colors">LAST 7 DAYS</span>
         </div>
-        <h3 id="crm-card-wip" class="text-6xl font-black text-slate-800 mb-4">0</h3>
-        <div id="crm-split-wip" class="text-sm font-bold text-slate-400 flex gap-2 flex-wrap">Loading...</div>
+        <h3 id="crm-card-wip" class="text-6xl font-black text-slate-800 dark:text-white mb-4 transition-colors">0</h3>
+        <div id="crm-split-wip" class="text-sm font-bold text-slate-400 dark:text-slate-500 flex gap-2 flex-wrap transition-colors">Loading...</div>
       </div>
     </div>
 
     <!-- Bottom Row: 2 Wider Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-      <!-- Card 4: Closed / Resolved -->
-      <div id="crm-card-container-COMPLETED" onclick="window.loadCRMReportData('COMPLETED')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-cyan-200 shadow-lg flex flex-col justify-between h-full group">
+      <div id="crm-card-container-COMPLETED" onclick="window.loadCRMReportData('COMPLETED')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition-all bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-cyan-200 dark:border-cyan-900/30 shadow-lg flex flex-col justify-between h-full group">
         <div class="flex justify-between items-start mb-4">
-          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 group-hover:text-cyan-500 transition">Closed / Resolved Calls</span>
-          <span class="crm-days-badge bg-cyan-100 text-cyan-800 text-xs font-black px-2 py-1 rounded tracking-wider">LAST 7 DAYS</span>
+          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-cyan-500 dark:group-hover:text-cyan-400 transition-colors">Closed / Resolved Calls</span>
+          <span class="crm-days-badge bg-cyan-100 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-400 text-xs font-black px-2 py-1 rounded tracking-wider transition-colors">LAST 7 DAYS</span>
         </div>
-        <h3 id="crm-card-completed" class="text-6xl font-black text-slate-800 mb-4">0</h3>
-        <div id="crm-split-completed" class="text-sm font-bold text-slate-400 flex gap-2 flex-wrap">Loading...</div>
+        <h3 id="crm-card-completed" class="text-6xl font-black text-slate-800 dark:text-white mb-4 transition-colors">0</h3>
+        <div id="crm-split-completed" class="text-sm font-bold text-slate-400 dark:text-slate-500 flex gap-2 flex-wrap transition-colors">Loading...</div>
       </div>
 
-      <!-- Card 5: Escalations -->
-      <div onclick="window.navigateFromDashboard('tran-escalations')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition bg-white p-6 rounded-3xl border-4 border-indigo-200 shadow-lg flex flex-col justify-between h-full group">
+      <div onclick="window.navigateFromDashboard('tran-escalations',null, 'Dormant & CRM')" class="crm-kpi-card cursor-pointer hover:scale-[1.02] transition-all bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-indigo-200 dark:border-indigo-900/30 shadow-lg flex flex-col justify-between h-full group">
         <div class="flex justify-between items-start mb-4">
-          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 group-hover:text-indigo-500 transition">Admin Escalations</span>
-          <span class="crm-days-badge bg-indigo-100 text-indigo-800 text-xs font-black px-2 py-1 rounded tracking-wider">ACTION REQ</span>
+          <span class="text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">Admin Escalations</span>
+          <span class="crm-days-badge bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-400 text-xs font-black px-2 py-1 rounded tracking-wider transition-colors">ACTION REQ</span>
         </div>
-        <h3 id="crm-card-escalated" class="text-6xl font-black text-slate-800 mb-4">0</h3>
-        <div class="text-sm font-black text-indigo-500 flex items-center gap-1 mt-auto">Go to Escalations <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div>
+        <h3 id="crm-card-escalated" class="text-6xl font-black text-slate-800 dark:text-white mb-4 transition-colors">0</h3>
+        <div class="text-sm font-black text-indigo-500 dark:text-indigo-400 flex items-center gap-1 mt-auto transition-colors">Go to Escalations <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div>
       </div>
     </div>
 
     <!-- DYNAMIC CRM ROW-WISE REPORT SECTION -->
-    <div id="crm-detailed-report" class="hidden bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-2xl mt-8 fade-in">
+    <div id="crm-detailed-report" class="hidden bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-2xl mt-8 fade-in transition-colors">
       
-      <div class="flex justify-between items-center border-b-4 border-slate-100 pb-4 mb-6">
-        <!-- NEW: Added the Record Count Badge next to the title -->
+      <div class="flex justify-between items-center border-b-4 border-slate-100 dark:border-slate-700/50 pb-4 mb-6 transition-colors">
         <div class="flex items-center gap-3">
-            <h4 id="crm-report-title" class="text-2xl font-black text-slate-800 uppercase tracking-widest">Report Title</h4>
-            <span id="crm-table-count" class="bg-slate-100 border border-slate-300 text-slate-700 px-3 py-1 rounded-lg text-sm font-black tracking-widest hidden sm:inline-block">0 Records</span>
+            <h4 id="crm-report-title" class="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-widest transition-colors">Report Title</h4>
+            <span id="crm-table-count" class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-lg text-sm font-black tracking-widest hidden sm:inline-block shadow-sm transition-colors">0 Records</span>
         </div>
-        <button onclick="document.getElementById('crm-detailed-report').classList.add('hidden')" class="text-slate-400 hover:text-rose-500 font-bold px-3 py-1 bg-slate-100 hover:bg-rose-50 rounded-lg transition shrink-0">Close</button>
+        <button onclick="document.getElementById('crm-detailed-report').classList.add('hidden')" class="text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 font-bold px-3 py-1 bg-slate-100 dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition-colors shrink-0 outline-none">Close Report</button>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-         <input type="text" id="crm-flt-cpn" placeholder="Search CPN..." onkeyup="window.renderCRMTable()" class="p-2 border-2 border-slate-200 rounded-lg font-bold outline-none focus:border-indigo-400">
-         <input type="text" id="crm-flt-status" placeholder="Call Status..." onkeyup="window.renderCRMTable()" class="p-2 border-2 border-slate-200 rounded-lg font-bold outline-none focus:border-indigo-400">
-         <input type="text" id="crm-flt-reason" placeholder="Reason/Agent..." onkeyup="window.renderCRMTable()" class="p-2 border-2 border-slate-200 rounded-lg font-bold outline-none focus:border-indigo-400">
-         <input type="date" id="crm-flt-date" onchange="window.renderCRMTable()" class="p-2 border-2 border-slate-200 rounded-lg font-bold outline-none text-slate-600 focus:border-indigo-400">
+         <input type="text" id="crm-flt-cpn" placeholder="Search CPN..." oninput="this.value=this.value.toUpperCase(); window.renderCRMTable()" class="p-2 border-2 border-slate-200 dark:border-slate-600 rounded-lg font-bold outline-none focus:border-indigo-400 dark:focus:border-indigo-500 shadow-inner bg-white dark:bg-slate-900 text-slate-900 dark:text-white uppercase transition-colors">
+         <input type="text" id="crm-flt-status" placeholder="Call Status..." onkeyup="window.renderCRMTable()" class="p-2 border-2 border-slate-200 dark:border-slate-600 rounded-lg font-bold outline-none focus:border-indigo-400 dark:focus:border-indigo-500 shadow-inner bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-colors">
+         <input type="text" id="crm-flt-reason" placeholder="Reason/Agent..." onkeyup="window.renderCRMTable()" class="p-2 border-2 border-slate-200 dark:border-slate-600 rounded-lg font-bold outline-none focus:border-indigo-400 dark:focus:border-indigo-500 shadow-inner bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-colors">
+         <input type="date" id="crm-flt-date" onchange="window.renderCRMTable()" class="p-2 border-2 border-slate-200 dark:border-slate-600 rounded-lg font-bold outline-none focus:border-indigo-400 dark:focus:border-indigo-500 shadow-inner bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 color-scheme-dark transition-colors">
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left whitespace-nowrap">
-          <thead class="bg-slate-100 text-slate-500 text-sm font-black uppercase tracking-widest border-b-4 border-slate-200">
+      <div class="overflow-x-auto overflow-y-auto max-h-[60vh] hide-scrollbar border-t border-slate-200 dark:border-slate-700 transition-colors scroll-smooth">
+        <table class="w-full text-left whitespace-nowrap border-collapse">
+          <thead class="bg-slate-100 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-black uppercase tracking-widest sticky top-0 z-10 shadow-sm border-b-2 border-slate-200 dark:border-slate-700 transition-colors">
             <tr>
-              <th class="px-4 py-3 rounded-tl-xl">Enter On / Log ID</th>
+              <th class="px-4 py-3">Enter On / Log ID</th>
               <th class="px-4 py-3">CPN / Name</th>
-              <th class="px-4 py-3">Prev -> New Status</th>
+              <th class="px-4 py-3">Prev &rarr; New Status</th>
               <th class="px-4 py-3">Call Status</th>
               <th class="px-4 py-3">Reason / Remarks</th>
-              <th class="px-4 py-3 rounded-tr-xl">Action By / Last Updated</th>
+              <th class="px-4 py-3">Action By / Updated</th>
             </tr>
           </thead>
-          <tbody id="crm-detailed-tbody" class="divide-y-2 divide-slate-100"></tbody>
+          <tbody id="crm-detailed-tbody" class="divide-y-2 divide-slate-100 dark:divide-slate-700/50 text-sm font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 transition-colors"></tbody>
         </table>
       </div>
     </div>

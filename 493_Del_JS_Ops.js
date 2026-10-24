@@ -30,189 +30,6 @@
             }
         };
 
-        window.fetchOrdersFromServer = async function () {
-            if (!navigator.onLine) { window.showToast("Offline mode.", false); return; }
-            window.showLoader('Checking Shift Status...');
-            
-            try {
-                const supa = window.supabase1;
-                const todayStr = new Date().toISOString().split('T')[0];
-
-                // --- NEW: THE GATEKEEPER BLOCK ---
-                if (window.currentUser && window.currentUser.username) {
-                    const { data: activeTrips } = await supa
-                        .from('eod_log')
-                        .select('id, created_at')
-                        .eq('driver_mail_id', window.currentUser.username)
-                        .eq('status', 'Active')
-                        .order('created_at', { ascending: true });
-
-                    if (activeTrips && activeTrips.length > 0) {
-                        let oldestTripDate = activeTrips[0].created_at.split('T')[0];
-                        
-                        // If the active trip is from a previous day, hard-stop the app.
-                        if (oldestTripDate < todayStr) {
-                            window.hideLoader();
-                            alert("⛔ GATEKEEPER ACTIVE\n\nYou have an open trip from a previous shift (" + oldestTripDate + ").\n\nA Manager must complete your EOD Handshake before you can load a new route.");
-                            return; 
-                        }
-                    } else {
-                        // Create today's new active trip since none exist
-                        await supa.from('eod_log').insert([{
-                            driver_mail_id: window.currentUser.username,
-                            status: 'Active'
-                        }]);
-                    }
-                }
-                // ---------------------------------
-
-                window.showLoader('Downloading Route...');
-
-                // Fetch Setup for VJ_PRICE
-                const { data: setupData } = await supa.from('setup').select('value').eq('key', 'VJ_PRICE').maybeSingle();
-                const vjPrice = setupData ? (Number(setupData.value) || window.APP_CONFIG.VJ_PRICE) : window.APP_CONFIG.VJ_PRICE;
-                window.APP_CONFIG.VJ_PRICE = vjPrice;
-                localStorage.setItem('wd_sys_config', JSON.stringify({ vjPrice: vjPrice }));
-
-                // Fetch ALL records from 'deliveries' table
-                const { data: routeData, error: routeErr } = await supa
-                    .from('deliveries')
-                    .select('*')
-                    .order('apartment', { ascending: true })
-                    .order('block', { ascending: true })
-                    .order('door', { ascending: true });
-
-                if (routeErr) throw routeErr;
-
-                var pendingOrders = {};
-                var allOrders = {};
-                var summary = {
-                    totalBlocks: 0, completedBlocks: 0, pendingBlocks: 0,
-                    totalDoors: 0, completedDoors: 0, pendingDoors: 0,
-                    actualDVj: 0, actualDNvj: 0, actualEVj: 0, actualENvj: 0,
-                    pendingDVj: 0, pendingDNvj: 0, pendingE: 0,
-                    totalOrdDVj: 0, totalOrdDNvj: 0, totalOrdE: 0
-                };
-
-                var uniqueBlocks = {};
-                var pendingBlocksSet = {};
-
-                (routeData || []).forEach(row => {
-                    var apt = String(row.apartment || "").trim();
-                    var blk = String(row.block || "").trim();
-                    if (!apt || !blk) return;
-
-                    var blockKey = apt + "_" + blk;
-                    uniqueBlocks[blockKey] = true;
-
-                    var v2bLink = String(row.van_to_block_link || "").trim();
-                    var b2vLink = String(row.block_to_van_link || "").trim();
-                    var deliveryEnterOn = row.delivery_entered_at;
-
-                    var isPending = (!deliveryEnterOn || v2bLink === "" || b2vLink === "");
-                    if (isPending) pendingBlocksSet[blockKey] = true;
-
-                    var doorDone = !!deliveryEnterOn;
-                    summary.totalDoors++;
-
-                    var ordD = Number(row.ord_d || 0);
-                    var ordE = Number(row.ord_e || 0);
-                    var advance = Number(row.can_deposit || row.advance_amount || 0);
-
-                    var maxVj = Math.floor(advance / vjPrice);
-                    var expVj = Math.min(maxVj, ordD);
-                    var expNvj = ordD - expVj;
-
-                    summary.totalOrdDVj += expVj;
-                    summary.totalOrdDNvj += expNvj;
-                    summary.totalOrdE += ordE;
-
-                    var actVj = 0, actNvj = 0, actEVj = 0, actENvj = 0;
-
-                    if (doorDone) {
-                        summary.completedDoors++;
-                        actVj = Number(row.act_d_vj || 0);
-                        actNvj = Number(row.act_d_nvj || 0);
-                        actEVj = Number(row.act_e_vj || 0);
-                        actENvj = Number(row.act_e_nvj || 0);
-
-                        summary.actualDVj += actVj; summary.actualDNvj += actNvj;
-                        summary.actualEVj += actEVj; summary.actualENvj += actENvj;
-                    } else {
-                        summary.pendingDoors++;
-                        summary.pendingDVj += expVj; summary.pendingDNvj += expNvj;
-                        summary.pendingE += ordE;
-                    }
-
-                    var formatTime = (ts) => ts ? new Date(ts).toLocaleString('en-US', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : "";
-
-                    var doorObj = {
-                        sno: row.id, 
-                        door: row.door || "", 
-                        cpnno: row.cpn_no || "",
-                        ordDate: formatTime(row.order_date), 
-                        ordD: ordD, 
-                        ordE: ordE,
-                        replaceQty: Number(row.replace_qty || 0), 
-                        replaceReason: row.replace_reason || "",
-                        replaceActVj: Number(row.replace_act_vj || 0), 
-                        replaceActNvj: Number(row.replace_act_nvj || 0),
-                        ordComment: row.order_comment || "", 
-                        uniqueNo: String(row.unique_no || "").trim(),
-                        advance: advance, 
-                        expVj: expVj, 
-                        expNvj: expNvj,
-                        actDVj: actVj, actDNvj: actNvj, actEVj: actEVj, actENvj: actENvj,
-                        actD: Number(row.act_d || 0), actE: Number(row.act_e || 0),
-                        delComment: row.delivery_comment || "",
-                        doorLink: row.door_delivery_link || "",
-                        unloadOn: formatTime(row.unload_on), unloadBy: row.unload_by || "",
-                        loadOn: formatTime(row.load_on), loadBy: row.load_by || "",
-                        delOn: formatTime(deliveryEnterOn), delBy: row.delivery_entered_by || "",
-                        doorDone: doorDone, 
-                        v2bDone: (v2bLink !== ""), 
-                        b2vDone: (b2vLink !== ""),
-                        v2bLink: v2bLink, 
-                        b2vLink: b2vLink,
-                        v2bFulls: Number(row.van_to_block_full_can_count || 0),
-                        b2vFulls: Number(row.block_to_van_full_count || 0),
-                        b2vEmpties: Number(row.block_to_van_empty_count || 0)
-                    };
-
-                    if (!allOrders[apt]) allOrders[apt] = {};
-                    if (!allOrders[apt][blk]) allOrders[apt][blk] = [];
-                    allOrders[apt][blk].push(doorObj);
-
-                    if (isPending) {
-                        if (!pendingOrders[apt]) pendingOrders[apt] = {};
-                        if (!pendingOrders[apt][blk]) pendingOrders[apt][blk] = [];
-                        pendingOrders[apt][blk].push(doorObj);
-                    }
-                });
-
-                summary.totalBlocks = Object.keys(uniqueBlocks).length;
-                summary.pendingBlocks = Object.keys(pendingBlocksSet).length;
-                summary.completedBlocks = summary.totalBlocks - summary.pendingBlocks;
-
-                window.pendingData = pendingOrders;
-                window.allData = allOrders;
-                window.serverSummary = summary;
-
-                localStorage.setItem('wd_pending_data', JSON.stringify(window.pendingData));
-                localStorage.setItem('wd_all_data', JSON.stringify(window.allData));
-                localStorage.setItem('wd_server_summary', JSON.stringify(window.serverSummary));
-                localStorage.setItem('wd_last_sync_ts', new Date().toLocaleTimeString());
-
-                window.loadLocalData();
-
-                window.hideLoader();
-                window.showToast("Route Synced & Trip Verified!", true);
-            } catch (err) {
-                window.hideLoader(); 
-                alert("Failed to fetch route: " + err.message);
-            }
-        };
-
         window.loadLocalData = function () {
             var lData = localStorage.getItem('wd_pending_data');
             var aData = localStorage.getItem('wd_all_data');
@@ -254,6 +71,7 @@
 
                 const supa = window.supabase1;
                 const ts = new Date().toISOString();
+                const todayStr = new Date().toISOString().split('T')[0];
                 const userEmail = window.currentUser.username;
 
                 // 1. Process Unloads (Van to Block)
@@ -289,6 +107,7 @@
                     await supa.from('deliveries').update({
                         act_d: d[i].actD,
                         act_e: d[i].actE,
+                        del_date: todayStr, 
                         act_d_vj: d[i].actDVj,
                         act_d_nvj: d[i].actDNvj,
                         act_e_vj: d[i].actEVj,
@@ -1513,6 +1332,66 @@
                     });
                 });
             });
+        };
+        
+        // ==========================================
+        // PROCESSED HISTORY REPORT VIEWS
+        // ==========================================
+        
+        window.openProcessedDeliveries = function() {
+            window.switchView('view-processed');
+            var startInput = document.getElementById('filter-start-date');
+            var endInput = document.getElementById('filter-end-date');
+            var today = new Date().toISOString().split('T')[0];
+            
+            // Set default dates to today if empty
+            if (!startInput.value) startInput.value = today;
+            if (!endInput.value) endInput.value = today;
+            
+            var container = document.getElementById('processed-list-container');
+            if (container) {
+                container.innerHTML = '<div class="text-center py-10"><span class="text-4xl text-slate-300">📅</span><p class="text-sm font-bold text-slate-500 mt-3">Select dates and click "Execute Query" to view history.</p></div>';
+            }
+        };
+
+        window.renderHistoryCardsMarkup = function(container, dataArray, emptyMsg) {
+            if (!dataArray || dataArray.length === 0) {
+                container.innerHTML = '<div class="text-center py-10"><span class="text-4xl">📭</span><p class="text-sm font-bold text-slate-500 mt-3">' + emptyMsg + '</p></div>';
+                return;
+            }
+            
+            var html = '';
+            dataArray.forEach(function(d) {
+                var actD = (d.actDVj || 0) + (d.actDNvj || 0);
+                var actE = (d.actEVj || 0) + (d.actENvj || 0);
+                var rep = (d.repActVj || 0) + (d.repActNvj || 0);
+                
+                var imgHtml = d.doorLink ? '<div class="mt-2"><img src="' + window.parseImgUrl(d.doorLink) + '" onclick="window.openLightbox(\'' + d.doorLink + '\')" class="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition"></div>' : '';
+                
+                var displayDate = d.delDate;
+                if (displayDate.includes('T')) {
+                    displayDate = new Date(displayDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                }
+
+                html += `
+                <div class="bg-white p-4 rounded-2xl mb-4 shadow-sm border border-slate-200 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-2 border-b border-slate-100 pb-2">
+                        <div>
+                            <span class="font-black text-slate-800 text-sm block tracking-wide">${d.apartment} - ${d.block}</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mt-0.5">Door ${d.door} &bull; <span class="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-600">${d.cpnno}</span></span>
+                        </div>
+                        <span class="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-1 rounded font-black shadow-sm uppercase tracking-widest">${displayDate}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] bg-slate-50 p-2.5 rounded-xl font-bold border border-slate-100 shadow-inner mt-2">
+                        <div>Delivered: <span class="font-black text-emerald-700">${actD} Fulls</span></div>
+                        <div>Collected: <span class="font-black text-emerald-700">${actE} Empties</span></div>
+                        ${rep > 0 ? `<div class="col-span-2 text-amber-700 border-t border-amber-100 pt-1 mt-1">Replacements: ${rep} (${d.replaceReason})</div>` : ''}
+                        ${d.ordComment ? `<div class="col-span-2 text-slate-500 italic border-t border-slate-200 pt-1 mt-1">Note: ${d.ordComment}</div>` : ''}
+                    </div>
+                    ${imgHtml}
+                </div>`;
+            });
+            container.innerHTML = html;
         };
 
     })();

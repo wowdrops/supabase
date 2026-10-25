@@ -611,11 +611,15 @@
                     let routeDispatchNvj = 0;
                     (routeData || []).forEach(row => {
                         let ordD = Number(row.ord_d || 0);
+                        let repQty = Number(row.replace_qty || 0);
+                        let totalNeeded = ordD + repQty; // Add replacements to the morning load!
+                        
                         let advance = Number(row.can_deposit || row.advance_amount || 0);
                         let maxVj = Math.floor(advance / vjPrice);
-                        let expVj = Math.min(maxVj, ordD);
+                        let expVj = Math.min(maxVj, totalNeeded);
+                        
                         routeDispatchVj += expVj;
-                        routeDispatchNvj += (ordD - expVj);
+                        routeDispatchNvj += (totalNeeded - expVj);
                     });
 
                     let driverEmail = window.currentUser.role.includes('DRIVER') ? window.currentUser.username : 'AUTO_CREATED_FOR_TEAM';

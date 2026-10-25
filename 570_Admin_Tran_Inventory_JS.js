@@ -289,6 +289,9 @@ window.editPurchase = function(id) {
     document.getElementById('inv-pu-rate').value = row.rate_per_can || 0;
     document.getElementById('inv-pu-amt').value = row.total_amount || 0;
 
+    document.getElementById('inv-pu-retired').value = row.qty_retired || 0;
+    document.getElementById('inv-pu-edit-retired-box').classList.remove('hidden');
+
     document.getElementById('pu-form-title').innerText = "Update Purchase";
     document.getElementById('btn-submit-purchase').innerHTML = "Update Entry";
     document.getElementById('btn-submit-purchase').classList.replace('bg-emerald-600', 'bg-indigo-600');
@@ -301,6 +304,8 @@ window.invClearPurchaseForm = function() {
     document.getElementById('inv-pu-qty').value = "";
     document.getElementById('inv-pu-rate').value = "0";
     document.getElementById('inv-pu-amt').value = "";
+    document.getElementById('inv-pu-retired').value = "0";
+    document.getElementById('inv-pu-edit-retired-box').classList.add('hidden');
     
     window.generateBatchSuggestion();
     
@@ -328,6 +333,9 @@ window.submitAssetPurchase = async function() {
 
     btn.innerHTML = 'Saving...'; btn.disabled = true;
 
+    var retired = parseInt(document.getElementById('inv-pu-retired').value) || 0;
+    var activeQty = qty - retired;
+
     try {
         var pDate = new Date(dateStr);
         pDate.setFullYear(pDate.getFullYear() + 1);
@@ -339,10 +347,12 @@ window.submitAssetPurchase = async function() {
             supplier_id: Number(sup),
             can_type: type,
             qty_purchased: qty,
-            qty_active: qty,
+            qty_active: activeQty,
+            qty_retired: retired,
             expiry_date: expDateStr,
             rate_per_can: rate,       // <-- Saved to DB
-            total_amount: amt         // <-- Saved to DB
+            total_amount: amt,         // <-- Saved to DB
+            status: activeQty <= 0 ? 'RETIRED' : 'ACTIVE'
         };
 
         if(editId) {

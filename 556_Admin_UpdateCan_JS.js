@@ -12,6 +12,30 @@ window.clearShortage = function () {
   if (short) short.value = ""; 
 };
 
+window.setAdjJarType = function (type) {
+  var jarInput = document.getElementById('uc-jar-type');
+  if (jarInput) jarInput.value = type;
+
+  var btnNvj = document.getElementById('btn-type-nvj');
+  var btnVj = document.getElementById('btn-type-vj');
+
+  if (type === 'NVJ') {
+    if (btnNvj) {
+      btnNvj.className = "p-3 rounded-xl font-black text-sm border-2 border-indigo-600 bg-indigo-600 text-white transition-all uppercase tracking-wider shadow-sm";
+    }
+    if (btnVj) {
+      btnVj.className = "p-3 rounded-xl font-black text-sm border-2 border-slate-300 dark:border-slate-600 bg-transparent text-slate-700 dark:text-slate-300 transition-all uppercase tracking-wider";
+    }
+  } else {
+    if (btnVj) {
+      btnVj.className = "p-3 rounded-xl font-black text-sm border-2 border-indigo-600 bg-indigo-600 text-white transition-all uppercase tracking-wider shadow-sm";
+    }
+    if (btnNvj) {
+      btnNvj.className = "p-3 rounded-xl font-black text-sm border-2 border-slate-300 dark:border-slate-600 bg-transparent text-slate-700 dark:text-slate-300 transition-all uppercase tracking-wider";
+    }
+  }
+};
+
 window.fetchCpnCount = async function () {
   var cpnInput = document.getElementById('uc-cpnno');
   if (!cpnInput) return;
@@ -47,7 +71,7 @@ window.fetchCpnCount = async function () {
 
     const { data: salesBalanceData, error: salesErr } = await supa
       .from('sales')
-      .select('act_d, act_e')
+      .select('act_d, act_e, act_d_vj, act_e_vj, act_d_nvj, act_e_nvj')
       .eq('cpn_no', cpn);
 
     if (salesErr) throw salesErr;
@@ -89,6 +113,7 @@ window.submitCanAdjustment = async function () {
   var cpn = document.getElementById('uc-cpnno').value.trim().toUpperCase();
   var short = document.getElementById('uc-shortage').value;
   var exc = document.getElementById('uc-excess').value;
+  var jarType = document.getElementById('uc-jar-type') ? document.getElementById('uc-jar-type').value : 'NVJ';
   var submitBtn = document.getElementById('btn-submit-stock');
 
   if ((!short || Number(short) <= 0) && (!exc || Number(exc) <= 0)) {
@@ -96,7 +121,7 @@ window.submitCanAdjustment = async function () {
     return;
   }
 
-  if(!confirm("Are you sure you want to adjust the stock for " + cpn + "?")) return;
+  if(!confirm("Are you sure you want to adjust " + jarType + " stock for " + cpn + "?")) return;
 
   if (submitBtn) {
       submitBtn.innerHTML = '<svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
@@ -122,7 +147,7 @@ window.submitCanAdjustment = async function () {
     var uniqueID = "ADJ_" + now.getTime();
     var adminUser = (window.activeAdminSession && window.activeAdminSession.username) ? window.activeAdminSession.username : "Admin";
 
-    const payload = {
+    var payload = {
       cpn_no: cpn,
       order_date: todayStr,
       ord_d: 0,
@@ -131,7 +156,7 @@ window.submitCanAdjustment = async function () {
       act_d: 0,
       act_e: actEValue,
       rate: 0,
-      order_comment: "##STOCK UPDATE##",
+      order_comment: "##STOCK UPDATE## (" + jarType + ")",
       amount: 0,
       unique_no: uniqueID,
       order_entered_at: fullTimestamp,
@@ -141,10 +166,18 @@ window.submitCanAdjustment = async function () {
       status: 'COMPLETED'
     };
 
+    if (jarType === 'VJ') {
+      payload.act_e_vj = actEValue;
+      payload.act_e_nvj = 0;
+    } else {
+      payload.act_e_nvj = actEValue;
+      payload.act_e_vj = 0;
+    }
+
     const { error } = await supa.from('sales').insert([payload]);
     if (error) throw error;
 
-    if(window.showToast) window.showToast("Stock " + logType + " logged successfully.", "success");
+    if(window.showToast) window.showToast("Stock " + logType + " (" + jarType + ") logged successfully.", "success");
     window.fetchCpnCount();
 
   } catch (err) {
@@ -204,11 +237,12 @@ window.loadStockLogs = async function () {
       var amt = Number(r.amount || 0);
       var ordComment = String(r.order_comment || "").trim();
 
-      if (ordComment === "##STOCK UPDATE##") {
+      if (ordComment.startsWith("##STOCK UPDATE##")) {
         stockLogs.push({
           date: dStr, cpn: r.cpn_no,
           type: actE > 0 ? "Shortage" : "Excess",
-          qty: Math.abs(actE)
+          qty: Math.abs(actE),
+          comment: ordComment
         });
       } else {
         sumActD += actD; sumActE += actE; sumAmt += amt;

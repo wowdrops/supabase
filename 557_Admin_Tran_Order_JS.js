@@ -190,8 +190,9 @@ function renderOrd2Table(data) {
         
         let reasonStr = order.repReason ? `<br><span class="text-[9px] text-rose-500 dark:text-rose-400 font-bold uppercase tracking-widest transition-colors">${order.repReason}</span>` : '';
 
+        // FIX: Injecting value="${order.id}" into the checkbox below!
         row.innerHTML = `
-          <td class="p-4 text-center"><input type="checkbox" class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 ord-batch-chk cursor-pointer transition-colors"></td>
+          <td class="p-4 text-center"><input type="checkbox" value="${order.id}" class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 ord-batch-chk cursor-pointer transition-colors"></td>
           <td class="p-4"><p class="text-sm font-black text-slate-700 dark:text-slate-300 transition-colors">${order.date}</p><p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest transition-colors">${order.time}</p></td>
           <td class="p-4">${locHtml}</td>
           <td class="p-4">${custHtml}</td>

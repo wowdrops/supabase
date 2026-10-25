@@ -566,6 +566,13 @@
                 return window.showToast("✅ No active route found. You are off duty.", true);
             }
 
+            // --- FIX: FETCH VJ_PRICE FIRST BEFORE ANY CALCULATIONS ---
+            const { data: setupData } = await supa.from('setup').select('value').eq('key', 'VJ_PRICE').maybeSingle();
+            const vjPrice = setupData ? (Number(setupData.value) || window.APP_CONFIG.VJ_PRICE) : window.APP_CONFIG.VJ_PRICE;
+            window.APP_CONFIG.VJ_PRICE = vjPrice;
+            localStorage.setItem('wd_sys_config', JSON.stringify({ vjPrice: vjPrice }));
+            // ---------------------------------------------------------
+
             // 2. WE HAVE A ROUTE! Now handle the EOD Trip & Shift logic.
             if (window.currentUser && window.currentUser.username) {
                 
@@ -586,7 +593,7 @@
                     }
                 }
 
-                // Locate or Create today's Active Master Trip (Supports Trip 1, Trip 2, Trip 3...)
+                // Locate or Create today's Active Master Trip
                 let activeTripId = null;
                 const { data: todayTrips } = await supa
                     .from('eod_log')
@@ -599,17 +606,39 @@
                 if (todayTrips && todayTrips.length > 0) {
                     activeTripId = todayTrips[0].id;
                 } else {
-                    // Create a NEW trip for this specific dispatch run!
+                    // 1. Calculate Dispatch Requirements using the safely fetched vjPrice
+                    let routeDispatchVj = 0;
+                    let routeDispatchNvj = 0;
+                    (routeData || []).forEach(row => {
+                        let ordD = Number(row.ord_d || 0);
+                        let advance = Number(row.can_deposit || row.advance_amount || 0);
+                        let maxVj = Math.floor(advance / vjPrice);
+                        let expVj = Math.min(maxVj, ordD);
+                        routeDispatchVj += expVj;
+                        routeDispatchNvj += (ordD - expVj);
+                    });
+
+                    let driverEmail = window.currentUser.role.includes('DRIVER') ? window.currentUser.username : 'AUTO_CREATED_FOR_TEAM';
+
+                    // 2. Create the Active Trip in eod_log
                     const { data: newTrip, error: tripErr } = await supa
                         .from('eod_log')
                         .insert([{
-                            driver_mail_id: window.currentUser.role.includes('DRIVER') ? window.currentUser.username : 'AUTO_CREATED_FOR_TEAM',
+                            driver_mail_id: driverEmail,
                             status: 'Active'
                         }])
                         .select('id')
                         .single();
                     if (tripErr) throw tripErr;
                     activeTripId = newTrip.id;
+
+                    // 3. Log the morning load in van_dispatch_log to trigger Inventory Movement!
+                    await supa.from('van_dispatch_log').insert([{
+                        dispatch_date: todayStr,
+                        driver_mail_id: driverEmail,
+                        load_full_vj: routeDispatchVj,
+                        load_full_nvj: routeDispatchNvj
+                    }]);
                 }
 
                 // Ensure user is clocked in to THIS specific trip
@@ -631,11 +660,6 @@
             }
 
             window.showLoader('Processing Route...');
-
-            const { data: setupData } = await supa.from('setup').select('value').eq('key', 'VJ_PRICE').maybeSingle();
-            const vjPrice = setupData ? (Number(setupData.value) || window.APP_CONFIG.VJ_PRICE) : window.APP_CONFIG.VJ_PRICE;
-            window.APP_CONFIG.VJ_PRICE = vjPrice;
-            localStorage.setItem('wd_sys_config', JSON.stringify({ vjPrice: vjPrice }));
 
             var pendingOrders = {};
             var allOrders = {};

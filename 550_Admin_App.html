@@ -4,7 +4,8 @@
 <head>
   <base target="_top">
   <title>WOWDROPS - Admin Portal</title>
-  <link rel="icon" type="image/x-icon" href="wowLogo.jpg">
+  <link rel="icon" type="image/x-icon" href="wowLogo_admin.jpg">
+  <link rel="manifest" href="manifest_admin.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
   tailwind.config = {
@@ -54,7 +55,13 @@
 </div>
 
 <div data-include="566_Admin_360_Modal.html"></div>
-
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('300_sw.js');
+    });
+  }
+</script>
 <!-- Master Loader: Fetches ONLY the Core Shell HTML, then boots JS -->
 <script>
   const jsFiles = [

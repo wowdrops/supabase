@@ -6,7 +6,7 @@
   <base target="_top">
   <title>WOW DROPS - Customer Portal</title>
   <link rel="icon" href="wowLogo.jpg" type="image/png">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest_customer.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -26,7 +26,7 @@
     <!-- LOGIN VIEW -->
     <div id="view-login" class="p-8 space-y-8 mt-12 md:my-auto fade-in">
       <div class="text-center flex flex-col items-center">
-        <a href="https://wowdrops.github.io/supabase" target="_blank" rel="noopener noreferrer" class="shrink-0">
+        <a href="index.html" target="_blank" rel="noopener noreferrer" class="shrink-0">
           <img src="wowLogo.jpg" class="h-20 md:h-24 w-auto"
             alt="Logo">
         </a>
@@ -237,7 +237,7 @@
       <div
         class="sticky top-0 z-50 glass-header py-1 px-4 text-white flex justify-between items-center shadow-lg border-b border-white/10">
         <div class="flex items-center gap-x-4">
-          <a href="https://wowdrops.github.io/supabase" target="_blank" rel="noopener noreferrer" class="shrink-0">
+          <a href="index.html" target="_blank" rel="noopener noreferrer" class="shrink-0">
             <img src="wowLogo.jpg" class="h-12 md:h-16 w-auto"
               alt="Logo">
           </a>
@@ -957,6 +957,14 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('300_sw.js');
+    });
+  }
+  </script>
   
   <!-- Link to external JS Modules -->
   <script src="supabase_config.js?v=4.2" defer></script>

@@ -1,0 +1,21 @@
+{
+  "id": "wowdrops_delivery_app",
+  "name": "WOW Delivery",
+  "short_name": "WOW Delivery",
+  "start_url": "./451_Delivery_App.html",
+  "display": "standalone",
+  "background_color": "#052e16",
+  "theme_color": "#15803d",
+  "icons": [
+    {
+      "src": "wowLogo_delivery.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "wowLogo_delivery.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

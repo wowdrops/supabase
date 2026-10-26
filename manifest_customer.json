@@ -1,0 +1,21 @@
+{
+  "id": "wowdrops_customer_app",
+  "name": "WOW Customer",
+  "short_name": "WOW DROPS",
+  "start_url": "./351_portal.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "wowLogo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "wowLogo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

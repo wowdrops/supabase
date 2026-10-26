@@ -135,7 +135,7 @@ function triggerUPIPayment() {
   btn.disabled = true;
   btn.classList.replace("bg-emerald-500", "bg-slate-400");
 
-  // Dynamically grab the current page URL (e.g., https://wowdrops.github.io/supabase/351_portal_supa.html)
+  // Dynamically grab the current page URL
   var currentUrl = window.location.origin + window.location.pathname;
 
   callBackendAPI("initiatePhonePePayment", { cpn: activeUserSession.cpn, amount: amt  },

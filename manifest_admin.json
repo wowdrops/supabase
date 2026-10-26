@@ -1,0 +1,21 @@
+{
+  "id": "wowdrops_admin_app",
+  "name": "WOW Admin",
+  "short_name": "WOW Admin",
+  "start_url": "./550_Admin_App.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "wowLogo_admin.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "wowLogo_admin.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

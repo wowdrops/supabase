@@ -1,227 +1,253 @@
-<div id="tab-dashboard" class="space-y-8 fade-in pb-12 transition-colors">
-  <div class="border-b-4 border-slate-200 dark:border-slate-700 pb-4 transition-colors">
-    <div class="flex flex-row justify-between items-center gap-2 md:gap-4">
-      <div class="flex items-center gap-2 md:gap-4">
-        <h2 class="text-2xl sm:text-3xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Operations & Ledger</h2>
-        <span id="dash-load-time" class="hidden text-[10px] md:text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 whitespace-nowrap transition-colors"></span>
-      </div>
-      <button onclick="window.loadDashboardData(true)"
-        class="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-lg font-black shadow-lg transition-colors active:scale-95 flex items-center gap-1.5 shrink-0">
-        <svg class="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-        <span class="hidden md:inline">Refresh Data</span>
-        <span class="md:hidden">Refresh</span>
-      </button>
-    </div>
+<div id="tab-dashboard" class="transition-colors relative">
+  <!-- INNER WRAPPER: Gets the fade-in animation so bottom bar stays fixed outside it -->
+  <div class="space-y-6 md:space-y-8 fade-in pb-24 md:pb-12">
     
-    <div class="flex flex-col sm:flex-row gap-2 mt-6">
-      <button id="btn-dash-tab-1" onclick="window.switchDashTab(1)"
-        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 dark:bg-blue-600 text-white shadow-md transition-colors text-center whitespace-nowrap">Operations</button>
-      <button id="btn-dash-tab-2" onclick="window.switchDashTab(2)"
-        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center whitespace-nowrap">Ledger</button>
-      <button id="btn-dash-tab-3" onclick="window.switchDashTab(3)"
-        class="flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center whitespace-nowrap">Customer Overview</button>
-    </div>
-  </div>
-
-  <div id="dash-loading" class="py-24 text-center text-indigo-600 dark:text-indigo-400 font-black text-3xl animate-pulse transition-colors">Syncing Dashboard Data...</div>
-
-  <!-- TAB 1: OPERATIONS -->
-  <div id="dash-content-1" class="hidden space-y-10 fade-in">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+    <div class="border-b-2 md:border-b-4 border-slate-200 dark:border-slate-700 pb-4 transition-colors">
+      <div class="flex flex-row justify-between items-center gap-2 md:gap-4">
+        <div class="flex items-center gap-2 md:gap-4">
+          <h2 class="text-xl sm:text-3xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Operations & Ledger</h2>
+          <span id="dash-load-time" class="hidden text-[10px] md:text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 whitespace-nowrap transition-colors"></span>
+        </div>
+        <button onclick="window.loadDashboardData(true)"
+          class="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg transition-colors active:scale-95 flex items-center gap-1.5 shrink-0 uppercase tracking-widest">
+          <svg class="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span class="hidden md:inline">Refresh Data</span>
+          <span class="md:hidden">Sync</span>
+        </button>
+      </div>
       
-      <!-- LEFT COLUMN: CURRENT ORDERS -->
-      <div class="lg:col-span-5 flex flex-col h-full">
-        <div onclick="window.navigateFromDashboard('tran-order', null, 'Operations & Ledger')"
-          class="cursor-pointer hover:-translate-y-1 transition-all shadow-xl hover:shadow-2xl bg-indigo-900 dark:bg-indigo-950 p-6 md:p-8 rounded-3xl text-white relative overflow-hidden border-4 border-indigo-800 dark:border-indigo-900 flex flex-col h-full">
-          <div class="relative z-10 flex-1 flex flex-col">
-            <div class="flex justify-between items-start">
-              <span class="text-xl md:text-2xl font-bold uppercase tracking-widest text-indigo-200">Current Orders</span>
-              <span class="bg-indigo-800 text-indigo-100 px-4 py-2 rounded-xl text-sm md:text-base font-black shadow-inner" id="dash-ord-count">0 Orders</span>
-            </div>
-            <h3 id="dash-ord-amt" class="text-5xl md:text-6xl lg:text-7xl font-black mt-6">₹0</h3>
-            <p class="text-3xl md:text-4xl text-indigo-200 font-bold mt-4 flex gap-6">
-              <span>Full: <b id="dash-ord-cans" class="text-white">0</b></span>
-              <span class="text-indigo-700">|</span>
-              <span>Empty: <b id="dash-ord-empties" class="text-white">0</b></span>
-            </p>
-            <div class="mt-auto pt-8">
-              <div class="bg-indigo-950/60 p-5 rounded-2xl border-2 border-indigo-800 shadow-inner">
-                <p class="text-xs font-black text-indigo-300 uppercase tracking-widest mb-4 border-b-2 border-indigo-800/50 pb-2">Daily Capacity Dashboard</p>
-                <div class="grid grid-cols-2 gap-y-5 gap-x-4">
-                   <div><p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Total Allowed</p><p class="text-2xl font-black text-indigo-100 mt-1" id="dash-ord-allowed">0</p></div>
-                   <div><p class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Available Cans</p><p class="text-2xl font-black text-emerald-400 mt-1" id="dash-ord-avail">0</p></div>
-                   <div><p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest" title="Physical Supply (ORD D - PEND)">Normal Placed</p><p class="text-xl font-bold text-white mt-1" id="dash-ord-normal">0</p></div>
-                   <div><p class="text-[10px] text-amber-400 font-bold uppercase tracking-widest">Pending Placed</p><p class="text-xl font-bold text-amber-400 mt-1" id="dash-ord-pend">0</p></div>
-                   <div class="col-span-2"><p class="text-[10px] text-rose-400 font-bold uppercase tracking-widest">Replacement Placed</p><p class="text-xl font-bold text-rose-400 mt-1" id="dash-ord-rep">0</p></div>
+      <!-- DESKTOP TOP TABS (Hidden on Mobile) -->
+      <div class="hidden md:flex flex-row gap-2 mt-6">
+        <button id="btn-dash-tab-1" onclick="window.switchDashTab(1)" class="flex-1 px-6 py-3 rounded-xl text-lg font-black bg-slate-800 dark:bg-blue-600 text-white shadow-md transition-colors text-center">Operations</button>
+        <button id="btn-dash-tab-2" onclick="window.switchDashTab(2)" class="flex-1 px-6 py-3 rounded-xl text-lg font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center border-2 border-slate-200 dark:border-slate-700">Ledger</button>
+        <button id="btn-dash-tab-3" onclick="window.switchDashTab(3)" class="flex-1 px-6 py-3 rounded-xl text-lg font-black bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-center border-2 border-slate-200 dark:border-slate-700">Customer Overview</button>
+      </div>
+    </div>
+
+    <div id="dash-loading" class="py-24 text-center text-indigo-600 dark:text-indigo-400 font-black text-2xl md:text-3xl animate-pulse transition-colors">Syncing Dashboard Data...</div>
+
+    <!-- TAB 1: OPERATIONS -->
+    <div id="dash-content-1" class="hidden space-y-6 md:space-y-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        
+        <!-- LEFT COLUMN: CURRENT ORDERS -->
+        <div class="lg:col-span-5 flex flex-col h-full">
+          <div onclick="window.navigateFromDashboard('tran-order', null, 'Operations & Ledger')"
+            class="cursor-pointer hover:-translate-y-1 transition-all shadow-lg hover:shadow-2xl bg-indigo-900 dark:bg-indigo-950 p-5 md:p-8 rounded-2xl md:rounded-3xl text-white relative overflow-hidden border-2 md:border-4 border-indigo-800 dark:border-indigo-900 flex flex-col h-full">
+            <div class="relative z-10 flex-1 flex flex-col">
+              <div class="flex justify-between items-start mb-4">
+                <span class="text-sm md:text-xl font-bold uppercase tracking-widest text-indigo-200">Current Orders</span>
+                <span class="bg-indigo-800 text-indigo-100 px-3 py-1.5 rounded-lg text-xs md:text-sm font-black shadow-inner" id="dash-ord-count">0 Orders</span>
+              </div>
+              <h3 id="dash-ord-amt" class="text-4xl md:text-5xl lg:text-6xl font-black mt-2">₹0</h3>
+              <p class="text-xl md:text-3xl text-indigo-200 font-bold mt-2 flex gap-4">
+                <span>Full: <b id="dash-ord-cans" class="text-white">0</b></span>
+                <span class="text-indigo-700">|</span>
+                <span>Empty: <b id="dash-ord-empties" class="text-white">0</b></span>
+              </p>
+              <div class="mt-auto pt-6">
+                <div class="bg-indigo-950/60 p-4 rounded-xl border border-indigo-800/50 shadow-inner">
+                  <p class="text-[10px] md:text-xs font-black text-indigo-300 uppercase tracking-widest mb-3 border-b border-indigo-800/50 pb-2">Daily Capacity</p>
+                  <div class="grid grid-cols-2 gap-y-3 gap-x-3">
+                     <div class="bg-indigo-900/40 p-2 rounded-lg"><p class="text-[9px] text-indigo-400 font-bold uppercase">Allowed</p><p class="text-lg md:text-xl font-black text-indigo-100 mt-0.5" id="dash-ord-allowed">0</p></div>
+                     <div class="bg-emerald-900/20 p-2 rounded-lg"><p class="text-[9px] text-emerald-400 font-bold uppercase">Available</p><p class="text-lg md:text-xl font-black text-emerald-400 mt-0.5" id="dash-ord-avail">0</p></div>
+                     <div class="bg-indigo-900/40 p-2 rounded-lg"><p class="text-[9px] text-indigo-400 font-bold uppercase">Normal</p><p class="text-base md:text-lg font-bold text-white mt-0.5" id="dash-ord-normal">0</p></div>
+                     <div class="bg-amber-900/20 p-2 rounded-lg"><p class="text-[9px] text-amber-400 font-bold uppercase">Pending</p><p class="text-base md:text-lg font-bold text-amber-400 mt-0.5" id="dash-ord-pend">0</p></div>
+                     <div class="col-span-2 bg-rose-900/20 p-2 rounded-lg"><p class="text-[9px] text-rose-400 font-bold uppercase">Replacement</p><p class="text-base md:text-lg font-bold text-rose-400 mt-0.5" id="dash-ord-rep">0</p></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- RIGHT COLUMN: DELIVERY, SALES, PAYS -->
-      <div class="lg:col-span-7 flex flex-col gap-6 lg:gap-8">
-        
-        <!-- Live Delivery -->
-        <div onclick="window.navigateFromDashboard('tran-delivery', 'ALL', 'Operations & Ledger')" class="cursor-pointer hover:-translate-y-1 transition-all shadow-xl hover:shadow-2xl bg-cyan-900 dark:bg-cyan-950 p-6 md:p-8 rounded-3xl text-white relative overflow-hidden border-4 border-cyan-800 dark:border-cyan-900">
-          <div>
-            <span class="text-xl md:text-2xl font-bold uppercase tracking-widest text-cyan-200">Live Delivery</span>
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-4">
-              <h3 id="dash-del-amt" class="text-5xl md:text-6xl font-black">₹0</h3>
-              <div class="text-left sm:text-right mt-4 sm:mt-0">
-                 <p class="text-sm md:text-lg font-bold text-cyan-300">ORD: <b id="dash-del-ord" class="text-white">0</b></p>
-                 <p class="text-lg md:text-2xl font-bold text-cyan-100"><b id="dash-del-cust" class="text-white">0</b> Customers</p>
-                 <p class="text-sm md:text-lg font-bold text-cyan-300 mt-1">ACT D: <b id="dash-del-actd" class="text-white">0</b><span class="mx-2">|</span>ACT E: <b id="dash-del-acte" class="text-white">0</b></p>
+        <!-- RIGHT COLUMN: DELIVERY, SALES, PAYS -->
+        <div class="lg:col-span-7 flex flex-col gap-6 lg:gap-8">
+          <div onclick="window.navigateFromDashboard('tran-delivery', 'ALL', 'Operations & Ledger')" class="cursor-pointer hover:-translate-y-1 transition-all shadow-lg hover:shadow-2xl bg-cyan-900 dark:bg-cyan-950 p-5 md:p-8 rounded-2xl md:rounded-3xl text-white relative overflow-hidden border-2 md:border-4 border-cyan-800 dark:border-cyan-900">
+            <div>
+              <span class="text-sm md:text-xl font-bold uppercase tracking-widest text-cyan-200">Live Delivery</span>
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-2">
+                <h3 id="dash-del-amt" class="text-4xl md:text-5xl font-black">₹0</h3>
+                <div class="text-left sm:text-right mt-3 sm:mt-0 bg-cyan-950/40 p-2 sm:p-0 rounded-lg sm:bg-transparent">
+                   <p class="text-xs md:text-sm font-bold text-cyan-300">ORD: <b id="dash-del-ord" class="text-white text-sm md:text-base">0</b> <span class="mx-1">|</span> <b id="dash-del-cust" class="text-white text-sm md:text-base">0</b> Cust</p>
+                   <p class="text-xs md:text-sm font-bold text-cyan-300 mt-1">ACT D: <b id="dash-del-actd" class="text-white text-sm md:text-base">0</b><span class="mx-2">|</span>ACT E: <b id="dash-del-acte" class="text-white text-sm md:text-base">0</b></p>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div onclick="event.stopPropagation(); window.navigateFromDashboard('tran-delivery', 'VERIFIED', 'Operations & Ledger')" class="bg-cyan-800/50 dark:bg-cyan-900/50 p-3 rounded-xl border border-cyan-700 hover:bg-cyan-700 dark:hover:bg-cyan-800 transition-colors cursor-pointer text-center">
+                <p class="text-[9px] md:text-xs font-bold text-cyan-200 uppercase tracking-widest">Delivered</p>
+                <p id="dash-del-doors-done" class="text-2xl md:text-3xl font-black text-emerald-400 mt-1">0</p>
+              </div>
+              <div onclick="event.stopPropagation(); window.navigateFromDashboard('tran-delivery', 'PENDING', 'Operations & Ledger')" class="bg-cyan-800/50 dark:bg-cyan-900/50 p-3 rounded-xl border border-cyan-700 hover:bg-cyan-700 dark:hover:bg-cyan-800 transition-colors cursor-pointer text-center">
+                <p class="text-[9px] md:text-xs font-bold text-cyan-200 uppercase tracking-widest">Pending</p>
+                <p id="dash-del-doors-pend" class="text-2xl md:text-3xl font-black text-amber-400 mt-1">0</p>
               </div>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4 mt-6">
-            <div onclick="event.stopPropagation(); window.navigateFromDashboard('tran-delivery', 'VERIFIED', 'Operations & Ledger')" class="bg-cyan-800/50 dark:bg-cyan-900/50 p-4 rounded-2xl border-2 border-cyan-700 hover:bg-cyan-700 dark:hover:bg-cyan-800 transition-colors cursor-pointer text-center">
-              <p class="text-[10px] md:text-sm font-bold text-cyan-200 uppercase tracking-widest">Delivered Doors</p>
-              <p id="dash-del-doors-done" class="text-3xl md:text-4xl font-black text-emerald-400 mt-1">0</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 flex-1">
+            <div class="bg-white dark:bg-slate-800 p-5 md:p-8 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 dark:border-slate-700 shadow-lg flex flex-col justify-between h-full transition-colors">
+              <div onclick="window.navigateFromDashboard('sales', 'latest', 'Operations & Ledger')" class="cursor-pointer hover:opacity-75 transition-opacity">
+                <span id="dash-label-sales-last" class="text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Loading...</span>
+                <h3 id="dash-sales-amt" class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white mt-1 transition-colors">₹0</h3>
+                <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 font-bold mt-2 transition-colors">Del: <b id="dash-sales-cans" class="text-indigo-600 dark:text-indigo-400">0</b><span class="mx-1">|</span>Emp: <b id="dash-sales-empties" class="text-amber-600 dark:text-amber-500">0</b></p>
+              </div>
+              <div onclick="window.navigateFromDashboard('sales', 'second', 'Operations & Ledger')" class="mt-4 pt-3 border-t-2 border-slate-100 dark:border-slate-700/50 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <p class="text-xs md:text-sm font-bold text-slate-400 dark:text-slate-500"><span id="dash-label-sales-secondlast">Loading...</span>: <b id="dash-sales-yday">₹0</b></p>
+              </div>
             </div>
-            <div onclick="event.stopPropagation(); window.navigateFromDashboard('tran-delivery', 'PENDING', 'Operations & Ledger')" class="bg-cyan-800/50 dark:bg-cyan-900/50 p-4 rounded-2xl border-2 border-cyan-700 hover:bg-cyan-700 dark:hover:bg-cyan-800 transition-colors cursor-pointer text-center">
-              <p class="text-[10px] md:text-sm font-bold text-cyan-200 uppercase tracking-widest">Pending Doors</p>
-              <p id="dash-del-doors-pend" class="text-3xl md:text-4xl font-black text-amber-400 mt-1">0</p>
+
+            <div class="bg-white dark:bg-slate-800 p-5 md:p-8 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 dark:border-slate-700 shadow-lg flex flex-col justify-between h-full transition-colors">
+              <div onclick="window.navigateFromDashboard('pays', 'latest', 'Operations & Ledger')" class="cursor-pointer hover:opacity-75 transition-opacity">
+                <span id="dash-label-pays-last" class="text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Loading...</span>
+                <h3 id="dash-pays-amt" class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white mt-1 transition-colors">₹0</h3>
+              </div>
+              <div onclick="window.navigateFromDashboard('pays', 'second', 'Operations & Ledger')" class="mt-4 pt-3 border-t-2 border-slate-100 dark:border-slate-700/50 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                <p class="text-xs md:text-sm font-bold text-slate-400 dark:text-slate-500"><span id="dash-label-pays-secondlast">Loading...</span>: <b id="dash-pays-yday">₹0</b></p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Sales and Pays Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 flex-1">
-          <div class="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl flex flex-col justify-between h-full transition-colors">
-            <div onclick="window.navigateFromDashboard('sales', 'latest', 'Operations & Ledger')" class="cursor-pointer hover:opacity-75 transition-opacity">
-              <span id="dash-label-sales-last" class="text-sm md:text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Loading...</span>
-              <h3 id="dash-sales-amt" class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white mt-2 transition-colors">₹0</h3>
-              <p class="text-base md:text-xl text-slate-500 dark:text-slate-400 font-bold mt-4 transition-colors">Delivered: <b id="dash-sales-cans" class="text-indigo-600 dark:text-indigo-400">0</b><span class="text-slate-300 dark:text-slate-600 mx-2">|</span>Empty: <b id="dash-sales-empties" class="text-amber-600 dark:text-amber-500">0</b></p>
-            </div>
-            <div onclick="window.navigateFromDashboard('sales', 'second', 'Operations & Ledger')" class="mt-6 pt-4 border-t-4 border-slate-100 dark:border-slate-700/50 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-              <p class="text-sm md:text-lg font-bold text-slate-400 dark:text-slate-500"><span id="dash-label-sales-secondlast">Loading...</span>: <b id="dash-sales-yday">₹0</b></p>
-            </div>
-          </div>
+    <!-- TAB 2: LEDGER -->
+    <div id="dash-content-2" class="hidden space-y-6 md:space-y-10">
+      <div onclick="window.navigateFromDashboard('outstanding',null, 'Operations & Ledger')" class="cursor-pointer hover:-translate-y-1 transition-all shadow-lg hover:shadow-2xl bg-slate-50 dark:bg-slate-900 rounded-2xl md:rounded-3xl border-2 md:border-4 border-rose-200 dark:border-rose-900/30 p-3 md:p-6 flex flex-col gap-3 md:gap-6">
+        <div class="bg-rose-600 p-4 md:p-8 text-center rounded-xl md:rounded-2xl shadow-inner w-full">
+          <h3 class="text-sm md:text-xl font-extrabold uppercase tracking-widest text-rose-100 mb-1">Total Outstanding</h3>
+          <p id="dash-grand-out" class="text-3xl md:text-6xl lg:text-7xl font-black text-white tracking-tight drop-shadow-md">₹0</p>
+        </div>
 
-          <div class="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-xl flex flex-col justify-between h-full transition-colors">
-            <div onclick="window.navigateFromDashboard('pays', 'latest', 'Operations & Ledger')" class="cursor-pointer hover:opacity-75 transition-opacity">
-              <span id="dash-label-pays-last" class="text-sm md:text-lg font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Loading...</span>
-              <h3 id="dash-pays-amt" class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white mt-2 transition-colors">₹0</h3>
-            </div>
-            <div onclick="window.navigateFromDashboard('pays', 'second', 'Operations & Ledger')" class="mt-6 pt-4 border-t-4 border-slate-100 dark:border-slate-700/50 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              <p class="text-sm md:text-lg font-bold text-slate-400 dark:text-slate-500"><span id="dash-label-pays-secondlast">Loading...</span>: <b id="dash-pays-yday">₹0</b></p>
-            </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl md:rounded-2xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm text-center w-full transition-colors">
+          <h4 class="text-base md:text-xl font-black text-slate-800 dark:text-white mb-3 border-b border-slate-100 dark:border-slate-700/50 pb-2 uppercase tracking-widest transition-colors" id="lbl-curr-month">Month</h4>
+          <div class="grid grid-cols-3 gap-2 divide-x divide-slate-100 dark:divide-slate-700/50 transition-colors">
+            <div><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Sales</p><p class="text-lg md:text-3xl font-black text-slate-800 dark:text-white mt-1 transition-colors" id="curr-sales">₹0</p></div>
+            <div><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Pay</p><p class="text-lg md:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1 transition-colors" id="curr-pay">₹0</p></div>
+            <div><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Pend</p><p class="text-lg md:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1 transition-colors" id="curr-pend">₹0</p></div>
           </div>
         </div>
 
+        <div class="bg-white dark:bg-slate-800 rounded-xl md:rounded-2xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm text-center w-full transition-colors">
+          <h4 class="text-base md:text-xl font-black text-slate-800 dark:text-white mb-3 border-b border-slate-100 dark:border-slate-700/50 pb-2 uppercase tracking-widest transition-colors" id="lbl-prev-month">Month</h4>
+          <div class="grid grid-cols-3 gap-2 divide-x divide-slate-100 dark:divide-slate-700/50 transition-colors">
+            <div><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Sales</p><p class="text-lg md:text-3xl font-black text-slate-800 dark:text-white mt-1 transition-colors" id="prev-sales">₹0</p></div>
+            <div><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Pay</p><p class="text-lg md:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1 transition-colors" id="prev-pay">₹0</p></div>
+            <div><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Pend</p><p class="text-lg md:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1 transition-colors" id="prev-pend">₹0</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-800 p-5 md:p-8 rounded-2xl md:rounded-3xl border-2 md:border-4 border-emerald-100 dark:border-emerald-900/30 shadow-sm border-b-4 md:border-b-8 border-b-emerald-500 flex flex-col justify-center text-center transition-colors">
+        <span class="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Allocations (Latest)</span>
+        <h3 id="dash-clean-pay" class="text-3xl md:text-5xl font-black text-slate-800 dark:text-white mt-3 mb-5 transition-colors">₹0</h3>
+        <div class="grid grid-cols-3 gap-1 md:gap-2 border-t-2 md:border-t-4 border-emerald-50 dark:border-emerald-900/20 pt-4 mt-auto transition-colors">
+           <div class="text-center"><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase">Current</p><p id="dash-pay-curr" class="text-base md:text-xl font-black text-emerald-600">₹0</p></div>
+           <div class="text-center border-l border-slate-100 dark:border-slate-700/50"><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase">Previous</p><p id="dash-pay-prev" class="text-base md:text-xl font-black text-emerald-600">₹0</p></div>
+           <div class="text-center border-l border-slate-100 dark:border-slate-700/50"><p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase">Older</p><p id="dash-pay-older" class="text-base md:text-xl font-black text-emerald-600">₹0</p></div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-800 p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 dark:border-slate-700 shadow-lg mt-6 transition-colors overflow-hidden">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 border-b-2 md:border-b-4 border-red-50 dark:border-red-900/20 pb-3 gap-3 transition-colors">
+          <h4 class="text-lg md:text-2xl font-black text-red-600 dark:text-red-400 uppercase tracking-widest flex items-center gap-2 transition-colors">
+            <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Defaulters (Top 10)
+          </h4>
+          <div class="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl w-full md:w-auto transition-colors">
+            <button id="btn-def-highest" onclick="window.switchDefaulterView('highest')" class="flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs md:text-sm font-black bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400 transition-colors">Highest Debt</button>
+            <button id="btn-def-oldest" onclick="window.switchDefaulterView('oldest')" class="flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs md:text-sm font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">Longest Pend</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto hide-scrollbar -mx-4 md:mx-0 px-4 md:px-0">
+          <table class="w-full text-left whitespace-nowrap border-collapse min-w-[500px]">
+            <thead class="bg-slate-100 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 md:border-b-4 border-slate-200 dark:border-slate-700 transition-colors">
+              <tr><th class="px-4 py-3 rounded-tl-lg">Customer</th><th class="px-4 py-3">Location</th><th class="px-4 py-3 text-right">Total Owed</th><th class="px-4 py-3 text-center rounded-tr-lg">Action</th></tr>
+            </thead>
+            <tbody id="dash-defaulters" class="divide-y-2 divide-slate-100 dark:divide-slate-700/50 transition-colors"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CUSTOMER OVERVIEW -->
+    <div id="dash-content-3" class="hidden space-y-4 md:space-y-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div id="card-cust-master" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2 mb-3">1. Master Database</h4>
+            <div class="space-y-2 text-sm" id="ui-dash-master-status"></div>
+        </div>
+        <div id="card-cust-joined" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-indigo-50 dark:border-indigo-900/20 shadow-sm flex flex-col justify-between transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-indigo-900/20 pb-2 mb-3">2. Joined Last 30 Days</h4>
+            <div class="space-y-2 text-sm" id="ui-dash-joined"></div>
+        </div>
+        <div id="card-cust-churn" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-rose-50 dark:border-rose-900/20 shadow-sm flex flex-col justify-between transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-rose-400 uppercase tracking-widest border-b border-rose-50 dark:border-rose-900/20 pb-2 mb-3">3. 30-Day Churn</h4>
+            <div id="ui-dash-churn" class="space-y-2 text-sm max-h-40 overflow-y-auto hide-scrollbar"></div>
+        </div>
+        <div id="card-cust-pays" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2 mb-3">4. Payment Methods</h4>
+            <div class="space-y-3 text-sm" id="ui-dash-pay-types"></div>
+        </div>
+        <div id="card-cust-advance" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-emerald-50 dark:border-emerald-900/20 shadow-sm transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-emerald-500 uppercase tracking-widest border-b border-emerald-50 dark:border-emerald-900/20 pb-2 mb-3">5. Security Deposits</h4>
+            <div class="space-y-3 text-sm" id="ui-dash-advance"></div>
+        </div>
+        <div id="card-cust-rate" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-amber-50 dark:border-amber-900/20 shadow-sm transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-amber-500 uppercase tracking-widest border-b border-amber-50 dark:border-amber-900/20 pb-2 mb-3">6. Zero Default Rate</h4>
+            <div class="space-y-2 text-sm" id="ui-dash-zero-rate"></div>
+        </div>
+        <div id="card-cust-waivers" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-cyan-50 dark:border-cyan-900/20 shadow-sm transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-cyan-500 uppercase tracking-widest border-b border-cyan-50 dark:border-cyan-900/20 pb-2 mb-3">7. Credit Waivers</h4>
+            <div class="space-y-2 text-sm" id="ui-dash-waivers"></div>
+        </div>
+        <div id="card-cust-reasons" class="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 dark:border-slate-700 shadow-sm sm:col-span-2 lg:col-span-3 transition-colors">
+            <h4 class="text-xs md:text-sm font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2 mb-3">8. All-Time Inactive Reasons</h4>
+            <div id="ui-dash-ina-reasons" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- TAB 2: LEDGER -->
-  <div id="dash-content-2" class="hidden space-y-10 fade-in">
-    <div onclick="window.navigateFromDashboard('outstanding',null, 'Operations & Ledger')" class="cursor-pointer hover:-translate-y-1 transition-all shadow-xl hover:shadow-2xl bg-slate-50 dark:bg-slate-900 rounded-3xl border-4 border-rose-200 dark:border-rose-900/30 p-4 md:p-6 flex flex-col gap-4 md:gap-6">
-      <div class="bg-rose-600 p-5 md:p-10 text-center rounded-2xl shadow-inner w-full">
-        <h3 class="text-xl md:text-3xl font-extrabold uppercase tracking-widest text-rose-100 mb-1 md:mb-2">Total Outstanding</h3>
-        <p id="dash-grand-out" class="text-4xl sm:text-5xl md:text-8xl font-black text-white tracking-tight drop-shadow-md">₹0</p>
+  <!-- STICKY BOTTOM TAB BAR (OUTSIDE the fade-in so fixed works) -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-[100] px-2 shadow-[0_-4px_15px_-5px_rgba(0,0,0,0.1)]">
+      <div class="flex justify-between items-center h-16 max-w-md mx-auto">
+          <button id="mob-dash-tab-1" onclick="window.switchDashTab(1)" class="flex-1 flex flex-col items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <span class="text-[9px] font-black uppercase tracking-widest">Ops</span>
+          </button>
+          <button id="mob-dash-tab-2" onclick="window.switchDashTab(2)" class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span class="text-[9px] font-black uppercase tracking-widest">Ledger</span>
+          </button>
+          <button id="mob-dash-tab-3" onclick="window.switchDashTab(3)" class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              <span class="text-[9px] font-black uppercase tracking-widest">Cust</span>
+          </button>
+          <button onclick="window.openMobileSearch()" class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-full">
+                  <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+          </button>
       </div>
-
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-8 border-2 border-slate-200 dark:border-slate-700 shadow-sm text-center w-full transition-colors">
-        <h4 class="text-lg md:text-3xl font-black text-slate-800 dark:text-white mb-3 md:mb-4 border-b-2 border-slate-100 dark:border-slate-700/50 pb-2 uppercase tracking-widest transition-colors" id="lbl-curr-month">Month</h4>
-        <div class="grid grid-cols-3 gap-2 md:gap-6 divide-x-2 divide-slate-100 dark:divide-slate-700/50 transition-colors">
-          <div><p class="text-[10px] md:text-base font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sales</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-slate-800 dark:text-white mt-1 md:mt-2 transition-colors" id="curr-sales">₹0</p></div>
-          <div><p class="text-[10px] md:text-base font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pay</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-emerald-600 dark:text-emerald-400 mt-1 md:mt-2 transition-colors" id="curr-pay">₹0</p></div>
-          <div><p class="text-[10px] md:text-base font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pend</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-rose-600 dark:text-rose-400 mt-1 md:mt-2 transition-colors" id="curr-pend">₹0</p></div>
-        </div>
-      </div>
-
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 md:p-8 border-2 border-slate-200 dark:border-slate-700 shadow-sm text-center w-full transition-colors">
-        <h4 class="text-lg md:text-3xl font-black text-slate-800 dark:text-white mb-3 md:mb-4 border-b-2 border-slate-100 dark:border-slate-700/50 pb-2 uppercase tracking-widest transition-colors" id="lbl-prev-month">Month</h4>
-        <div class="grid grid-cols-3 gap-2 md:gap-6 divide-x-2 divide-slate-100 dark:divide-slate-700/50 transition-colors">
-          <div><p class="text-[10px] md:text-base font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sales</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-slate-800 dark:text-white mt-1 md:mt-2 transition-colors" id="prev-sales">₹0</p></div>
-          <div><p class="text-[10px] md:text-base font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pay</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-emerald-600 dark:text-emerald-400 mt-1 md:mt-2 transition-colors" id="prev-pay">₹0</p></div>
-          <div><p class="text-[10px] md:text-base font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pend</p><p class="text-base sm:text-lg md:text-4xl lg:text-5xl font-black text-rose-600 dark:text-rose-400 mt-1 md:mt-2 transition-colors" id="prev-pend">₹0</p></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ROW 2: PAYMENT ALLOCATIONS -->
-    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border-4 border-emerald-100 dark:border-emerald-900/30 shadow-sm border-b-8 border-b-emerald-500 dark:border-b-emerald-700 flex flex-col justify-center text-center transition-colors">
-      <span class="text-lg md:text-xl font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Payment Allocations (Latest)</span>
-      <h3 id="dash-clean-pay" class="text-5xl md:text-6xl font-black text-slate-800 dark:text-white mt-6 mb-8 transition-colors">₹0</h3>
-      <div class="grid grid-cols-3 gap-2 border-t-4 border-emerald-50 dark:border-emerald-900/20 pt-6 mt-auto transition-colors">
-         <div class="text-center"><p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Current</p><p id="dash-pay-curr" class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">₹0</p></div>
-         <div class="text-center border-l-2 border-slate-100 dark:border-slate-700/50 transition-colors"><p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Previous</p><p id="dash-pay-prev" class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">₹0</p></div>
-         <div class="text-center border-l-2 border-slate-100 dark:border-slate-700/50 transition-colors"><p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Older</p><p id="dash-pay-older" class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">₹0</p></div>
-      </div>
-    </div>
-
-    <!-- ROW 3: DEFAULTERS -->
-    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-2xl mt-8 transition-colors">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-4 border-red-50 dark:border-red-900/20 pb-4 gap-4 transition-colors">
-        <h4 class="text-2xl md:text-3xl font-black text-red-600 dark:text-red-400 uppercase tracking-widest flex items-center gap-4 transition-colors">
-          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          Defaulters (Top 10)
-        </h4>
-        <div class="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl w-full md:w-auto transition-colors">
-          <button id="btn-def-highest" onclick="window.switchDefaulterView('highest')" class="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400 transition-colors">Highest Debt</button>
-          <button id="btn-def-oldest" onclick="window.switchDefaulterView('oldest')" class="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">Longest Pending</button>
-        </div>
-      </div>
-      <div class="overflow-x-auto hide-scrollbar">
-        <table class="w-full text-left whitespace-nowrap border-collapse">
-          <thead class="bg-slate-100 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xl font-black uppercase tracking-widest border-b-4 border-slate-200 dark:border-slate-700 transition-colors">
-            <tr><th class="px-6 py-5 rounded-tl-xl">Customer</th><th class="px-6 py-5">Location</th><th class="px-6 py-5 text-right">Total Owed</th><th class="px-6 py-5 text-center rounded-tr-xl">Action</th></tr>
-          </thead>
-          <tbody id="dash-defaulters" class="divide-y-4 divide-slate-100 dark:divide-slate-700/50 transition-colors"></tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
-  <!-- TAB 3: CUSTOMER OVERVIEW (NEW) -->
-  <div id="dash-content-3" class="hidden space-y-8 fade-in">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-      <div id="card-cust-master" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-          <h4 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 dark:border-slate-700 pb-2 mb-4 transition-colors">1. Master Database Status</h4>
-          <div class="space-y-3" id="ui-dash-master-status"></div>
+  <!-- FULL SCREEN MOBILE SEARCH OVERLAY -->
+  <div id="mobile-search-overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-lg z-[110] hidden flex-col transition-opacity duration-300 opacity-0">
+      <div class="flex justify-between items-center p-4 border-b border-slate-700">
+          <h3 class="text-white font-black text-lg uppercase tracking-widest">Find Customer</h3>
+          <button type="button" onclick="window.closeMobileSearch()" class="text-slate-400 hover:text-white p-2 outline-none">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
       </div>
-
-      <div id="card-cust-joined" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-indigo-50 dark:border-indigo-900/20 shadow-sm flex flex-col justify-between hover:border-indigo-100 dark:hover:border-indigo-800/40 transition-colors">
-          <h4 class="text-sm font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-widest border-b-2 border-indigo-50 dark:border-indigo-900/20 pb-2 mb-4 transition-colors">2. Joined Last 30 Days</h4>
-          <div class="space-y-3" id="ui-dash-joined"></div>
+      <div class="p-6 mt-10">
+          <form onsubmit="event.preventDefault(); window.executeMobileSearch();" class="flex flex-col gap-4">
+              <input type="text" id="mobile-cpn-input" placeholder="Enter CPN (e.g. CPN123)" class="w-full text-center text-2xl font-black p-4 rounded-2xl bg-slate-800 text-white border-2 border-indigo-500 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/30 outline-none uppercase placeholder-slate-500 transition-all shadow-inner">
+              <button type="submit" class="w-full bg-indigo-600 text-white font-black text-lg uppercase tracking-widest p-4 rounded-2xl shadow-lg active:scale-95 transition-transform mt-2">Open 360 View</button>
+          </form>
+          <p class="text-center text-slate-400 text-sm mt-6 font-bold">Type the CPN and hit Search on your keyboard or tap the button above.</p>
       </div>
-
-      <div id="card-cust-churn" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-rose-50 dark:border-rose-900/20 shadow-sm flex flex-col justify-between hover:border-rose-100 dark:hover:border-rose-800/40 transition-colors">
-          <h4 class="text-sm font-black text-rose-400 dark:text-rose-500 uppercase tracking-widest border-b-2 border-rose-50 dark:border-rose-900/20 pb-2 mb-4 transition-colors">3. 30-Day Churn (Act &rarr; Ina)</h4>
-          <div id="ui-dash-churn" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar"></div>
-      </div>
-
-      <div id="card-cust-pays" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-          <h4 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 dark:border-slate-700 pb-2 mb-4 transition-colors">4. Payment Methods</h4>
-          <div class="space-y-4" id="ui-dash-pay-types"></div>
-      </div>
-
-      <div id="card-cust-advance" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-emerald-50 dark:border-emerald-900/20 shadow-sm hover:border-emerald-100 dark:hover:border-emerald-800/40 transition-colors">
-          <h4 class="text-sm font-black text-emerald-500 dark:text-emerald-600 uppercase tracking-widest border-b-2 border-emerald-50 dark:border-emerald-900/20 pb-2 mb-4 transition-colors">5. Security Deposits</h4>
-          <div class="space-y-4" id="ui-dash-advance"></div>
-      </div>
-
-      <div id="card-cust-rate" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-amber-50 dark:border-amber-900/20 shadow-sm hover:border-amber-100 dark:hover:border-amber-800/40 transition-colors">
-          <h4 class="text-sm font-black text-amber-500 dark:text-amber-600 uppercase tracking-widest border-b-2 border-amber-50 dark:border-amber-900/20 pb-2 mb-4 transition-colors">6. Zero Default Rate (₹0)</h4>
-          <div class="space-y-3" id="ui-dash-zero-rate"></div>
-      </div>
-
-      <div id="card-cust-waivers" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-cyan-50 dark:border-cyan-900/20 shadow-sm hover:border-cyan-100 dark:hover:border-cyan-800/40 transition-colors">
-          <h4 class="text-sm font-black text-cyan-500 dark:text-cyan-600 uppercase tracking-widest border-b-2 border-cyan-50 dark:border-cyan-900/20 pb-2 mb-4 transition-colors">7. Credit Waivers Granted</h4>
-          <div class="space-y-3" id="ui-dash-waivers"></div>
-      </div>
-
-      <div id="card-cust-reasons" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border-4 border-slate-200 dark:border-slate-700 shadow-sm lg:col-span-2 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-          <h4 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 dark:border-slate-700 pb-2 mb-4 transition-colors">8. All-Time Inactive Reasons</h4>
-          <div id="ui-dash-ina-reasons" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
-      </div>
-
-    </div>
   </div>
 
 </div>

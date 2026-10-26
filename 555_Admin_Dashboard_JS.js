@@ -15,6 +15,11 @@ window.switchDashTab = function (tabNum) {
   if (activeContent) activeContent.classList.remove('hidden');
   if (activeBtn) activeBtn.className = "flex-1 px-3 md:px-6 py-3 rounded-xl text-base md:text-xl font-black bg-slate-800 dark:bg-blue-600 text-white shadow-md transition-colors text-center whitespace-nowrap";
   window.dashboardReturnState = tabNum;
+  
+  // Auto-sync the mobile bottom tab bar if it exists
+  if (typeof window.updateMobileNav === 'function') {
+      window.updateMobileNav(tabNum);
+  }
 };
 
 window.formatDateForInput = function (dateStr) {
@@ -39,35 +44,35 @@ function formatDisplayDate(dateStr) {
 window.switchDefaulterView = function (viewType) {
   var btnHigh = document.getElementById('btn-def-highest');
   var btnOld = document.getElementById('btn-def-oldest');
-  if (btnHigh) btnHigh.className = "flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black transition-colors " + (viewType === 'highest' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white');
-  if (btnOld) btnOld.className = "flex-1 md:flex-none px-4 py-2 rounded-lg text-sm md:text-lg font-black transition-colors " + (viewType === 'oldest' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white');
+  if (btnHigh) btnHigh.className = "flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs md:text-sm font-black transition-colors " + (viewType === 'highest' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white');
+  if (btnOld) btnOld.className = "flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs md:text-sm font-black transition-colors " + (viewType === 'oldest' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-700 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white');
 
   var list = (window.defaultersData && window.defaultersData[viewType]) ? window.defaultersData[viewType] : [];
   var tableHtml = '';
   if (list.length === 0) {
-    tableHtml = "<tr><td colspan='4' class='px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-bold text-xl transition-colors'>No outstanding debts found.</td></tr>";
+    tableHtml = "<tr><td colspan='4' class='px-4 py-8 text-center text-slate-400 dark:text-slate-500 font-bold text-sm md:text-lg transition-colors'>No outstanding debts found.</td></tr>";
   } else {
     for (var i = 0; i < list.length; i++) {
       var c = list[i];
       var waNum = String(c.contact || '').replace(/\D/g, '');
       var actionLinks = "";
       if (c.contact) {
-        actionLinks += "<a href='tel:" + c.contact + "' target='_top' class='inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-xl text-sm font-black border-2 border-blue-200 dark:border-blue-800 shadow-sm mr-2 transition-colors'>Call</a>";
-        actionLinks += "<a href='https://wa.me/" + waNum + "' target='_blank' class='inline-block bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm font-black border-2 border-emerald-200 dark:border-emerald-800 shadow-sm transition-colors'>WA</a>";
+        actionLinks += "<a href='tel:" + c.contact + "' target='_top' class='inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg text-xs md:text-sm font-black border border-blue-200 dark:border-blue-800 shadow-sm mr-2 transition-colors'>Call</a>";
+        actionLinks += "<a href='https://wa.me/" + waNum + "' target='_blank' class='inline-block bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs md:text-sm font-black border border-emerald-200 dark:border-emerald-800 shadow-sm transition-colors'>WA</a>";
       } else { 
-        actionLinks = "<span class='text-sm text-slate-400 dark:text-slate-500 font-bold transition-colors'>No Number</span>"; 
+        actionLinks = "<span class='text-xs md:text-sm text-slate-400 dark:text-slate-500 font-bold transition-colors'>No Number</span>"; 
       }
       
-      let cpnBadgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 hover:shadow-sm active:scale-95 transition-all cursor-pointer group" onclick="window.openCustomer360('${c.cpn || ''}')">
+      let cpnBadgeHtml = `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 mt-1 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-900/50 hover:shadow-sm active:scale-95 transition-all cursor-pointer group text-[10px] md:text-xs font-bold" onclick="window.openCustomer360('${c.cpn || ''}')">
         ${c.cpn || 'UNKNOWN'}
-        <svg class="w-3.5 h-3.5 text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        <svg class="w-3 h-3 text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
       </span>`;
 
-      tableHtml += "<tr class='hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b-4 border-slate-100 dark:border-slate-700/50'>" +
-        "<td class='px-6 py-5'><p class='font-black text-slate-800 dark:text-white text-xl md:text-2xl'>" + (c.name || 'Unknown') + "</p>" + (c.cpn ? cpnBadgeHtml : "") + "</td>" +
-        "<td class='px-6 py-5 text-sm md:text-lg font-bold text-slate-500 dark:text-slate-400 uppercase'>" + (c.apt || '') + (c.blk ? " - " + c.blk : "") + "</td>" +
-        "<td class='px-6 py-5 text-right font-black text-red-600 dark:text-red-400 text-2xl md:text-3xl transition-colors'>₹" + (Number(c.due || 0)).toLocaleString('en-IN') + "</td>" +
-        "<td class='px-6 py-5 text-center'>" + actionLinks + "</td>" +
+      tableHtml += "<tr class='hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b-2 border-slate-100 dark:border-slate-700/50'>" +
+        "<td class='px-4 py-3'><p class='font-black text-slate-800 dark:text-white text-sm md:text-lg'>" + (c.name || 'Unknown') + "</p>" + (c.cpn ? cpnBadgeHtml : "") + "</td>" +
+        "<td class='px-4 py-3 text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase'>" + (c.apt || '') + (c.blk ? " - " + c.blk : "") + "</td>" +
+        "<td class='px-4 py-3 text-right font-black text-red-600 dark:text-red-400 text-lg md:text-2xl transition-colors'>₹" + (Number(c.due || 0)).toLocaleString('en-IN') + "</td>" +
+        "<td class='px-4 py-3 text-center'>" + actionLinks + "</td>" +
         "</tr>";
     }
   }
@@ -128,6 +133,7 @@ window.loadDashboardData = async function (forceRefresh) {
       supa.from('crm_dormant_call_logs').select('previous_customer_status, new_customer_status, reason_for_dormancy').gte('created_at', thirtyDaysAgoStr)
     ]);
 
+    // Error logging silently handles missing data
     if (ordersRes.error) console.warn("Orders Query Warning:", ordersRes.error);
     if (outstandingRes.error) console.warn("Outstanding Query Warning:", outstandingRes.error);
     if (customersRes && customersRes.error) console.warn("Customers Query Warning:", customersRes.error);
@@ -161,18 +167,18 @@ window.loadDashboardData = async function (forceRefresh) {
     var physicalDemand = ordCans - ordPend;
     var available = totalAllowed - physicalDemand;
 
-    document.getElementById('dash-ord-count').innerText = ordCount + " Orders";
-    document.getElementById('dash-ord-amt').innerText = "₹" + ordAmt.toLocaleString('en-IN');
-    document.getElementById('dash-ord-cans').innerText = ordCans;
-    document.getElementById('dash-ord-empties').innerText = ordEmpties;
-    document.getElementById('dash-ord-allowed').innerText = totalAllowed;
-    document.getElementById('dash-ord-avail').innerText = available;
-    document.getElementById('dash-ord-normal').innerText = physicalDemand;
-    document.getElementById('dash-ord-pend').innerText = ordPend;
-    document.getElementById('dash-ord-rep').innerText = ordRep;
+    if(document.getElementById('dash-ord-count')) document.getElementById('dash-ord-count').innerText = ordCount + " Orders";
+    if(document.getElementById('dash-ord-amt')) document.getElementById('dash-ord-amt').innerText = "₹" + ordAmt.toLocaleString('en-IN');
+    if(document.getElementById('dash-ord-cans')) document.getElementById('dash-ord-cans').innerText = ordCans;
+    if(document.getElementById('dash-ord-empties')) document.getElementById('dash-ord-empties').innerText = ordEmpties;
+    if(document.getElementById('dash-ord-allowed')) document.getElementById('dash-ord-allowed').innerText = totalAllowed;
+    if(document.getElementById('dash-ord-avail')) document.getElementById('dash-ord-avail').innerText = available;
+    if(document.getElementById('dash-ord-normal')) document.getElementById('dash-ord-normal').innerText = physicalDemand;
+    if(document.getElementById('dash-ord-pend')) document.getElementById('dash-ord-pend').innerText = ordPend;
+    if(document.getElementById('dash-ord-rep')) document.getElementById('dash-ord-rep').innerText = ordRep;
 
     // ----------------------------------------------------
-    // B. LIVE DELIVERY (Upgraded Math Fallbacks)
+    // B. LIVE DELIVERY
     // ----------------------------------------------------
     var delList = deliveryRes.data || [];
     var delCustCount = 0, delActD = 0, delActE = 0, delOrdD = 0, delSalesAmt = 0;
@@ -203,13 +209,13 @@ window.loadDashboardData = async function (forceRefresh) {
       }
     });
 
-    document.getElementById('dash-del-amt').innerText = "₹" + delSalesAmt.toLocaleString('en-IN');
-    document.getElementById('dash-del-cust').innerText = delCustCount;
-    document.getElementById('dash-del-ord').innerText = delOrdD;
-    document.getElementById('dash-del-actd').innerText = delActD;
-    document.getElementById('dash-del-acte').innerText = delActE;
-    document.getElementById('dash-del-doors-done').innerText = doorsDelivered;
-    document.getElementById('dash-del-doors-pend').innerText = doorsPending;
+    if(document.getElementById('dash-del-amt')) document.getElementById('dash-del-amt').innerText = "₹" + delSalesAmt.toLocaleString('en-IN');
+    if(document.getElementById('dash-del-cust')) document.getElementById('dash-del-cust').innerText = delCustCount;
+    if(document.getElementById('dash-del-ord')) document.getElementById('dash-del-ord').innerText = delOrdD;
+    if(document.getElementById('dash-del-actd')) document.getElementById('dash-del-actd').innerText = delActD;
+    if(document.getElementById('dash-del-acte')) document.getElementById('dash-del-acte').innerText = delActE;
+    if(document.getElementById('dash-del-doors-done')) document.getElementById('dash-del-doors-done').innerText = doorsDelivered;
+    if(document.getElementById('dash-del-doors-pend')) document.getElementById('dash-del-doors-pend').innerText = doorsPending;
 
     // ----------------------------------------------------
     // C. SALES BY DATE HASH-MAP
@@ -231,12 +237,12 @@ window.loadDashboardData = async function (forceRefresh) {
     var sLast = sLastDate ? salesByDate[sLastDate] : { cans: 0, empties: 0, amt: 0 };
     var sSecondLast = sSecondLastDate ? salesByDate[sSecondLastDate] : { cans: 0, empties: 0, amt: 0 };
 
-    document.getElementById('dash-sales-amt').innerText = "₹" + sLast.amt.toLocaleString('en-IN');
-    document.getElementById('dash-sales-cans').innerText = sLast.cans;
-    document.getElementById('dash-sales-empties').innerText = sLast.empties;
-    document.getElementById('dash-label-sales-last').innerText = "Sales: " + (sLastDate ? formatDisplayDate(sLastDate) : "None");
-    document.getElementById('dash-label-sales-secondlast').innerText = sSecondLastDate ? formatDisplayDate(sSecondLastDate) : "Previous";
-    document.getElementById('dash-sales-yday').innerText = "₹" + sSecondLast.amt.toLocaleString('en-IN');
+    if(document.getElementById('dash-sales-amt')) document.getElementById('dash-sales-amt').innerText = "₹" + sLast.amt.toLocaleString('en-IN');
+    if(document.getElementById('dash-sales-cans')) document.getElementById('dash-sales-cans').innerText = sLast.cans;
+    if(document.getElementById('dash-sales-empties')) document.getElementById('dash-sales-empties').innerText = sLast.empties;
+    if(document.getElementById('dash-label-sales-last')) document.getElementById('dash-label-sales-last').innerText = "Sales: " + (sLastDate ? formatDisplayDate(sLastDate) : "None");
+    if(document.getElementById('dash-label-sales-secondlast')) document.getElementById('dash-label-sales-secondlast').innerText = sSecondLastDate ? formatDisplayDate(sSecondLastDate) : "Previous";
+    if(document.getElementById('dash-sales-yday')) document.getElementById('dash-sales-yday').innerText = "₹" + sSecondLast.amt.toLocaleString('en-IN');
 
     // ----------------------------------------------------
     // D. PAYS BY DATE HASH-MAP & ACTIVE PAYS
@@ -262,10 +268,10 @@ window.loadDashboardData = async function (forceRefresh) {
     var pSecondLastTotal = pSecondLastDate ? paysByDate[pSecondLastDate].total : 0;
     var activePays = pLastDate ? paysByDate[pLastDate].cpnMap : {};
 
-    document.getElementById('dash-pays-amt').innerText = "₹" + pLastTotal.toLocaleString('en-IN');
-    document.getElementById('dash-label-pays-last').innerText = "Payments: " + (pLastDate ? formatDisplayDate(pLastDate) : "None");
-    document.getElementById('dash-label-pays-secondlast').innerText = pSecondLastDate ? formatDisplayDate(pSecondLastDate) : "Previous";
-    document.getElementById('dash-pays-yday').innerText = "₹" + pSecondLastTotal.toLocaleString('en-IN');
+    if(document.getElementById('dash-pays-amt')) document.getElementById('dash-pays-amt').innerText = "₹" + pLastTotal.toLocaleString('en-IN');
+    if(document.getElementById('dash-label-pays-last')) document.getElementById('dash-label-pays-last').innerText = "Payments: " + (pLastDate ? formatDisplayDate(pLastDate) : "None");
+    if(document.getElementById('dash-label-pays-secondlast')) document.getElementById('dash-label-pays-secondlast').innerText = pSecondLastDate ? formatDisplayDate(pSecondLastDate) : "Previous";
+    if(document.getElementById('dash-pays-yday')) document.getElementById('dash-pays-yday').innerText = "₹" + pSecondLastTotal.toLocaleString('en-IN');
 
     // ----------------------------------------------------
     // E. OUTSTANDING LEDGER & FIFO ALLOCATION
@@ -319,20 +325,20 @@ window.loadDashboardData = async function (forceRefresh) {
       }
     });
 
-    document.getElementById('dash-grand-out').innerText = "₹" + grandTotal.toLocaleString('en-IN');
+    if(document.getElementById('dash-grand-out')) document.getElementById('dash-grand-out').innerText = "₹" + grandTotal.toLocaleString('en-IN');
     var currMonthName = now.toLocaleString('default', { month: 'short', year: 'numeric' });
     var prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     var prevMonthName = prevMonthDate.toLocaleString('default', { month: 'short', year: 'numeric' });
 
-    document.getElementById('lbl-curr-month').innerText = currMonthName;
-    document.getElementById('curr-pend').innerText = "₹" + m1_total.toLocaleString('en-IN');
-    document.getElementById('lbl-prev-month').innerText = prevMonthName;
-    document.getElementById('prev-pend').innerText = "₹" + m2_total.toLocaleString('en-IN');
+    if(document.getElementById('lbl-curr-month')) document.getElementById('lbl-curr-month').innerText = currMonthName;
+    if(document.getElementById('curr-pend')) document.getElementById('curr-pend').innerText = "₹" + m1_total.toLocaleString('en-IN');
+    if(document.getElementById('lbl-prev-month')) document.getElementById('lbl-prev-month').innerText = prevMonthName;
+    if(document.getElementById('prev-pend')) document.getElementById('prev-pend').innerText = "₹" + m2_total.toLocaleString('en-IN');
 
-    document.getElementById('dash-clean-pay').innerText = "₹" + netPay.total.toLocaleString('en-IN');
-    document.getElementById('dash-pay-curr').innerText = "₹" + netPay.currCleared.toLocaleString('en-IN');
-    document.getElementById('dash-pay-prev').innerText = "₹" + netPay.prevCleared.toLocaleString('en-IN');
-    document.getElementById('dash-pay-older').innerText = "₹" + netPay.olderCleared.toLocaleString('en-IN');
+    if(document.getElementById('dash-clean-pay')) document.getElementById('dash-clean-pay').innerText = "₹" + netPay.total.toLocaleString('en-IN');
+    if(document.getElementById('dash-pay-curr')) document.getElementById('dash-pay-curr').innerText = "₹" + netPay.currCleared.toLocaleString('en-IN');
+    if(document.getElementById('dash-pay-prev')) document.getElementById('dash-pay-prev').innerText = "₹" + netPay.prevCleared.toLocaleString('en-IN');
+    if(document.getElementById('dash-pay-older')) document.getElementById('dash-pay-older').innerText = "₹" + netPay.olderCleared.toLocaleString('en-IN');
 
     // ----------------------------------------------------
     // F. TOP 10 DEFAULTERS 
@@ -346,9 +352,8 @@ window.loadDashboardData = async function (forceRefresh) {
     window.defaultersData = { highest: highestList, oldest: oldestList };
     window.switchDefaulterView('highest');
 
-
     // ----------------------------------------------------
-    // G. CUSTOMER OVERVIEW ENGINE (NEW TAB 3)
+    // G. CUSTOMER OVERVIEW ENGINE (RESPONSIVE FONTS)
     // ----------------------------------------------------
     var custResData = customersRes ? (customersRes.data || []) : [];
     var logsResData = logsRes ? (logsRes.data || []) : [];
@@ -386,7 +391,6 @@ window.loadDashboardData = async function (forceRefresh) {
        }
 
        if (Number(c.default_rate || 0) === 0) zeroRate[stat]++;
-
        if (c.created_at && new Date(c.created_at) >= thirtyDaysAgoDate) joined30[stat]++;
 
        if (stat === 'INACTIVE') {
@@ -414,29 +418,30 @@ window.loadDashboardData = async function (forceRefresh) {
        }
     });
 
+    // Helper functions updated to use fully responsive tailwind text classes
     function bRow(lbl, typeKey, act, rnd, ina) {
-       return '<div><p class="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1.5 tracking-wider transition-colors">' + lbl + '</p>' +
+       return '<div><p class="text-[10px] md:text-xs font-black text-slate-500 dark:text-slate-400 uppercase mb-1 md:mb-1.5 tracking-wider transition-colors">' + lbl + '</p>' +
               '<div class="flex gap-2">' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|' + typeKey + '\', \'Operations & Ledger\')" class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition-colors active:scale-95">ACT: ' + act + '</button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|' + typeKey + '\', \'Operations & Ledger\')" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition-colors active:scale-95">RND: ' + rnd + '</button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|' + typeKey + '\', \'Operations & Ledger\')" class="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 hover:bg-rose-200 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 px-2 py-1 rounded text-[10px] font-black w-full text-center shadow-sm transition-colors active:scale-95">INA: ' + ina + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|' + typeKey + '\', \'Operations & Ledger\')" class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2 py-1.5 rounded-lg text-[9px] md:text-xs font-black w-full text-center shadow-sm transition-colors active:scale-95">ACT: ' + act + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|' + typeKey + '\', \'Operations & Ledger\')" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-1.5 rounded-lg text-[9px] md:text-xs font-black w-full text-center shadow-sm transition-colors active:scale-95">RND: ' + rnd + '</button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|' + typeKey + '\', \'Operations & Ledger\')" class="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 hover:bg-rose-200 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-400 px-2 py-1.5 rounded-lg text-[9px] md:text-xs font-black w-full text-center shadow-sm transition-colors active:scale-95">INA: ' + ina + '</button>' +
               '</div></div>';
     }
 
     function bAdv(lbl, data) {
-       return '<div><p class="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1.5 tracking-wider transition-colors">' + lbl + '</p>' +
+       return '<div><p class="text-[10px] md:text-xs font-black text-slate-500 dark:text-slate-400 uppercase mb-1 md:mb-1.5 tracking-wider transition-colors">' + lbl + '</p>' +
               '<div class="flex flex-col gap-1.5">' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 px-2 py-1 rounded shadow-sm text-[11px] font-black text-emerald-800 dark:text-emerald-400 transition-colors active:scale-95"><span>ACT (' + data['ACTIVE'].c + ')</span> <span>₹' + data['ACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 border border-blue-100 dark:border-blue-800 px-2 py-1 rounded shadow-sm text-[11px] font-black text-blue-800 dark:text-blue-400 transition-colors active:scale-95"><span>RND (' + data['ACTIVE RANDOM'].c + ')</span> <span>₹' + data['ACTIVE RANDOM'].s.toLocaleString('en-IN') + '</span></button>' +
-              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 border border-rose-100 dark:border-rose-800 px-2 py-1 rounded shadow-sm text-[11px] font-black text-rose-800 dark:text-rose-400 transition-colors active:scale-95"><span>INA (' + data['INACTIVE'].c + ')</span> <span>₹' + data['INACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 px-2 py-1.5 rounded-lg shadow-sm text-[10px] md:text-xs font-black text-emerald-800 dark:text-emerald-400 transition-colors active:scale-95"><span>ACT (' + data['ACTIVE'].c + ')</span> <span>₹' + data['ACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 border border-blue-100 dark:border-blue-800 px-2 py-1.5 rounded-lg shadow-sm text-[10px] md:text-xs font-black text-blue-800 dark:text-blue-400 transition-colors active:scale-95"><span>RND (' + data['ACTIVE RANDOM'].c + ')</span> <span>₹' + data['ACTIVE RANDOM'].s.toLocaleString('en-IN') + '</span></button>' +
+              '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|ADVANCE\', \'Operations & Ledger\')" class="flex justify-between items-center bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 border border-rose-100 dark:border-rose-800 px-2 py-1.5 rounded-lg shadow-sm text-[10px] md:text-xs font-black text-rose-800 dark:text-rose-400 transition-colors active:scale-95"><span>INA (' + data['INACTIVE'].c + ')</span> <span>₹' + data['INACTIVE'].s.toLocaleString('en-IN') + '</span></button>' +
               '</div></div>';
     }
 
     var eMaster = document.getElementById('ui-dash-master-status');
     if(eMaster) eMaster.innerHTML = 
-       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-sm">ACTIVE</span> <span class="text-2xl font-black text-emerald-900 dark:text-emerald-300">' + masterStatus['ACTIVE'] + '</span></button>' +
-       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest text-sm">ACTIVE RANDOM</span> <span class="text-2xl font-black text-blue-900 dark:text-blue-300">' + masterStatus['ACTIVE RANDOM'] + '</span></button>' +
-       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 rounded-xl border border-rose-200 dark:border-rose-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest text-sm">INACTIVE</span> <span class="text-2xl font-black text-rose-900 dark:text-rose-300">' + masterStatus['INACTIVE'] + '</span></button>';
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-200 dark:hover:bg-emerald-900/40 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs md:text-sm">ACTIVE</span> <span class="text-xl md:text-2xl font-black text-emerald-900 dark:text-emerald-300">' + masterStatus['ACTIVE'] + '</span></button>' +
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'ACTIVE RANDOM|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest text-xs md:text-sm">ACTIVE RANDOM</span> <span class="text-xl md:text-2xl font-black text-blue-900 dark:text-blue-300">' + masterStatus['ACTIVE RANDOM'] + '</span></button>' +
+       '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|CUSTOMER_LIST\', \'Operations & Ledger\')" class="w-full flex justify-between items-center p-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-200 dark:hover:bg-rose-900/40 rounded-xl border border-rose-200 dark:border-rose-800 shadow-sm transition-colors active:scale-95"><span class="font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest text-xs md:text-sm">INACTIVE</span> <span class="text-xl md:text-2xl font-black text-rose-900 dark:text-rose-300">' + masterStatus['INACTIVE'] + '</span></button>';
 
     var eJoin = document.getElementById('ui-dash-joined');
     if(eJoin) eJoin.innerHTML = bRow('New Onboarding (30 Days)', 'CUSTOMER_JOINED_LAST30DAYS', joined30['ACTIVE'], joined30['ACTIVE RANDOM'], joined30['INACTIVE']);
@@ -457,11 +462,11 @@ window.loadDashboardData = async function (forceRefresh) {
 
     var eChurn = document.getElementById('ui-dash-churn');
     if(eChurn) {
-       var cHtml = '<div class="flex justify-between items-center mb-3 transition-colors"><span class="text-[11px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Total Churned</span> <button onclick="window.navigateFromDashboard(\'reports-customer\', \'ALL|CHURN_30_DAYS\', \'Operations & Ledger\')" class="bg-rose-600 dark:bg-rose-700 hover:bg-rose-700 dark:hover:bg-rose-600 transition-colors border border-rose-700 dark:border-rose-800 text-white px-2.5 py-1 rounded-md text-[11px] font-black shadow-inner active:scale-95">' + totalChurn + ' &rarr;</button></div>';
-       if(totalChurn === 0) cHtml += '<p class="text-sm font-bold text-slate-400 dark:text-slate-500 transition-colors">No churn detected in last 30 days.</p>';
+       var cHtml = '<div class="flex justify-between items-center mb-3 transition-colors"><span class="text-[10px] md:text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Total Churned</span> <button onclick="window.navigateFromDashboard(\'reports-customer\', \'ALL|CHURN_30_DAYS\', \'Operations & Ledger\')" class="bg-rose-600 dark:bg-rose-700 hover:bg-rose-700 dark:hover:bg-rose-600 transition-colors border border-rose-700 dark:border-rose-800 text-white px-2.5 py-1 rounded-md text-[10px] md:text-xs font-black shadow-inner active:scale-95">' + totalChurn + ' &rarr;</button></div>';
+       if(totalChurn === 0) cHtml += '<p class="text-xs md:text-sm font-bold text-slate-400 dark:text-slate-500 transition-colors">No churn detected in last 30 days.</p>';
        else {
           Object.keys(churnReasons).sort(function(a,b){return churnReasons[b]-churnReasons[a]}).forEach(function(rsn) {
-             cHtml += '<div class="flex justify-between items-center bg-rose-50 dark:bg-rose-900/30 px-3 py-2.5 rounded-xl border border-rose-100 dark:border-rose-800 mb-2 shadow-sm transition-colors"><span class="text-[11px] font-bold text-rose-700 dark:text-rose-400 truncate mr-2 uppercase tracking-wide">' + rsn + '</span><span class="text-sm font-black text-rose-900 dark:text-rose-300">' + churnReasons[rsn] + '</span></div>';
+             cHtml += '<div class="flex justify-between items-center bg-rose-50 dark:bg-rose-900/30 px-3 py-2.5 rounded-xl border border-rose-100 dark:border-rose-800 mb-2 shadow-sm transition-colors"><span class="text-[10px] md:text-xs font-bold text-rose-700 dark:text-rose-400 truncate mr-2 uppercase tracking-wide">' + rsn + '</span><span class="text-xs md:text-sm font-black text-rose-900 dark:text-rose-300">' + churnReasons[rsn] + '</span></div>';
           });
        }
        eChurn.innerHTML = cHtml;
@@ -470,10 +475,10 @@ window.loadDashboardData = async function (forceRefresh) {
     var eIna = document.getElementById('ui-dash-ina-reasons');
     if(eIna) {
        var iHtml = '';
-       if(Object.keys(inactiveReasons).length === 0) iHtml = '<p class="text-sm font-bold text-slate-400 dark:text-slate-500 transition-colors">No inactive reasons logged.</p>';
+       if(Object.keys(inactiveReasons).length === 0) iHtml = '<p class="text-xs md:text-sm font-bold text-slate-400 dark:text-slate-500 transition-colors">No inactive reasons logged.</p>';
        else {
           Object.keys(inactiveReasons).sort(function(a,b){return inactiveReasons[b]-inactiveReasons[a]}).forEach(function(rsn) {
-             iHtml += '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|INACTIVE_BY_REASON\', \'Operations & Ledger\')" class="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors active:scale-95 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"><span class="text-[10px] md:text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate mr-2 uppercase tracking-wide" title="' + rsn + '">' + rsn + '</span><span class="text-sm font-black text-slate-800 dark:text-white">' + inactiveReasons[rsn] + '</span></button>';
+             iHtml += '<button onclick="window.navigateFromDashboard(\'reports-customer\', \'INACTIVE|INACTIVE_BY_REASON\', \'Operations & Ledger\')" class="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors active:scale-95 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"><span class="text-[9px] md:text-xs font-bold text-slate-600 dark:text-slate-400 truncate mr-2 uppercase tracking-wide" title="' + rsn + '">' + rsn + '</span><span class="text-sm md:text-base font-black text-slate-800 dark:text-white">' + inactiveReasons[rsn] + '</span></button>';
           });
        }
        eIna.innerHTML = iHtml;
@@ -499,6 +504,56 @@ window.loadDashboardData = async function (forceRefresh) {
     if (loadingEl) loadingEl.innerText = "Error Loading Dashboard. Please Refresh.";
     if (window.showToast) window.showToast("Dashboard Error: " + err.message, "error");
   }
+};
+
+// ==========================================
+// 3. MOBILE NAVIGATION & SEARCH UI
+// ==========================================
+
+window.updateMobileNav = function(tabNum) {
+    for(let i=1; i<=3; i++) {
+        let btn = document.getElementById('mob-dash-tab-' + i);
+        if(btn) btn.className = "flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors";
+    }
+    let act = document.getElementById('mob-dash-tab-' + tabNum);
+    if(act) act.className = "flex-1 flex flex-col items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 transition-colors";
+};
+
+window.openMobileSearch = function() {
+    const overlay = document.getElementById('mobile-search-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        document.getElementById('mobile-cpn-input').focus();
+    }, 10);
+};
+
+window.closeMobileSearch = function() {
+    const overlay = document.getElementById('mobile-search-overlay');
+    if (!overlay) return;
+    overlay.classList.add('opacity-0');
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        document.getElementById('mobile-cpn-input').value = '';
+    }, 300);
+};
+
+window.executeMobileSearch = function() {
+    const input = document.getElementById('mobile-cpn-input');
+    const rawCpn = input.value.trim().toUpperCase();
+    if(rawCpn !== "") {
+        input.blur();
+        window.closeMobileSearch();
+        
+        if (typeof window.openCustomer360 === 'function') {
+            window.openCustomer360(rawCpn);
+        } else if (window.showToast) {
+            window.showToast("Customer 360 module is not loaded.", "error");
+        } else {
+            alert("Customer 360 module is not loaded.");
+        }
+    }
 };
 
 window.tabActions['dashboard'] = function () { 

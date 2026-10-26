@@ -3,6 +3,7 @@
   "name": "WOW Delivery",
   "short_name": "WOW Delivery",
   "start_url": "./451_Delivery_App.html",
+  "scope": "./451_Delivery_App.html",
   "display": "standalone",
   "background_color": "#052e16",
   "theme_color": "#15803d",

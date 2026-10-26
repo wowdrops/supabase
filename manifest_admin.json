@@ -3,6 +3,7 @@
   "name": "WOW Admin",
   "short_name": "WOW Admin",
   "start_url": "./550_Admin_App.html",
+  "scope": "./550_Admin_App.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#4f46e5",

@@ -6,210 +6,40 @@
         <h2 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-cyan-400 tracking-tight uppercase transition-colors">
           System Config
         </h2>
-        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Global Database Parameters</p>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">Dynamic Database Parameters</p>
       </div>
       <span id="sys-live-timer" class="hidden"></span>
     </div>
   </div>
 
   <!-- Main Container -->
-  <div class="px-2 md:px-4 w-full max-w-6xl mx-auto mt-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden transition-colors flex flex-col md:flex-row min-h-[70vh]">
-      
-      <!-- Left Tab Navigation -->
-      <div class="w-full md:w-64 bg-slate-50 dark:bg-slate-950 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-4 shrink-0 transition-colors">
-        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 pl-2">Configuration Modules</h3>
-        <nav class="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
-          <button id="sys-tab-btn-ops" onclick="window.switchSysTab('ops')" class="sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-black text-sm transition-all bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 shadow-sm shrink-0 md:shrink">
-            📦 Operations & Orders
-          </button>
-          <button id="sys-tab-btn-crm" onclick="window.switchSysTab('crm')" class="sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-all border border-transparent shrink-0 md:shrink">
-            📞 CRM & Workflows
-          </button>
-          <!-- NEW NOTIFICATION TAB -->
-          <button id="sys-tab-btn-noti" onclick="window.switchSysTab('noti')" class="sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-all border border-transparent shrink-0 md:shrink">
-            📢 Notifications & Routing
-          </button>
-        </nav>
-      </div>
+  <div class="px-2 md:px-4 w-full max-w-7xl mx-auto mt-4 pb-10">
+    <div class="flex justify-between items-end mb-6 px-2 border-b border-slate-200 dark:border-slate-800 pb-4">
+      <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configuration Modules</h3>
+      <button onclick="window.addNewSysConfig()" class="bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300 hover:bg-cyan-200 dark:hover:bg-cyan-800 font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-widest transition-colors outline-none shadow-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+        Add New Parameter
+      </button>
+    </div>
 
-      <!-- Right Content Area -->
-      <div class="flex-1 p-4 md:p-6 relative bg-white dark:bg-slate-900 transition-colors flex flex-col">
+    <!-- ⚡ THIS IS WHERE THE DYNAMIC SECTIONS WILL INJECT -->
+    <div id="sys-dynamic-container" class="space-y-10 relative min-h-[50vh]">
         
         <!-- Overlay loader -->
-        <div id="sys-config-loader" class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center hidden rounded-r-3xl transition-colors">
+        <div id="sys-config-loader" class="absolute inset-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-3xl transition-colors">
           <svg class="w-10 h-10 text-cyan-500 animate-spin mb-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
           <p class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Processing Data...</p>
         </div>
 
-        <!-- TAB 1: OPERATIONS -->
-        <div id="sys-tab-ops" class="sys-tab-content space-y-6 flex-1">
-          <div class="pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">Order Processing Limits</h4>
-            <p class="text-xs text-slate-500 font-bold mt-1">Core variables for daily delivery and master logic.</p>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Per Day Can Count</label>
-              <input type="number" id="cfg-per-day-can" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors">
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Per Day Limitation ON/OFF</label>
-              <div class="relative">
-                 <select id="cfg-per-day-onoff" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner appearance-none cursor-pointer transition-colors">
-                   <option value="ON">ON (Enforced)</option>
-                   <option value="OFF">OFF (Unlimited)</option>
-                 </select>
-                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
-                 </div>
-              </div>
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Lookup Restrict Can Qty</label>
-              <input type="number" id="cfg-lookup-restrict" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors">
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Minimum Entry Qty</label>
-              <input type="number" id="cfg-min-entry" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors">
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Validity Jar Price (VJ_PRICE)</label>
-              <input type="number" id="cfg-vj-price" class="w-full p-3 bg-cyan-50 dark:bg-cyan-900/10 border border-cyan-200 dark:border-cyan-800 rounded-xl font-black text-cyan-700 dark:text-cyan-400 outline-none focus:border-cyan-500 shadow-inner transition-colors text-lg">
-            </div>
-          </div>
-        </div>
+    </div>
 
-        <!-- TAB 2: CRM & WORKFLOWS -->
-        <div id="sys-tab-crm" class="sys-tab-content space-y-6 flex-1 hidden">
-          <div class="pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">CRM Telecalling Parameters</h4>
-            <p class="text-xs text-slate-500 font-bold mt-1">Manage thresholds and dropdown lists. Use commas to separate list items.</p>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Dormant Queue Threshold</label>
-              <input type="number" id="cfg-crm-threshold" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors">
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Max Completed Limit</label>
-              <input type="number" id="cfg-crm-max-comp" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors">
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Editable Recent Records</label>
-              <input type="number" id="cfg-crm-edit-rec" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Call Statuses (Dropdown)</label>
-              <textarea id="cfg-crm-call-stat" rows="2" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Customer Statuses (Dropdown)</label>
-              <textarea id="cfg-crm-cust-stat" rows="2" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">WIP Statuses (Queue Logic)</label>
-              <textarea id="cfg-crm-wip-stat" rows="2" class="w-full p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Completed Statuses (Queue Logic)</label>
-              <textarea id="cfg-crm-comp-stat" rows="2" class="w-full p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Dormancy Reasons (Dropdown)</label>
-              <textarea id="cfg-crm-dorm-reasons" rows="2" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Feedback Categories (Dropdown)</label>
-              <textarea id="cfg-crm-feedback" rows="2" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 3: NOTIFICATIONS & ROUTING (NEW) -->
-        <div id="sys-tab-noti" class="sys-tab-content space-y-6 flex-1 hidden">
-          <div class="pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">Omnichannel Routing Strategy</h4>
-            <p class="text-xs text-slate-500 font-bold mt-1">Control fallback logic between Firebase Push, WhatsApp API, and Email.</p>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100 dark:border-indigo-900/50">
-               <label class="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-2">WhatsApp Routing Preference</label>
-               <div class="relative">
-                 <select id="cfg-wa-routing" class="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-indigo-500 shadow-sm appearance-none cursor-pointer transition-colors">
-                   <option value="COST_EFFECTIVE">Cost Effective (Push First, No WA Fallback)</option>
-                   <option value="MAX_REACH">Max Reach (Push First, WA Fallback if no App)</option>
-                 </select>
-                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
-                 </div>
-               </div>
-               <p class="text-[9px] font-bold text-slate-400 mt-2">Determines behavior if a customer does not have the Customer App installed.</p>
-            </div>
-
-            <!-- Toggles -->
-            <div class="space-y-4">
-               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-                  <div>
-                     <label class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Order Confirmations</label>
-                     <p class="text-[9px] font-bold text-slate-400">Fire alerts instantly on order placement.</p>
-                  </div>
-                  <div class="relative">
-                     <select id="cfg-wa-order-confirm" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg font-black text-slate-800 dark:text-white outline-none text-xs appearance-none cursor-pointer pr-8">
-                       <option value="TRUE">ENABLED</option>
-                       <option value="FALSE">DISABLED</option>
-                     </select>
-                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"><svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
-                  </div>
-               </div>
-
-               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-                  <div>
-                     <label class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Delivery Confirmations</label>
-                     <p class="text-[9px] font-bold text-slate-400">Fire alerts upon Delivery QC completion.</p>
-                  </div>
-                  <div class="relative">
-                     <select id="cfg-wa-del-confirm" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg font-black text-slate-800 dark:text-white outline-none text-xs appearance-none cursor-pointer pr-8">
-                       <option value="TRUE">ENABLED</option>
-                       <option value="FALSE">DISABLED</option>
-                     </select>
-                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"><svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
-                  </div>
-               </div>
-
-               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-                  <div>
-                     <label class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Outstanding Reminders</label>
-                     <p class="text-[9px] font-bold text-slate-400">Allow broadcasts for pending balances.</p>
-                  </div>
-                  <div class="relative">
-                     <select id="cfg-wa-out-remind" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg font-black text-slate-800 dark:text-white outline-none text-xs appearance-none cursor-pointer pr-8">
-                       <option value="TRUE">ENABLED</option>
-                       <option value="FALSE">DISABLED</option>
-                     </select>
-                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"><svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
-                  </div>
-               </div>
-            </div>
-
-          </div>
-        </div>
-        
-        <!-- Global Save Footer -->
-        <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0">
-           <button onclick="window.loadSysConfig()" class="px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-[10px] outline-none">Discard Changes</button>
-           <button onclick="window.saveSysConfig()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-black px-8 py-2.5 rounded-xl shadow-lg transition text-[10px] uppercase tracking-widest active:scale-95 flex items-center gap-2 outline-none">
-             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Save Global Config
-           </button>
-        </div>
-
-      </div>
+    <!-- Global Save Footer -->
+    <div class="mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+        <button onclick="window.loadSysConfig()" class="px-6 py-3 rounded-xl font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-[10px] outline-none">Discard Changes</button>
+        <button onclick="window.saveSysConfig()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-black px-8 py-3 rounded-xl shadow-lg transition text-[11px] uppercase tracking-widest active:scale-95 flex items-center gap-2 outline-none">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> 
+          Save Global Config
+        </button>
     </div>
   </div>
 </div>

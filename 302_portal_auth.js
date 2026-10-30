@@ -32,60 +32,63 @@ async function handleLogin() {
   toggleButtonState('btn-login', true, 'Verifying...');
 
   try {
-    const { data, error } = await supabase1
-      .from('ac_customers')
-      .select('*')
-      .or(`cpn_no.eq.${loginId},con1.eq.${loginId}`)
-      .maybeSingle();
+    // This currently just returns the plain text based on your JS setup
+    const inputHash = await hashCustomerPassword(loginPass);
+
+    // --- NEW: SECURE RPC CALL ---
+    const { data: result, error } = await supabase1.rpc('authenticate_customer_secure', {
+        p_login_id: loginId,
+        p_password: inputHash
+    });
 
     toggleButtonState('btn-login', false, 'Secure Sign In');
 
-    if (error || !data) {
-      return showError(errorEl, "Invalid Credentials. Please try again.");
+    if (error) throw error;
+
+    // --- HANDLE RPC RESPONSES ---
+    if (!result.success) {
+        if (result.error === 'REQUIRES_SETUP') {
+            document.getElementById('login-pass').blur();
+            document.getElementById('login-id').blur();
+            
+            passwordSetupSource = 'login';
+            // Cache the required user details for the OTP step
+            window.setupUser = result.setup_user; 
+            
+            showSetupEmailConfirm();
+            switchView('view-new-password');
+            return;
+        }
+        if (result.error === 'ACCOUNT_INACTIVE') {
+            return showError(errorEl, "Account is inactive. Please contact support.");
+        }
+        
+        return showError(errorEl, "Invalid Credentials. Please try again.");
     }
 
-    var dbPassword = data.password_hash ? String(data.password_hash).trim() : "";
+    // --- REGULAR LOGIN SUCCESS ---
+    document.getElementById('login-pass').blur();
+    document.getElementById('login-id').blur();
+    
+    // Build the session from the safe data returned by the database
+    activeUserSession = {
+      cpn: result.cpn,
+      name: result.name,
+      phone: result.phone,
+      email: result.email,
+      whatsapp: result.whatsapp,
+      defaultRate: Number(result.defaultRate) || 0,
+      apartment: result.apartment,
+      block: result.block,
+      door: result.door,
+      maxClientD: Number(result.maxClientD) || 9999
+    };
 
-    // FIRST-TIME USER SETUP CHECK
-    if (!dbPassword || dbPassword === "" || dbPassword === "undefined") {
-      document.getElementById('login-pass').blur();
-      document.getElementById('login-id').blur();
-      
-      passwordSetupSource = 'login';
-      window.setupUser = data; // Cache user row for the security checks
-      
-      showSetupEmailConfirm();
-      switchView('view-new-password');
-      return;
-    }
-
-    // REGULAR LOGIN
-    const inputHash = await hashCustomerPassword(loginPass);
-    if (dbPassword === inputHash) {
-      document.getElementById('login-pass').blur();
-      document.getElementById('login-id').blur();
-      
-      activeUserSession = {
-        cpn: data.cpn_no,
-        name: data.poc1,
-        phone: data.con1,
-        email: data.mail_id || "",
-        whatsapp: data.con2 || "",
-        defaultRate: Number(data.default_rate) || 0,
-        apartment: data.apartment || "",
-        block: data.block || "",
-        door: data.door || "",
-        maxClientD: Number(data.maximum_ord_d) || 9999
-      };
-
-      localStorage.setItem('wowdrops_customer_session', JSON.stringify(activeUserSession));
-      updateHeaderDisplays();
-      showDashboardSkeletons();
-      switchView('view-dashboard');
-      refreshCustomerSessionData(activeUserSession.cpn);
-    } else {
-      showError(errorEl, "Invalid Credentials. Please try again.");
-    }
+    localStorage.setItem('wowdrops_customer_session', JSON.stringify(activeUserSession));
+    updateHeaderDisplays();
+    showDashboardSkeletons();
+    switchView('view-dashboard');
+    refreshCustomerSessionData(activeUserSession.cpn);
 
   } catch (err) {
     toggleButtonState('btn-login', false, 'Secure Sign In');

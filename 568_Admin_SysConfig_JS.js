@@ -1,25 +1,23 @@
 window.activeSysTimerInterval = null;
 window.sysStartTime = 0;
 
-// Tab Switching Logic
-window.switchSysTab = function(tabId) {
-    // Hide all content blocks
-    document.querySelectorAll('.sys-tab-content').forEach(el => el.classList.add('hidden'));
-    document.getElementById('sys-tab-' + tabId).classList.remove('hidden');
-
-    // Reset button styles
-    document.querySelectorAll('.sys-tab-btn').forEach(btn => {
-        btn.className = "sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-all border border-transparent shrink-0 md:shrink";
-    });
-
-    // Apply active styles to selected tab
-    var activeBtn = document.getElementById('sys-tab-btn-' + tabId);
-    if (activeBtn) {
-        activeBtn.className = "sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-black text-sm transition-all bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 shadow-sm shrink-0 md:shrink";
+// --- SECTION TOGGLE LOGIC ---
+window.toggleSysSection = function(headerEl) {
+    const bodyEl = headerEl.nextElementSibling;
+    const chevron = headerEl.querySelector('.chevron-icon');
+    
+    if (bodyEl.classList.contains('hidden')) {
+        // Open it
+        bodyEl.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        // Close it
+        bodyEl.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
     }
 };
 
-// UI Timer & Loaders
+// --- UI Timers & Loaders ---
 window.startSysTimer = function(actionLabel) {
   var badge = document.getElementById('sys-live-timer');
   if (!badge) return;
@@ -56,7 +54,7 @@ window.setSysLoader = function(show) {
    else loader.classList.add('hidden');
 };
 
-// 1. DYNAMIC LOAD ALL DATA FROM SUPABASE
+// --- DYNAMIC RENDERING LOGIC ---
 window.loadSysConfig = async function() {
   window.setSysLoader(true);
   window.startSysTimer('Loading');
@@ -65,41 +63,102 @@ window.loadSysConfig = async function() {
       const supa = window.supabase1;
       if (!supa) throw new Error("Supabase not initialized");
 
-      const { data, error } = await supa.from('setup').select('key, value');
+      // Fetch all columns, sort by tabname first, then key
+      const { data, error } = await supa.from('setup').select('*').order('tabname', { ascending: true, nullsFirst: false }).order('key', { ascending: true });
       if (error) throw error;
 
-      // Build mapping
-      const configMap = {};
+      // Group data intelligently by tabname
+      const groupedData = {};
       (data || []).forEach(row => {
-          configMap[row.key] = row.value;
+          const tab = (row.tabname && row.tabname.trim() !== '') ? row.tabname.toUpperCase() : 'GENERAL SETUP';
+          if (!groupedData[tab]) groupedData[tab] = [];
+          groupedData[tab].push(row);
       });
 
-      // --- MAP OPERATIONS ---
-      document.getElementById('cfg-per-day-can').value = configMap['per day can count'] || '';
-      document.getElementById('cfg-lookup-restrict').value = configMap['lookup restrict can qty'] || '';
-      document.getElementById('cfg-min-entry').value = configMap['minimum entry qty'] || '';
-      var onOffVal = String(configMap['per day onoff'] || 'OFF').trim().toUpperCase();
-      document.getElementById('cfg-per-day-onoff').value = (onOffVal === 'ON') ? 'ON' : 'OFF';
-      document.getElementById('cfg-vj-price').value = configMap['VJ_PRICE'] || '';
+      const container = document.getElementById('sys-dynamic-container');
+      
+      // Clear out the container but leave the loader element intact
+      const loaderHtml = document.getElementById('sys-config-loader').outerHTML;
+      container.innerHTML = loaderHtml;
 
-      // --- MAP CRM LIMITS ---
-      document.getElementById('cfg-crm-threshold').value = configMap['Dormant_Queue_Threshold'] || '';
-      document.getElementById('cfg-crm-edit-rec').value = configMap['Editable_Recent_Records'] || '';
-      document.getElementById('cfg-crm-max-comp').value = configMap['Max_Completed_Limit'] || '';
+      // Build the UI completely dynamically
+      for (const tabName in groupedData) {
+          const itemCount = groupedData[tabName].length;
+          
+          let sectionHtml = `
+            <div class="mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+               
+               <!-- Clickable Accordion Header -->
+               <div onclick="window.toggleSysSection(this)" class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/80 transition-colors select-none">
+                 <div class="flex items-center gap-3">
+                   <div class="w-2 h-6 bg-cyan-500 rounded-full shrink-0"></div>
+                   <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">${tabName} <span class="text-xs text-slate-400 dark:text-slate-500 font-bold tracking-normal ml-2">(${itemCount} items)</span></h4>
+                 </div>
+                 <div class="text-slate-400 transition-transform duration-300 transform chevron-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                 </div>
+               </div>
+               
+               <!-- Collapsible Body (Hidden by default) -->
+               <div class="section-body p-4 md:p-6 space-y-4 hidden">
+          `;
 
-      // --- MAP CRM TEXT LISTS ---
-      document.getElementById('cfg-crm-call-stat').value = configMap['Call_Statuses'] || '';
-      document.getElementById('cfg-crm-cust-stat').value = configMap['Customer_Statuses'] || '';
-      document.getElementById('cfg-crm-wip-stat').value = configMap['WIP_Statuses'] || '';
-      document.getElementById('cfg-crm-comp-stat').value = configMap['Completed_Statuses'] || '';
-      document.getElementById('cfg-crm-dorm-reasons').value = configMap['Dormancy_Reasons'] || '';
-      document.getElementById('cfg-crm-feedback').value = configMap['Feedback_Categories'] || '';
+          groupedData[tabName].forEach(row => {
+              const safeId = row.id || '';
+              const safeKey = row.key || '';
+              const safeValue = row.value || '';
+              const safeRemark = row.remark || '';
+              const safeTab = row.tabname || '';
+              const safeBy = row.created_by || 'SYSTEM';
+              
+              let safeDate = '--';
+              if (row.created_at) {
+                 const dt = new Date(row.created_at);
+                 safeDate = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+              }
 
-      // --- MAP NOTIFICATIONS & ROUTING ---
-      document.getElementById('cfg-wa-routing').value = configMap['WA_ROUTING_PREFERENCE'] || 'COST_EFFECTIVE';
-      document.getElementById('cfg-wa-order-confirm').value = configMap['WA_ORDER_CONFIRMATION'] || 'FALSE';
-      document.getElementById('cfg-wa-del-confirm').value = configMap['WA_DELIVERY_CONFIRMATION'] || 'FALSE';
-      document.getElementById('cfg-wa-out-remind').value = configMap['WA_OUTSTANDING_REMINDER'] || 'FALSE';
+              sectionHtml += `
+                <div class="config-row p-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl relative transition-colors shadow-sm" data-id="${safeId}">
+                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                      
+                      <div class="lg:col-span-1">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Key Name</label>
+                        <input type="text" class="cfg-key w-full p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-inner" value="${safeKey}" readonly title="System Keys cannot be renamed.">
+                      </div>
+                      
+                      <div class="lg:col-span-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Value / Payload</label>
+                        <textarea rows="1" class="cfg-val w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-cyan-500 transition-colors resize-y shadow-inner">${safeValue}</textarea>
+                      </div>
+
+                      <div class="lg:col-span-1">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Tab Grouping</label>
+                        <input type="text" class="cfg-tab w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-cyan-500 transition-colors shadow-inner" value="${safeTab}">
+                      </div>
+                      
+                      <div class="lg:col-span-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Remark / Usage Info</label>
+                        <input type="text" class="cfg-remark w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 outline-none focus:ring-2 focus:ring-cyan-500 transition-colors shadow-inner" value="${safeRemark}">
+                      </div>
+
+                      <div class="lg:col-span-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Created By</label>
+                        <input type="text" disabled class="w-full p-3 bg-transparent border-none rounded-xl text-xs font-bold text-slate-400 cursor-not-allowed uppercase px-0" value="${safeBy}">
+                      </div>
+
+                      <div class="lg:col-span-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Created Date</label>
+                        <input type="text" disabled class="w-full p-3 bg-transparent border-none rounded-xl text-xs font-bold text-slate-400 cursor-not-allowed px-0" value="${safeDate}">
+                      </div>
+
+                   </div>
+                </div>
+              `;
+          });
+
+          sectionHtml += `</div></div>`;
+          container.insertAdjacentHTML('beforeend', sectionHtml);
+      }
 
       window.setSysLoader(false);
       window.stopSysTimer('Loaded', false);
@@ -112,9 +171,73 @@ window.loadSysConfig = async function() {
   }
 };
 
-// 2. BULK UPSERT ALL DATA TO SUPABASE
+// --- ADD NEW CONFIGURATION BLOCK IN UI ---
+window.addNewSysConfig = function() {
+    const container = document.getElementById('sys-dynamic-container');
+    
+    // Create an "UNSAVED NEW CONFIGS" section if it doesn't exist
+    let newSection = document.getElementById('section-UNSAVED');
+    if (!newSection) {
+        newSection = document.createElement('div');
+        newSection.id = 'section-UNSAVED';
+        newSection.className = 'mb-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border-2 border-indigo-200 dark:border-indigo-800 overflow-hidden shadow-lg';
+        newSection.innerHTML = `
+          <div onclick="window.toggleSysSection(this)" class="bg-indigo-100 dark:bg-indigo-950 border-b border-indigo-200 dark:border-indigo-800 px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-indigo-200/50 dark:hover:bg-indigo-900/50 transition-colors select-none">
+             <div class="flex items-center gap-3">
+                 <div class="w-2 h-6 bg-indigo-500 rounded-full shrink-0"></div>
+                 <h4 class="text-lg font-black text-indigo-800 dark:text-indigo-400 uppercase tracking-widest">✨ New Unsaved Configurations</h4>
+             </div>
+             <div class="text-indigo-400 transition-transform duration-300 transform rotate-180 chevron-icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+             </div>
+          </div>
+          <div class="section-body p-4 md:p-6 space-y-4"></div>
+        `;
+        // Inject right after the loader
+        document.getElementById('sys-config-loader').insertAdjacentElement('afterend', newSection);
+    }
+
+    const rowHtml = `
+      <div class="config-row p-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm relative transition-colors" data-id="">
+         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            <div class="lg:col-span-1">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Key Name</label>
+              <input type="text" class="cfg-key w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black text-indigo-600 dark:text-indigo-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="e.g. NEW_API_KEY">
+            </div>
+            <div class="lg:col-span-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Value / Payload</label>
+              <textarea rows="1" class="cfg-val w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-y" placeholder="Value string or JSON"></textarea>
+            </div>
+            <div class="lg:col-span-1">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Tab Grouping</label>
+              <input type="text" class="cfg-tab w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="e.g. NOTIFICATION">
+            </div>
+            <div class="lg:col-span-3">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Remark / Usage Info</label>
+              <input type="text" class="cfg-remark w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="Description of this key">
+            </div>
+            <div class="lg:col-span-1 flex items-end">
+               <button type="button" onclick="this.closest('.config-row').remove()" class="w-full text-xs font-black text-rose-500 hover:text-white bg-rose-50 hover:bg-rose-500 px-4 py-3 rounded-xl transition-colors tracking-widest uppercase shadow-sm">🗑️ Discard</button>
+            </div>
+         </div>
+      </div>
+    `;
+    
+    // Ensure section body is open before adding row
+    const sectionBody = newSection.querySelector('.section-body');
+    const chevron = newSection.querySelector('.chevron-icon');
+    sectionBody.classList.remove('hidden');
+    chevron.classList.add('rotate-180');
+
+    sectionBody.insertAdjacentHTML('beforeend', rowHtml);
+    
+    // Scroll to the new entry
+    newSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// --- BULK UPSERT ALL DATA TO SUPABASE ---
 window.saveSysConfig = async function() {
-  if (!confirm("Are you sure you want to update these global configurations? This affects live operations.")) return;
+  if (!confirm("Are you sure you want to update the global database configurations? This affects live operations.")) return;
   
   window.setSysLoader(true);
   window.startSysTimer('Saving');
@@ -124,40 +247,38 @@ window.saveSysConfig = async function() {
       if (!supa) throw new Error("Supabase not initialized");
       const currentUser = window.activeAdminSession ? window.activeAdminSession.username : 'ADMIN';
 
-      // Build payload mapping exact keys to UI elements
-      const updatePayload = [
-          // Operations
-          { key: 'per day can count', value: document.getElementById('cfg-per-day-can').value, created_by: currentUser },
-          { key: 'lookup restrict can qty', value: document.getElementById('cfg-lookup-restrict').value, created_by: currentUser },
-          { key: 'minimum entry qty', value: document.getElementById('cfg-min-entry').value, created_by: currentUser },
-          { key: 'per day onoff', value: document.getElementById('cfg-per-day-onoff').value, created_by: currentUser },
-          { key: 'VJ_PRICE', value: document.getElementById('cfg-vj-price').value, created_by: currentUser },
+      const updatePayload = [];
+      
+      // Iterate through every rendered config row on the screen
+      document.querySelectorAll('.config-row').forEach(row => {
+          const id = row.getAttribute('data-id');
+          const key = row.querySelector('.cfg-key').value.trim();
           
-          // CRM 
-          { key: 'Dormant_Queue_Threshold', value: document.getElementById('cfg-crm-threshold').value, created_by: currentUser },
-          { key: 'Editable_Recent_Records', value: document.getElementById('cfg-crm-edit-rec').value, created_by: currentUser },
-          { key: 'Max_Completed_Limit', value: document.getElementById('cfg-crm-max-comp').value, created_by: currentUser },
-          { key: 'Call_Statuses', value: document.getElementById('cfg-crm-call-stat').value, created_by: currentUser },
-          { key: 'Customer_Statuses', value: document.getElementById('cfg-crm-cust-stat').value, created_by: currentUser },
-          { key: 'WIP_Statuses', value: document.getElementById('cfg-crm-wip-stat').value, created_by: currentUser },
-          { key: 'Completed_Statuses', value: document.getElementById('cfg-crm-comp-stat').value, created_by: currentUser },
-          { key: 'Dormancy_Reasons', value: document.getElementById('cfg-crm-dorm-reasons').value, created_by: currentUser },
-          { key: 'Feedback_Categories', value: document.getElementById('cfg-crm-feedback').value, created_by: currentUser },
+          if (!key) return; // Skip entirely blank rows
 
-          // Notifications
-          { key: 'WA_ROUTING_PREFERENCE', value: document.getElementById('cfg-wa-routing').value, created_by: currentUser },
-          { key: 'WA_ORDER_CONFIRMATION', value: document.getElementById('cfg-wa-order-confirm').value, created_by: currentUser },
-          { key: 'WA_DELIVERY_CONFIRMATION', value: document.getElementById('cfg-wa-del-confirm').value, created_by: currentUser },
-          { key: 'WA_OUTSTANDING_REMINDER', value: document.getElementById('cfg-wa-out-remind').value, created_by: currentUser }
-      ];
+          const payloadObj = {
+              key: key,
+              value: row.querySelector('.cfg-val').value.trim(),
+              remark: row.querySelector('.cfg-remark').value.trim(),
+              tabname: row.querySelector('.cfg-tab').value.trim() || 'GENERAL SETUP' 
+          };
 
+          // If this is a brand new row (no existing ID), stamp the created_by user
+          if (!id) {
+              payloadObj.created_by = currentUser;
+          }
+          
+          updatePayload.push(payloadObj);
+      });
+
+      // Upsert using 'key'
       const { error } = await supa.from('setup').upsert(updatePayload, { onConflict: 'key' });
       if (error) throw error;
 
-      window.setSysLoader(false);
-      window.stopSysTimer('Saved', false);
-      
       if(window.showToast) window.showToast("Global configurations securely updated.", "success");
+
+      // Reload the screen to fetch fresh IDs and rearrange any changed tab groups
+      await window.loadSysConfig();
 
   } catch (err) {
       window.setSysLoader(false);

@@ -522,84 +522,78 @@ window.handleAdminLogin = async function () {
     var id = document.getElementById('admin-id').value.trim().toLowerCase();
     var pass = document.getElementById('admin-pass').value;
     var errBox = document.getElementById('login-err');
-    if (!id) return window.showNotif(errBox, "Please enter your username or email.", false);
+    
+    if (!id || !pass) return window.showNotif(errBox, "Please enter your username and password.", false);
 
     document.getElementById('btn-login').innerText = "Verifying...";
+    
     try {
         const inputHash = await window.hashPassword(pass);
-        const { data: userData, error } = await window.supabase1
-            .from('users')
-            .select('*')
-            .or(`username.eq.${id},mail_id.eq.${id}`)
-            .maybeSingle();
+        
+        // --- NEW: SECURE RPC CALL ---
+        const { data: result, error } = await window.supabase1.rpc('authenticate_user_secure', {
+            p_username: id,
+            p_password_hash: inputHash,
+            p_module: 'ADMIN'
+        });
 
-        if (error || !userData) {
+        if (error) throw error;
+
+        // --- HANDLE RPC RESPONSES ---
+        if (!result.success) {
             document.getElementById('btn-login').innerText = "Sign In";
-            return window.showNotif(errBox, "User not found.", false);
-        }
-
-        if (String(userData.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') {
-            document.getElementById('btn-login').innerText = "Sign In";
-            return window.showNotif(errBox, "Access Denied: Your account is currently INACTIVE.", false);
-        }
-
-        var dbPassword = String(userData.password_hash || '').trim();
-        if (dbPassword === "" || dbPassword === "undefined") {
-            document.getElementById('btn-login').innerText = "Sign In";
-            window.openForgotPasswordView();
-            document.getElementById('otp-step-1').classList.add('hidden');
-            document.getElementById('otp-step-2').classList.remove('hidden');
-            document.getElementById('first-time-notice').classList.remove('hidden');
-            document.getElementById('reset-email').value = userData.mail_id;
-            window.showNotif(document.getElementById('reset-msg'), "Account initialization caught. Setup access via OTP verification.", true);
-            return;
-        }
-
-        if (dbPassword === inputHash) {
-            var appRoles = userData.app_roles || {};
-            var adminRolesArray = appRoles['ADMIN'] || [];
-
-            if (adminRolesArray.length === 0) {
-                document.getElementById('btn-login').innerText = "Sign In";
-                return window.showNotif(errBox, "Access Denied: No Admin Portal roles assigned.", false);
+            
+            if (result.error === 'REQUIRES_SETUP') {
+                window.openForgotPasswordView();
+                document.getElementById('otp-step-1').classList.add('hidden');
+                document.getElementById('otp-step-2').classList.remove('hidden');
+                document.getElementById('first-time-notice').classList.remove('hidden');
+                document.getElementById('reset-email').value = result.mail_id;
+                return window.showNotif(document.getElementById('reset-msg'), "Account initialization caught. Setup access via OTP verification.", true);
             }
+            if (result.error === 'ACCOUNT_INACTIVE') return window.showNotif(errBox, "Access Denied: Your account is currently INACTIVE.", false);
+            if (result.error === 'NO_ROLE_ASSIGNED') return window.showNotif(errBox, "Access Denied: No Admin Portal roles assigned.", false);
+            
+            return window.showNotif(errBox, "Invalid Username or Password.", false);
+        }
 
-            const { data: perms } = await window.supabase1
-                .from('sys_role_permissions')
-                .select('page_id, can_edit')
-                .eq('module_name', 'ADMIN')
-                .in('role_name', adminRolesArray);
+        // --- SUCCESS! BUILD ADMIN SESSION ---
+        const adminRolesArray = result.module_roles; // Example: ["Super Admin", "Manager"]
+        const isSuper = adminRolesArray.includes("Super Admin");
 
-            var allowedTabs = [];
-            var readOnlyTabs = [];
-            var isSuper = adminRolesArray.includes("Super Admin");
+        // Fetch Page Permissions based on roles (Safe to do client-side as it only reads sys_role_permissions)
+        const { data: perms } = await window.supabase1
+            .from('sys_role_permissions')
+            .select('page_id, can_edit')
+            .eq('module_name', 'ADMIN')
+            .in('role_name', adminRolesArray);
 
-            if (isSuper) {
-                allowedTabs = ["ALL"];
-            } else {
-                (perms || []).forEach(p => {
-                    if (!allowedTabs.includes(p.page_id)) allowedTabs.push(p.page_id);
-                    if (!p.can_edit && !readOnlyTabs.includes(p.page_id)) readOnlyTabs.push(p.page_id);
-                    if (p.can_edit) readOnlyTabs = readOnlyTabs.filter(id => id !== p.page_id);
-                });
-            }
+        var allowedTabs = [];
+        var readOnlyTabs = [];
 
-            window.activeAdminSession = {
-                id: userData.id,
-                username: userData.username,
-                roles: adminRolesArray,
-                mailid: userData.mail_id,
-                allowedTabs: allowedTabs,
-                readOnlyTabs: readOnlyTabs
-            };
-
-            document.getElementById('btn-login').innerText = "Sign In";
-            localStorage.setItem('wowdrops_admin_session_payload', JSON.stringify(window.activeAdminSession));
-            window.assertWorkspaceDeployment();
+        if (isSuper) {
+            allowedTabs = ["ALL"];
         } else {
-            document.getElementById('btn-login').innerText = "Sign In";
-            window.showNotif(errBox, "Invalid Password.", false);
+            (perms || []).forEach(p => {
+                if (!allowedTabs.includes(p.page_id)) allowedTabs.push(p.page_id);
+                if (!p.can_edit && !readOnlyTabs.includes(p.page_id)) readOnlyTabs.push(p.page_id);
+                if (p.can_edit) readOnlyTabs = readOnlyTabs.filter(pageId => pageId !== p.page_id);
+            });
         }
+
+        window.activeAdminSession = {
+            id: result.id,
+            username: result.username,
+            roles: adminRolesArray,
+            mailid: result.mail_id,
+            allowedTabs: allowedTabs,
+            readOnlyTabs: readOnlyTabs
+        };
+
+        document.getElementById('btn-login').innerText = "Sign In";
+        localStorage.setItem('wowdrops_admin_session_payload', JSON.stringify(window.activeAdminSession));
+        window.assertWorkspaceDeployment();
+
     } catch (err) {
         document.getElementById('btn-login').innerText = "Sign In";
         window.showNotif(errBox, "Login error: " + err.message, false);

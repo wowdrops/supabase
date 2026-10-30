@@ -1,0 +1,13 @@
+# Node dependencies
+node_modules/
+
+# Temporary comparison files
+to_compare1.txt
+to_compare2.txt
+
+# VS Code local workspace settings
+WOWDROPS_SUPABASE.code-workspace
+*.code-workspace
+
+# Google Clasp config
+.clasp.json

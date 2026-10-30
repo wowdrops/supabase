@@ -133,68 +133,68 @@
 
     window.handleLogin = async function () {
         try {
-            var userEl = document.getElementById('login-user'); var passEl = document.getElementById('login-pass');
+            var userEl = document.getElementById('login-user');
+            var passEl = document.getElementById('login-pass');
             if (!userEl || !passEl) { alert("Error: Inputs missing"); return; }
-            var id = userEl.value.trim().toLowerCase(); var pass = passEl.value;
-            if (!id) { window.showToast("Enter credentials.", false); return; }
+
+            var id = userEl.value.trim().toLowerCase();
+            var pass = passEl.value;
+            if (!id || !pass) { window.showToast("Enter credentials.", false); return; }
 
             window.showLoader('Authenticating...');
-
             const inputHash = await hashDeliveryPassword(pass);
-            const { data: userData, error } = await window.supabase1
-                .from('users')
-                .select('*')
-                .or(`username.eq.${id},mail_id.eq.${id}`)
-                .maybeSingle();
+
+            // --- NEW: SECURE RPC CALL ---
+            const { data: result, error } = await window.supabase1.rpc('authenticate_user_secure', {
+                p_username: id,
+                p_password_hash: inputHash,
+                p_module: 'DELIVERY'
+            });
 
             window.hideLoader();
 
-            if (error || !userData) {
-                window.showToast("User not found.", false);
-                return;
-            }
+            if (error) throw error;
 
-            if (String(userData.status).toUpperCase() !== 'ACTIVE') {
-                window.showToast("Account is disabled or terminated.", false);
-                return;
-            }
-
-            var dbPassword = String(userData.password_hash || '').trim();
-            if (dbPassword === "" || dbPassword === "undefined") {
-                window.showForgotPassword();
-                document.getElementById('otp-step-1').classList.add('hidden');
-                document.getElementById('otp-step-2').classList.remove('hidden');
-                document.getElementById('fp-user').value = userData.mail_id;
-                window.showToast("Account activation required. Setup access via OTP.", true);
-                return;
-            }
-
-            if (dbPassword === inputHash) {
-                // Parse the JSON app_roles
-                let roleString = parseAppRoles(userData.app_roles);
-
-                if (roleString === "UNDEFINED") {
-                    window.showToast("Access Denied: You do not have Delivery App permissions.", false);
-                    return;
+            // --- HANDLE RPC RESPONSES ---
+            if (!result.success) {
+                if (result.error === 'REQUIRES_SETUP') {
+                    window.showForgotPassword();
+                    document.getElementById('otp-step-1').classList.add('hidden');
+                    document.getElementById('otp-step-2').classList.remove('hidden');
+                    document.getElementById('fp-user').value = result.mail_id;
+                    return window.showToast("Account activation required. Setup access via OTP.", true);
                 }
+                if (result.error === 'ACCOUNT_INACTIVE') return window.showToast("Account is disabled or terminated.", false);
+                if (result.error === 'NO_ROLE_ASSIGNED') return window.showToast("Access Denied: You do not have Delivery App permissions.", false);
 
-                var sessionData = {
-                    username: userData.username,
-                    role: roleString,
-                    mailid: userData.mail_id
-                };
-
-                window.currentUser = sessionData;
-                localStorage.setItem('wd_staff_user', JSON.stringify(sessionData));
-
-                document.getElementById('driver-name-display').innerText = sessionData.username;
-                document.getElementById('main-header').classList.remove('hidden');
-                window.setupRoleBasedUI();
-                window.switchView('view-dashboard');
-                if (window.fetchOrdersFromServer) window.fetchOrdersFromServer();
-            } else {
-                window.showToast("Invalid Password.", false);
+                return window.showToast("Invalid Username or Password.", false);
             }
+
+            // --- SUCCESS! BUILD DELIVERY SESSION ---
+            // result.app_roles contains the full JSON (e.g. {"ADMIN": [], "DELIVERY": ["DRIVER"]})
+            let roleString = parseAppRoles(result.app_roles);
+
+            if (roleString === "UNDEFINED") {
+                window.showToast("Access Denied: Role parsing failed.", false);
+                return;
+            }
+
+            var sessionData = {
+                username: result.username,
+                role: roleString,
+                mailid: result.mail_id
+            };
+
+            window.currentUser = sessionData;
+            localStorage.setItem('wd_staff_user', JSON.stringify(sessionData));
+
+            document.getElementById('driver-name-display').innerText = sessionData.username;
+            document.getElementById('main-header').classList.remove('hidden');
+            window.setupRoleBasedUI();
+            window.switchView('view-dashboard');
+
+            if (window.fetchOrdersFromServer) window.fetchOrdersFromServer();
+
         } catch (e) {
             window.hideLoader();
             alert("Login Error: " + e.message);
@@ -336,7 +336,7 @@
         var mAud = document.getElementById('menu-report-audit'); var mEod = document.getElementById('menu-report-eod');
 
         //if (r.includes('DRIVER') || r.includes('ADMIN')) {
-        if (r.includes('DRIVER') ) {
+        if (r.includes('DRIVER')) {
             if (mDrv) mDrv.classList.remove('hidden'); if (mBVar) mBVar.classList.remove('hidden'); if (mEod) mEod.classList.remove('hidden');
             var sUnload = document.getElementById('section-unload'); if (sUnload) sUnload.classList.remove('hidden');
             var sLoad = document.getElementById('section-load'); if (sLoad) sLoad.classList.remove('hidden');
@@ -346,7 +346,7 @@
             if (mDel) mDel.classList.remove('hidden'); if (mDVar) mDVar.classList.remove('hidden');
             var sDoors = document.getElementById('section-doors'); if (sDoors) sDoors.classList.remove('hidden');
         }
-        if (r.includes('DRIVER') && r.includes('DELIVERY') ) {
+        if (r.includes('DRIVER') && r.includes('DELIVERY')) {
             if (mAud) mAud.classList.remove('hidden');
         }
 
@@ -538,7 +538,7 @@
     window.fetchOrdersFromServer = async function () {
         if (!navigator.onLine) { window.showToast("Offline mode.", false); return; }
         window.showLoader('Checking Route & Shift...');
-        
+
         try {
             const supa = window.supabase1;
             const todayStr = new Date().toISOString().split('T')[0];
@@ -557,12 +557,12 @@
             if (!routeData || routeData.length === 0) {
                 window.hideLoader();
                 document.getElementById('main-header').classList.add('hidden');
-                
+
                 // Clear local storage so dashboard resets
-                localStorage.removeItem('wd_pending_data'); 
+                localStorage.removeItem('wd_pending_data');
                 localStorage.removeItem('wd_all_data');
                 window.pendingData = {}; window.allData = {}; window.serverSummary = null;
-                
+
                 return window.showToast("✅ No active route found. You are off duty.", true);
             }
 
@@ -575,7 +575,7 @@
 
             // 2. WE HAVE A ROUTE! Now handle the EOD Trip & Shift logic.
             if (window.currentUser && window.currentUser.username) {
-                
+
                 // GATEKEEPER: Check for open shifts from PREVIOUS days
                 const { data: activeShifts } = await supa
                     .from('shift_log')
@@ -589,7 +589,7 @@
                     if (oldestShiftDate < todayStr) {
                         window.hideLoader();
                         alert("⛔ GATEKEEPER ACTIVE\n\nYou have an open shift from a previous date (" + oldestShiftDate + ").\n\nYou must enter the EOD Handshake PIN to close that shift before you can load a new route.");
-                        return; 
+                        return;
                     }
                 }
 
@@ -613,11 +613,11 @@
                         let ordD = Number(row.ord_d || 0);
                         let repQty = Number(row.replace_qty || 0);
                         let totalNeeded = ordD + repQty; // Add replacements to the morning load!
-                        
+
                         let advance = Number(row.can_deposit || row.advance_amount || 0);
                         let maxVj = Math.floor(advance / vjPrice);
                         let expVj = Math.min(maxVj, totalNeeded);
-                        
+
                         routeDispatchVj += expVj;
                         routeDispatchNvj += (totalNeeded - expVj);
                     });
@@ -725,23 +725,23 @@
                     summary.pendingE += ordE;
                 }
 
-                var formatTime = (ts) => ts ? new Date(ts).toLocaleString('en-US', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : "";
+                var formatTime = (ts) => ts ? new Date(ts).toLocaleString('en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : "";
 
                 var doorObj = {
-                    sno: row.id, 
-                    door: row.door || "", 
+                    sno: row.id,
+                    door: row.door || "",
                     cpnno: row.cpn_no || "",
-                    ordDate: formatTime(row.order_date), 
-                    ordD: ordD, 
+                    ordDate: formatTime(row.order_date),
+                    ordD: ordD,
                     ordE: ordE,
-                    replaceQty: Number(row.replace_qty || 0), 
+                    replaceQty: Number(row.replace_qty || 0),
                     replaceReason: row.replace_reason || "",
-                    replaceActVj: Number(row.replace_act_vj || 0), 
+                    replaceActVj: Number(row.replace_act_vj || 0),
                     replaceActNvj: Number(row.replace_act_nvj || 0),
-                    ordComment: row.order_comment || "", 
+                    ordComment: row.order_comment || "",
                     uniqueNo: String(row.unique_no || "").trim(),
-                    advance: advance, 
-                    expVj: expVj, 
+                    advance: advance,
+                    expVj: expVj,
                     expNvj: expNvj,
                     actDVj: actVj, actDNvj: actNvj, actEVj: actEVj, actENvj: actENvj,
                     actD: Number(row.act_d || 0), actE: Number(row.act_e || 0),
@@ -750,10 +750,10 @@
                     unloadOn: formatTime(row.unload_on), unloadBy: row.unload_by || "",
                     loadOn: formatTime(row.load_on), loadBy: row.load_by || "",
                     delOn: formatTime(deliveryEnterOn), delBy: row.delivery_entered_by || "",
-                    doorDone: doorDone, 
-                    v2bDone: (v2bLink !== ""), 
+                    doorDone: doorDone,
+                    v2bDone: (v2bLink !== ""),
                     b2vDone: (b2vLink !== ""),
-                    v2bLink: v2bLink, 
+                    v2bLink: v2bLink,
                     b2vLink: b2vLink,
                     v2bFulls: Number(row.van_to_block_full_can_count || 0),
                     b2vFulls: Number(row.block_to_van_full_count || 0),
@@ -789,7 +789,7 @@
             window.hideLoader();
             window.showToast("Route Synced & Trip Active!", true);
         } catch (err) {
-            window.hideLoader(); 
+            window.hideLoader();
             alert("Failed to fetch route: " + err.message);
         }
     };

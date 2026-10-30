@@ -42,15 +42,19 @@ window.openCustomer360 = async function(cpn, isInline = false) {
   }
 
   try {
-    let profRes = await window.supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle();
+    // 1. Fetch all data concurrently including the new notification_logs
+    let [profRes, outRes, ordRes, delRes, salesRes, paysRes, logsRes, notiRes] = await Promise.all([
+        window.supabase1.from('ac_customers').select('*').eq('cpn_no', cpn).maybeSingle(),
+        window.supabase1.from('v_customer_outstanding').select('current_balance, cans').eq('cpn_no', cpn).maybeSingle(),
+        window.supabase1.from('orders').select('*').eq('cpn_no', cpn).maybeSingle(),
+        window.supabase1.from('deliveries').select('*').eq('cpn_no', cpn).order('created_at', {ascending: false}).limit(1).maybeSingle(),
+        window.supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5),
+        window.supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5),
+        window.supabase1.from('crm_dormant_call_logs').select('*').eq('cpn_no', cpn).order('last_updated', {ascending: false}).limit(5),
+        window.supabase1.from('notification_logs').select('*').eq('cpn_no', cpn).order('created_at', {ascending: false}).limit(5)
+    ]);
+
     if (profRes.error || !profRes.data) throw new Error("Customer not found in Master DB");
-    
-    let outRes = await window.supabase1.from('v_customer_outstanding').select('current_balance, cans').eq('cpn_no', cpn).maybeSingle();
-    let ordRes = await window.supabase1.from('orders').select('*').eq('cpn_no', cpn).maybeSingle();
-    let delRes = await window.supabase1.from('deliveries').select('*').eq('cpn_no', cpn).order('created_at', {ascending: false}).limit(1).maybeSingle();
-    let salesRes = await window.supabase1.from('sales').select('del_date, act_d, act_e, amount').eq('cpn_no', cpn).order('del_date', {ascending: false}).limit(5);
-    let paysRes = await window.supabase1.from('pays').select('payment_date, mode, amount').eq('cpn_no', cpn).order('payment_date', {ascending: false}).limit(5);
-    let logsRes = await window.supabase1.from('crm_dormant_call_logs').select('*').eq('cpn_no', cpn).order('last_updated', {ascending: false}).limit(5);
 
     const pData = profRes.data;
     const profile = {
@@ -92,13 +96,19 @@ window.openCustomer360 = async function(cpn, isInline = false) {
         prevStatus: l.previous_customer_status || "-", newStatus: l.new_customer_status || "-", reason: l.reason_for_dormancy || "-", remark: l.telecaller_feedback || "-", lastUpdated: window.format360Date(l.last_updated)
     }));
 
+    // Map Notification Logs
+    const notiArr = (notiRes.data || []).map(n => ({
+        date: window.format360Date(n.created_at), channel: String(n.channel).toUpperCase(), type: n.message_type || "-",
+        status: String(n.status).toUpperCase(), cost: Number(n.estimated_cost || 0)
+    }));
+
     if (!isInline) {
         clearInterval(window.active360TimerInterval);
         var badge = document.getElementById('modal-360-timer');
         if (badge) badge.innerText = ((performance.now() - startTime) / 1000).toFixed(2) + "s";
     }
     
-    renderCustomer360UI(cpn, {profile, liveData}, activeOrder, activeDelivery, {sales: salesArr, pays: paysArr}, logsArr, targetId, isInline);
+    renderCustomer360UI(cpn, {profile, liveData}, activeOrder, activeDelivery, {sales: salesArr, pays: paysArr}, logsArr, notiArr, targetId, isInline);
     
     return { activeOrder: activeOrder };
 
@@ -110,7 +120,7 @@ window.openCustomer360 = async function(cpn, isInline = false) {
   }
 };
 
-function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSalesPays, historyLogs, targetId, isInline) {
+function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSalesPays, historyLogs, notiLogs, targetId, isInline) {
   var p = resProfile.profile;
   var container = document.getElementById(targetId);
   
@@ -119,7 +129,6 @@ function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSa
     return;
   }
 
-  // Unified responsive classes for both Modal and Inline views
   const t_card = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800";
   const t_text = "text-slate-800 dark:text-white";
   const t_sub  = "text-slate-500 dark:text-slate-400";
@@ -228,15 +237,17 @@ function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSa
     });
   }
 
+  // Row 3: History & Notification Logs side-by-side
   html += `</div></div></div>
-    <div class="${t_card} border p-4 rounded-2xl mt-4 shadow-sm transition-colors">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+      <div class="${t_card} border p-4 rounded-2xl shadow-sm transition-colors flex flex-col">
         <h5 class="text-xs font-black uppercase tracking-widest ${t_sub} mb-3 border-b border-slate-200 dark:border-slate-800 pb-2">Telecaller History Logs</h5>
-        <div class="space-y-2.5 max-h-44 overflow-y-auto">`;
+        <div class="space-y-2.5 max-h-48 overflow-y-auto pr-1">`;
 
   if (historyLogs.length === 0) html += `<p class="text-xs ${t_sub} italic font-bold py-2">No CRM interactions logged.</p>`;
   else {
     historyLogs.forEach(log => {
-      html += `<div class="${t_box} p-3.5 rounded-xl border text-xs mb-2 shadow-sm transition-colors">
+      html += `<div class="${t_box} p-3.5 rounded-xl border text-xs shadow-sm transition-colors">
           <div class="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-2 mb-2"><span class="font-black ${t_text}">${log.date} - ${log.status}</span><span class="font-bold ${t_sub} text-[10px] uppercase tracking-wider">${log.lastUpdated} by ${log.actionBy}</span></div>
           <div class="grid grid-cols-2 gap-3 mb-2"><p><span class="${t_lbl} font-black uppercase text-[9px] tracking-widest">Change</span> <br><span class="font-black text-indigo-600 dark:text-indigo-400">${log.prevStatus} &rarr; ${log.newStatus}</span></p><p><span class="${t_lbl} font-black uppercase text-[9px] tracking-widest">Reason</span> <br><span class="font-bold ${t_text}">${log.reason}</span></p></div>
           <div class="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg transition-colors"><p class="font-medium ${t_sub}">${log.remark}</p></div>
@@ -244,6 +255,45 @@ function renderCustomer360UI(cpn, resProfile, activeOrder, activeDelivery, resSa
     });
   }
 
-  html += `</div></div>`;
+  html += `</div></div>
+      <div class="${t_card} border p-4 rounded-2xl shadow-sm transition-colors flex flex-col">
+        <h5 class="text-xs font-black uppercase tracking-widest ${t_sub} mb-3 border-b border-slate-200 dark:border-slate-800 pb-2 flex justify-between items-center">
+            <span>Notification & Delivery Logs</span>
+            <span class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[9px]">OMNICHANNEL</span>
+        </h5>
+        <div class="space-y-2.5 max-h-48 overflow-y-auto pr-1">`;
+
+  if (notiLogs.length === 0) html += `<p class="text-xs ${t_sub} italic font-bold py-2">No messages sent yet.</p>`;
+  else {
+    notiLogs.forEach(n => {
+      // Dynamic styling based on channel & status
+      let badgeColor = n.channel === 'WHATSAPP' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' :
+                       n.channel === 'FIREBASE' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200 dark:border-amber-800' :
+                       'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400 border-sky-200 dark:border-sky-800';
+      
+      let statColor = n.status === 'SUCCESS' || n.status === 'DELIVERED' ? 'text-emerald-500' : 
+                     (n.status === 'FAILED' ? 'text-rose-500' : 'text-amber-500');
+
+      html += `<div class="${t_box} p-3.5 rounded-xl border text-xs shadow-sm transition-colors">
+          <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2 mb-2">
+              <span class="font-black ${t_text}">${n.date}</span>
+              <span class="font-black border px-2 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm ${badgeColor}">${n.channel}</span>
+          </div>
+          <div class="flex justify-between items-start">
+              <div>
+                 <p class="${t_lbl} font-black uppercase text-[9px] tracking-widest">Trigger Event</p>
+                 <p class="font-bold ${t_text} mt-0.5">${n.type}</p>
+              </div>
+              <div class="text-right">
+                  <p class="font-black uppercase text-[10px] tracking-widest ${statColor}">${n.status}</p>
+                  <p class="${t_lbl} font-black text-[9px] tracking-widest mt-0.5">Est. Cost: ₹${n.cost.toFixed(2)}</p>
+              </div>
+          </div>
+      </div>`;
+    });
+  }
+
+  html += `</div></div></div>`;
+  
   container.innerHTML = html;
 }

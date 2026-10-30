@@ -95,6 +95,12 @@ window.loadSysConfig = async function() {
       document.getElementById('cfg-crm-dorm-reasons').value = configMap['Dormancy_Reasons'] || '';
       document.getElementById('cfg-crm-feedback').value = configMap['Feedback_Categories'] || '';
 
+      // --- MAP NOTIFICATIONS & ROUTING ---
+      document.getElementById('cfg-wa-routing').value = configMap['WA_ROUTING_PREFERENCE'] || 'COST_EFFECTIVE';
+      document.getElementById('cfg-wa-order-confirm').value = configMap['WA_ORDER_CONFIRMATION'] || 'FALSE';
+      document.getElementById('cfg-wa-del-confirm').value = configMap['WA_DELIVERY_CONFIRMATION'] || 'FALSE';
+      document.getElementById('cfg-wa-out-remind').value = configMap['WA_OUTSTANDING_REMINDER'] || 'FALSE';
+
       window.setSysLoader(false);
       window.stopSysTimer('Loaded', false);
 
@@ -136,7 +142,13 @@ window.saveSysConfig = async function() {
           { key: 'WIP_Statuses', value: document.getElementById('cfg-crm-wip-stat').value, created_by: currentUser },
           { key: 'Completed_Statuses', value: document.getElementById('cfg-crm-comp-stat').value, created_by: currentUser },
           { key: 'Dormancy_Reasons', value: document.getElementById('cfg-crm-dorm-reasons').value, created_by: currentUser },
-          { key: 'Feedback_Categories', value: document.getElementById('cfg-crm-feedback').value, created_by: currentUser }
+          { key: 'Feedback_Categories', value: document.getElementById('cfg-crm-feedback').value, created_by: currentUser },
+
+          // Notifications
+          { key: 'WA_ROUTING_PREFERENCE', value: document.getElementById('cfg-wa-routing').value, created_by: currentUser },
+          { key: 'WA_ORDER_CONFIRMATION', value: document.getElementById('cfg-wa-order-confirm').value, created_by: currentUser },
+          { key: 'WA_DELIVERY_CONFIRMATION', value: document.getElementById('cfg-wa-del-confirm').value, created_by: currentUser },
+          { key: 'WA_OUTSTANDING_REMINDER', value: document.getElementById('cfg-wa-out-remind').value, created_by: currentUser }
       ];
 
       const { error } = await supa.from('setup').upsert(updatePayload, { onConflict: 'key' });

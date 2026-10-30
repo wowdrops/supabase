@@ -26,6 +26,10 @@
           <button id="sys-tab-btn-crm" onclick="window.switchSysTab('crm')" class="sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-all border border-transparent shrink-0 md:shrink">
             📞 CRM & Workflows
           </button>
+          <!-- NEW NOTIFICATION TAB -->
+          <button id="sys-tab-btn-noti" onclick="window.switchSysTab('noti')" class="sys-tab-btn w-full text-left px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-all border border-transparent shrink-0 md:shrink">
+            📢 Notifications & Routing
+          </button>
         </nav>
       </div>
 
@@ -123,6 +127,77 @@
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Feedback Categories (Dropdown)</label>
               <textarea id="cfg-crm-feedback" rows="2" class="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-xs text-slate-800 dark:text-white outline-none focus:border-cyan-500 shadow-inner transition-colors resize-none leading-relaxed"></textarea>
             </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: NOTIFICATIONS & ROUTING (NEW) -->
+        <div id="sys-tab-noti" class="sys-tab-content space-y-6 flex-1 hidden">
+          <div class="pb-4 border-b border-slate-100 dark:border-slate-800">
+            <h4 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">Omnichannel Routing Strategy</h4>
+            <p class="text-xs text-slate-500 font-bold mt-1">Control fallback logic between Firebase Push, WhatsApp API, and Email.</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100 dark:border-indigo-900/50">
+               <label class="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-2">WhatsApp Routing Preference</label>
+               <div class="relative">
+                 <select id="cfg-wa-routing" class="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-indigo-500 shadow-sm appearance-none cursor-pointer transition-colors">
+                   <option value="COST_EFFECTIVE">Cost Effective (Push First, No WA Fallback)</option>
+                   <option value="MAX_REACH">Max Reach (Push First, WA Fallback if no App)</option>
+                 </select>
+                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                 </div>
+               </div>
+               <p class="text-[9px] font-bold text-slate-400 mt-2">Determines behavior if a customer does not have the Customer App installed.</p>
+            </div>
+
+            <!-- Toggles -->
+            <div class="space-y-4">
+               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                  <div>
+                     <label class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Order Confirmations</label>
+                     <p class="text-[9px] font-bold text-slate-400">Fire alerts instantly on order placement.</p>
+                  </div>
+                  <div class="relative">
+                     <select id="cfg-wa-order-confirm" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg font-black text-slate-800 dark:text-white outline-none text-xs appearance-none cursor-pointer pr-8">
+                       <option value="TRUE">ENABLED</option>
+                       <option value="FALSE">DISABLED</option>
+                     </select>
+                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"><svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
+                  </div>
+               </div>
+
+               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                  <div>
+                     <label class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Delivery Confirmations</label>
+                     <p class="text-[9px] font-bold text-slate-400">Fire alerts upon Delivery QC completion.</p>
+                  </div>
+                  <div class="relative">
+                     <select id="cfg-wa-del-confirm" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg font-black text-slate-800 dark:text-white outline-none text-xs appearance-none cursor-pointer pr-8">
+                       <option value="TRUE">ENABLED</option>
+                       <option value="FALSE">DISABLED</option>
+                     </select>
+                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"><svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
+                  </div>
+               </div>
+
+               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                  <div>
+                     <label class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Outstanding Reminders</label>
+                     <p class="text-[9px] font-bold text-slate-400">Allow broadcasts for pending balances.</p>
+                  </div>
+                  <div class="relative">
+                     <select id="cfg-wa-out-remind" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg font-black text-slate-800 dark:text-white outline-none text-xs appearance-none cursor-pointer pr-8">
+                       <option value="TRUE">ENABLED</option>
+                       <option value="FALSE">DISABLED</option>
+                     </select>
+                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500"><svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
+                  </div>
+               </div>
+            </div>
+
           </div>
         </div>
         

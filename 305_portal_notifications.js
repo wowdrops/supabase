@@ -42,23 +42,32 @@ function triggerNotificationSetup() {
 
 async function subscribeUserToPush() {
   try {
-    const registration = await navigator.serviceWorker.register('300_sw.js');
+    // 1. Register the new Service Worker
+    const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
     await navigator.serviceWorker.ready;
     
-    // ⚡ THIS IS THE MAGIC FIREBASE CALL THAT FIXES THE ERROR 
+    // 2. Request the Token from Google
     const token = await messaging.getToken({
       vapidKey: VAPID_PUBLIC_KEY,
       serviceWorkerRegistration: registration
     });
 
     if (token) {
-      callBackendAPI("savePushSubscription", { 
-        cpn: activeUserSession.cpn, 
-        subscriptionObj: token // We now send a pure Firebase string token!
-      }, 
-      function(res) {
-        if (res.success) alert("✅ Daily alerts successfully enabled on this device!");
-      });
+      // 3. ⚡ NEW SUPABASE UPSERT (Replaces the old GAS call)
+      const { error } = await window.supabase1
+        .from('push_subscriptions')
+        .upsert({ 
+          cpn_no: activeUserSession.cpn, 
+          subscription_json: { token: token } // Matches the JSON format the Edge Function expects!
+        }, { onConflict: 'cpn_no' });
+
+      if (error) {
+        console.error("Database Error:", error);
+        alert("Failed to save registration to database.");
+        return;
+      }
+
+      alert("✅ Daily alerts successfully enabled on this device!");
     }
 
   } catch (error) {

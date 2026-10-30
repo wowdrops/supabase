@@ -1,0 +1,204 @@
+<div id="tab-push-notifications" class="hidden absolute inset-0 overflow-y-auto bg-slate-900 custom-scrollbar fade-in pb-20">
+  <!-- Sticky Glassmorphism Header -->
+  <div class="sticky top-0 z-30 backdrop-blur-md bg-slate-900/80 border-b border-slate-800 p-4 flex items-center justify-between shadow-sm">
+    <div>
+      <h1 class="text-xl md:text-2xl font-black text-white tracking-tight uppercase">Omnichannel Notification Engine</h1>
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Automated Queues • Meta WhatsApp • Firebase • Gmail</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="window.loadNotificationManager()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 outline-none border border-slate-700">
+        <i class="fas fa-sync-alt"></i> Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <div class="p-4 md:p-6 w-full max-w-[1600px] mx-auto flex flex-col xl:flex-row gap-6">
+    
+    <!-- ========================================== -->
+    <!-- LEFT PANEL: DISPATCH ENGINE                -->
+    <!-- ========================================== -->
+    <div class="w-full xl:w-1/2 flex flex-col gap-6">
+      
+      <!-- 1. Context & Targeting Grid -->
+      <div class="bg-slate-800/50 rounded-2xl border border-slate-700 shadow-lg flex flex-col h-[500px]">
+        <div class="p-4 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex-1">
+            <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1.5"><i class="fas fa-crosshairs mr-1"></i> 1. Target Context</label>
+            <select id="notif-context-select" class="w-full sm:max-w-xs bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white font-bold text-xs focus:border-emerald-500 outline-none transition-colors appearance-none cursor-pointer shadow-inner">
+              <option value="GENERAL">📢 General Active Customers</option>
+              <option value="ORDERS">📦 Current Orders</option>
+              <option value="DELIVERIES">🚚 Current Deliveries</option>
+              <option value="OUTSTANDING">⚠️ Outstanding Balances</option>
+            </select>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input type="text" id="notif-grid-search" placeholder="Search CPN, Name..." class="w-full bg-slate-900 border border-slate-600 rounded-lg pl-8 pr-3 py-2.5 text-white font-medium text-xs focus:border-emerald-500 outline-none transition-colors shadow-inner">
+          </div>
+        </div>
+        
+        <!-- Dynamic Grid -->
+        <div class="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-2">
+          <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead class="sticky top-0 bg-slate-800 z-10 shadow-sm">
+              <tr>
+                <th class="p-2 border-b border-slate-700 w-10 text-center">
+                  <input type="checkbox" id="notif-select-all" class="accent-emerald-500 w-4 h-4 rounded cursor-pointer">
+                </th>
+                <th class="p-2 border-b border-slate-700 text-[10px] font-black text-slate-400 uppercase tracking-wider">CPN No</th>
+                <th class="p-2 border-b border-slate-700 text-[10px] font-black text-slate-400 uppercase tracking-wider">Name / Contact</th>
+                <th class="p-2 border-b border-slate-700 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right" id="notif-grid-metric-header">Metric</th>
+                <th class="p-2 border-b border-slate-700 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="notif-target-grid" class="text-xs">
+              <!-- JS Populated Rows Go Here -->
+              <tr><td colspan="5" class="p-10 text-center text-slate-500 font-bold"><i class="fas fa-spinner fa-spin text-xl mb-2 text-emerald-500"></i><br>Loading Data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-2 border-t border-slate-700 bg-slate-900/50 text-right">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Selected: <span id="notif-selected-count" class="text-emerald-400">0</span></span>
+        </div>
+      </div>
+
+      <!-- 2. Message Composer & Actions -->
+      <div class="bg-slate-800/50 rounded-2xl p-5 border border-slate-700 shadow-lg space-y-5">
+        
+        <!-- Channels -->
+        <div>
+           <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2"><i class="fas fa-satellite-dish mr-1"></i> 2. Channel Overrides</label>
+           <div class="flex flex-wrap gap-4 bg-slate-900 p-3 rounded-xl border border-slate-700 shadow-inner">
+             <label class="flex items-center gap-2 cursor-pointer">
+               <input type="checkbox" id="channel-wa" class="accent-emerald-500 w-4 h-4 rounded">
+               <span class="text-xs font-bold text-slate-300"><i class="fab fa-whatsapp text-emerald-500"></i> WhatsApp</span>
+             </label>
+             <label class="flex items-center gap-2 cursor-pointer">
+               <input type="checkbox" id="channel-push" class="accent-blue-500 w-4 h-4 rounded">
+               <span class="text-xs font-bold text-slate-300"><i class="fas fa-mobile-alt text-blue-400"></i> Firebase Push</span>
+             </label>
+             <label class="flex items-center gap-2 cursor-pointer">
+               <input type="checkbox" id="channel-gmail" class="accent-amber-500 w-4 h-4 rounded">
+               <span class="text-xs font-bold text-slate-300"><i class="fas fa-envelope text-amber-400"></i> Gmail</span>
+             </label>
+           </div>
+        </div>
+
+        <!-- Content -->
+        <div class="space-y-4">
+          <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest border-b border-slate-700 pb-2"><i class="fas fa-pen-nib mr-1"></i> 3. Compose Message</label>
+          
+          <div>
+            <input type="text" id="notif-title" placeholder="Subject / Title (e.g. Action Required: Pending Balance)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold text-sm outline-none focus:border-emerald-500 transition-colors shadow-inner">
+          </div>
+
+          <div class="relative">
+            <textarea id="notif-body" rows="4" placeholder="Write your full message here..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-medium text-sm outline-none focus:border-emerald-500 resize-none transition-colors shadow-inner"></textarea>
+            <div class="absolute bottom-3 right-3 text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+              Merge Tags: <span class="bg-slate-800 border border-slate-600 px-1 py-0.5 rounded text-emerald-400">{{name}}</span> <span class="bg-slate-800 border border-slate-600 px-1 py-0.5 rounded text-emerald-400">{{balance}}</span> <span class="bg-slate-800 border border-slate-600 px-1 py-0.5 rounded text-emerald-400">{{qty}}</span>
+            </div>
+          </div>
+
+          <div class="p-3 bg-emerald-900/10 border border-emerald-900/30 rounded-xl">
+            <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Meta Template Assignment (If WhatsApp is selected)</label>
+            <select id="notif-wa-template" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-xs outline-none focus:border-emerald-500 transition-colors shadow-inner appearance-none cursor-pointer">
+              <option value="">-- No Template (Text Only / Non-WhatsApp) --</option>
+              <!-- Loaded from SysConfig WA_TEMPLATES -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button id="btn-pool" onclick="dispatchToPool()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 border border-slate-600">
+            <i class="fas fa-layer-group text-blue-400"></i>
+            <div>
+              <span class="block">Transfer to Dispatch Pool</span>
+              <span class="block text-[8px] text-slate-400 font-medium normal-case tracking-normal">Cron will process in background</span>
+            </div>
+          </button>
+          
+          <button id="btn-immediate" onclick="dispatchImmediately()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all active:scale-95 flex items-center justify-center gap-2">
+            <i class="fas fa-bolt text-yellow-300"></i>
+            <div>
+              <span class="block">Send Immediately</span>
+              <span class="block text-[8px] text-emerald-200 font-medium normal-case tracking-normal">Limit: Max 10 Selections</span>
+            </div>
+          </button>
+        </div>
+        <p id="notif-feedback" class="text-[10px] font-black text-center hidden mt-2 uppercase tracking-wider p-2 rounded-lg"></p>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- RIGHT PANEL: COMMAND CENTER (LEDGER)       -->
+    <!-- ========================================== -->
+    <div class="w-full xl:w-1/2 flex flex-col gap-6">
+      
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-slate-800/50 rounded-xl p-3 border border-slate-700 shadow-md">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Today's Meta Cost</p>
+          <p class="text-xl font-black text-white">₹<span id="kpi-cost">0.00</span></p>
+        </div>
+        <div class="bg-slate-800/50 rounded-xl p-3 border border-slate-700 shadow-md">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Queue Status</p>
+          <p class="text-xl font-black text-amber-400"><span id="kpi-queue">0</span> <span class="text-[10px] text-slate-500 font-medium tracking-normal">Pending</span></p>
+        </div>
+        <div class="bg-slate-800/50 rounded-xl p-3 border border-slate-700 shadow-md">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Success Rate</p>
+          <p class="text-xl font-black text-emerald-400"><span id="kpi-success">100</span>%</p>
+        </div>
+      </div>
+
+      <!-- Advanced Ledger -->
+      <div class="bg-slate-800/50 rounded-2xl flex-1 border border-slate-700 shadow-lg flex flex-col overflow-hidden min-h-[500px]">
+        
+        <!-- Filters Header -->
+        <div class="p-3 border-b border-slate-700 bg-slate-800/80">
+           <div class="flex flex-wrap items-center gap-2">
+             <h2 class="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 mr-auto">
+               <i class="fas fa-stream text-emerald-500"></i> Dispatch Ledger
+             </h2>
+             
+             <!-- Filter: Channel -->
+             <select id="filter-channel" onchange="fetchNotificationLogs()" class="bg-slate-900 border border-slate-600 rounded text-[10px] font-bold text-slate-300 p-1.5 outline-none cursor-pointer">
+               <option value="ALL">All Channels</option>
+               <option value="WHATSAPP">WhatsApp</option>
+               <option value="FIREBASE">Push</option>
+               <option value="GMAIL">Gmail</option>
+             </select>
+
+             <!-- Filter: Status -->
+             <select id="filter-status" onchange="fetchNotificationLogs()" class="bg-slate-900 border border-slate-600 rounded text-[10px] font-bold text-slate-300 p-1.5 outline-none cursor-pointer">
+               <option value="ALL">All Statuses</option>
+               <option value="SUCCESS">Success</option>
+               <option value="FAILED">Failed</option>
+               <option value="PENDING">Pending / Pool</option>
+             </select>
+             
+             <!-- Filter: Trigger -->
+             <select id="filter-trigger" onchange="fetchNotificationLogs()" class="bg-slate-900 border border-slate-600 rounded text-[10px] font-bold text-slate-300 p-1.5 outline-none cursor-pointer hidden sm:block">
+               <option value="ALL">All Triggers</option>
+               <option value="MANUAL">Manual</option>
+               <option value="AUTOMATIC">Automatic</option>
+             </select>
+           </div>
+        </div>
+        
+        <!-- Ledger List -->
+        <div id="notif-logs-container" class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-900/30">
+          <!-- Populated dynamically via JS -->
+          <div class="flex flex-col items-center justify-center py-10">
+            <i class="fas fa-spinner fa-spin text-2xl text-emerald-500 mb-3"></i>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syncing Live Ledger...</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

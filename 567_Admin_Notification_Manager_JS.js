@@ -26,7 +26,7 @@ async function loadNotificationConfigs() {
     const templateSelect = document.getElementById('notif-wa-template');
     if (!templateSelect) return;
     try {
-        // Fetch only the relevant keys (WA_MAP_* keys were removed per your instructions)
+        // Fetch only the relevant keys
         const { data, error } = await window.supabase1.from('setup').select('key, value').in('key', [
             'WA_TEMPLATES', 
             'PUSH_URL_ROUTING'
@@ -64,7 +64,6 @@ async function loadGridData() {
     try {
         let data = [], error = null;
 
-        // Fetching with select('*') preserves all columns for template mapping
         if (context === 'GENERAL') {
             metricHeader.textContent = "A/c Status";
             ({ data, error } = await window.supabase1.from('ac_customers').select('*').in('final_status', ['ACTIVE', 'Active']));

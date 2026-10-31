@@ -34,9 +34,19 @@ serve(async (req) => {
     const { action = 'cron_sweep', log_id } = reqData
 
     // 2. Fetch PENDING records based on the mode
-    // Fetch dynamic batch limit from setup table (defaults to 50 if missing)
-    const { data: setupLimit } = await supabase.from('setup').select('value').eq('key', 'CRON_BATCH_SIZE_SEND_ALERT').maybeSingle()
-    const batchLimit = setupLimit?.value ? parseInt(setupLimit.value, 10) : 50
+    // Fetch dynamic batch limit and routing preference from setup table
+    const { data: setupData } = await supabase.from('setup').select('key, value').in('key', ['CRON_BATCH_SIZE_SEND_ALERT', 'WA_ROUTING_PREFERENCE'])
+    
+    let batchLimit = 50
+    let routingPref = 'MAX_REACH'
+
+    if (setupData) {
+        const limitRow = setupData.find(r => r.key === 'CRON_BATCH_SIZE_SEND_ALERT')
+        if (limitRow?.value) batchLimit = parseInt(limitRow.value, 10)
+        
+        const prefRow = setupData.find(r => r.key === 'WA_ROUTING_PREFERENCE')
+        if (prefRow?.value) routingPref = prefRow.value.trim().toUpperCase()
+    }
 
     let query = supabase
       .from('notification_logs')
@@ -76,6 +86,7 @@ serve(async (req) => {
       let finalStatus = 'SUCCESS'
       let finalCost = 0.00
       let errors: string[] = []
+      let push_delivered = false // Tracker for COST_SAVER logic
 
       // Fetch latest customer contact details
       const { data: customer } = await supabase.from('ac_customers').select('con1, mail_id').eq('cpn_no', cpn_no).single()
@@ -83,55 +94,14 @@ serve(async (req) => {
 
       const phoneNum = customer?.con1 ? String(customer.con1).replace(/\D/g, '') : null
       const emailAddress = customer?.mail_id
-      const fcmToken = pushSub?.subscription_json
 
       // --- CHANNEL ROUTING EXECUTION ---
 
-      // A. WHATSAPP META API
-      if (target_channels.includes('WHATSAPP') && phoneNum && raw_payload.wa_template) {
-        const waToken = Deno.env.get('META_WA_TOKEN')
-        const waPhoneId = Deno.env.get('META_PHONE_ID')
-        
-        // FIXED LOGIC: Only attach components if variables exist, avoiding Meta strict crashes
-        const templatePayload: any = {
-          messaging_product: "whatsapp",
-          to: `91${phoneNum.slice(-10)}`,
-          type: "template",
-          template: { name: raw_payload.wa_template, language: { code: "en" } }
-        }
-
-        if (raw_payload.wa_variables && raw_payload.wa_variables.length > 0) {
-            templatePayload.template.components = [{
-                type: "body",
-                parameters: raw_payload.wa_variables.map((val: any) => ({ type: "text", text: String(val) }))
-            }]
-        }
-
-        try {
-          const waRes = await fetch(`https://graph.facebook.com/v17.0/${waPhoneId}/messages`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${waToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(templatePayload)
-          })
-          
-          const waData = await waRes.json()
-          if (waData.error) errors.push(`WhatsApp Error: ${waData.error.message}`)
-          else finalCost += 0.88 
-        } catch (err: any) {
-          errors.push(`WhatsApp Network Failure: ${err.message}`)
-        }
-      } else if (target_channels.includes('WHATSAPP') && !phoneNum) {
-        errors.push(`WhatsApp Skipped: No valid phone number.`)
-      }
-
-      // B. FIREBASE PUSH API
+      // A. FIREBASE PUSH API (Moved to top so WhatsApp knows if it succeeded)
       if (target_channels.includes('FIREBASE')) {
         try {
-          // Fetch the JSON subscription data
-          const { data: pushData } = await supabase.from('push_subscriptions').select('subscription_json').eq('cpn_no', cpn_no).maybeSingle()
-          
           // Smart extraction: Look for the 'token' key inside the JSON object
-          const fcmToken = pushData?.subscription_json?.token 
+          const fcmToken = pushSub?.subscription_json?.token 
 
           if (fcmToken) {
             // Build payload using Admin SDK structure (ported from your GAS webpush config)
@@ -152,11 +122,11 @@ serve(async (req) => {
               // Admin SDK automatically handles the OAuth2 token generation!
               await getMessaging().send(fcmMessage)
               finalCost += 0.00 // Pushes are free
+              push_delivered = true // Mark as successfully delivered!
             } catch (fcmError: any) {
               const errorCode = fcmError.code || fcmError.errorInfo?.code
               
               // --- THE AUTO-CLEANUP LOGIC PORTED FROM GAS ---
-              // Firebase Admin SDK uses slightly different error codes for dead tokens
               if (errorCode === 'messaging/registration-token-not-registered' || 
                   errorCode === 'messaging/invalid-registration-token' || 
                   errorCode === 'messaging/invalid-argument') {
@@ -176,6 +146,49 @@ serve(async (req) => {
         } catch (err: any) {
           errors.push(`Push System Failure: ${err.message}`)
         }
+      }
+
+      // B. WHATSAPP META API
+      if (target_channels.includes('WHATSAPP') && phoneNum && raw_payload.wa_template) {
+        
+        // INTELLIGENT ROUTING CHECK
+        if (routingPref === 'COST_SAVER' && push_delivered) {
+            // Silently skip WhatsApp to save money. We don't log an error because this is a success state.
+        } else {
+            const waToken = Deno.env.get('META_WA_TOKEN')
+            const waPhoneId = Deno.env.get('META_PHONE_ID')
+            
+            // FIXED LOGIC: Only attach components if variables exist, avoiding Meta strict crashes
+            const templatePayload: any = {
+              messaging_product: "whatsapp",
+              to: `91${phoneNum.slice(-10)}`,
+              type: "template",
+              template: { name: raw_payload.wa_template, language: { code: "en" } }
+            }
+
+            if (raw_payload.wa_variables && raw_payload.wa_variables.length > 0) {
+                templatePayload.template.components = [{
+                    type: "body",
+                    parameters: raw_payload.wa_variables.map((val: any) => ({ type: "text", text: String(val) }))
+                }]
+            }
+
+            try {
+              const waRes = await fetch(`https://graph.facebook.com/v17.0/${waPhoneId}/messages`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${waToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(templatePayload)
+              })
+              
+              const waData = await waRes.json()
+              if (waData.error) errors.push(`WhatsApp Error: ${waData.error.message}`)
+              else finalCost += 0.88 
+            } catch (err: any) {
+              errors.push(`WhatsApp Network Failure: ${err.message}`)
+            }
+        }
+      } else if (target_channels.includes('WHATSAPP') && !phoneNum) {
+        errors.push(`WhatsApp Skipped: No valid phone number.`)
       }
 
       // C. GMAIL VIA APPS SCRIPT

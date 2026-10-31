@@ -338,7 +338,7 @@ window.verifyBlockQC = function (blockId) {
 window.executeTransferToSales = async function () {
     var btn = document.getElementById('btn-transfer-sales');
     if (window.selectedBlocks.length === 0) {
-        if(window.showToast) return window.showToast("Select at least one verified block.", "warning");
+        if (window.showToast) return window.showToast("Select at least one verified block.", "warning");
         return;
     }
     
@@ -348,23 +348,46 @@ window.executeTransferToSales = async function () {
     window.startQCTimer('Syncing');
 
     try {
-        var allDeliveriesToMigrate = [];
+        var adminName = window.activeAdminSession ? window.activeAdminSession.username : 'ADMIN';
+        var deliveryIdsToProcess = [];
+        var rolloverOrdersBatch = [];
+        var timeNow = new Date().toISOString();
+        var todayDateStr = timeNow.split('T')[0];
         
-        // 1. Gather all data from selected blocks
+        // 1. GATHER DELIVERIES & IDENTIFY ROLLOVER SHORTAGES
         window.selectedBlocks.forEach(blockId => {
-            var block = document.querySelector('.qc-block-group[data-block-id="' + blockId + '"]');
             var bData = window.cachedQCBlocksData[blockId];
             
             bData.doors.forEach(d => {
-                d.runtimeVars = {
-                    v2bF: parseInt(block.querySelector('.qc-inp-v2bf').value) || 0,
-                    b2vF: parseInt(block.querySelector('.qc-inp-b2vf').value) || 0,
-                    b2vE: parseInt(block.querySelector('.qc-inp-b2ve').value) || 0,
-                    fullVar: (parseInt(block.querySelector('.qc-var-xf').value) || 0) - (parseInt(block.querySelector('.qc-var-sf').value) || 0),
-                    empVar: (parseInt(block.querySelector('.qc-var-xe').value) || 0) - (parseInt(block.querySelector('.qc-var-se').value) || 0),
-                    reason: block.querySelector('.qc-var-reason').value || "Verified"
-                };
-                allDeliveriesToMigrate.push(d);
+                deliveryIdsToProcess.push(d.dbId);
+
+                // If driver marked rollover and there is a shortage, create the new pending order
+                if (d.rollover) {
+                    var actD = d.dvj + d.dnvj;
+                    var actE = d.evj + d.envj;
+                    var reqRep = d.replaceQty || 0;
+                    var actRep = d.repVj + d.repNvj;
+
+                    var diffD = Math.max(0, d.ordD - actD);
+                    var diffE = Math.max(0, d.ordE - actE);
+                    var diffRep = Math.max(0, reqRep - actRep);
+
+                    if (diffD > 0 || diffE > 0 || diffRep > 0) {
+                        var pushReason = "[ADMIN ROLLED: SHORTAGE]";
+                        if (d.delComment && d.delComment.includes("[DEFERRED")) {
+                            pushReason = d.delComment.replace("[DEFERRED", "[AUTO-DEFERRED");
+                        }
+                        
+                        rolloverOrdersBatch.push({
+                            unique_no: d.uniqueNo + ((actD > 0 || actE > 0) ? "-P1" : "-R1"),
+                            cpn_no: d.cpn, apartment: bData.apartment, block: bData.blockName, door: d.doorNo,
+                            order_date: todayDateStr, ord_d: diffD, ord_e: diffE, rate: d.rate, amount: diffD * d.rate,
+                            order_comment: pushReason, status: "PENDING", pending_qty: diffD,
+                            replace_qty: diffRep, replace_reason: d.replaceReason,
+                            created_at: timeNow, created_by: adminName
+                        });
+                    }
+                }
             });
         });
 
@@ -388,115 +411,26 @@ window.executeTransferToSales = async function () {
         // 3. LIVE COLLISION CHECK
         const { data: ordData } = await window.supabase1.from('orders').select('cpn_no');
         var currentOrders = ordData ? ordData.map(o => o.cpn_no.toUpperCase()) : [];
-        var liveCollisions = false;
-
-        allDeliveriesToMigrate.forEach(d => {
-            if (d.rollover && currentOrders.includes(d.cpn.toUpperCase())) liveCollisions = true;
-        });
+        var liveCollisions = rolloverOrdersBatch.some(r => currentOrders.includes(r.cpn_no.toUpperCase()));
 
         if (liveCollisions) {
             window.loadDeliveryQCData(); 
             throw new Error("LIVE COLLISION DETECTED! A customer placed a new order while you were reviewing. Please disable Rollover for highlighted exceptions.");
         }
 
-        // 4. FETCH RAW DATA TO PRESERVE ALL COLUMNS (Photos, Names, Timestamps)
-        var deliveryIdsToProcess = allDeliveriesToMigrate.map(d => d.dbId);
-        
-        const { data: rawDeliveries, error: rawErr } = await window.supabase1
-            .from('deliveries')
-            .select('*')
-            .in('id', deliveryIdsToProcess);
-
-        if (rawErr) throw rawErr;
-
-        var salesBatch = [];
-        var ordersBatch = [];
-        var timeNow = new Date().toISOString();
-        var todayDateStr = timeNow.split('T')[0];
-
-        rawDeliveries.forEach(rawRow => {
-            // Find the matching QC data from our array
-            var qcData = allDeliveriesToMigrate.find(d => d.dbId === rawRow.id);
-            if (!qcData) return;
-
-            var actD = qcData.dvj + qcData.dnvj;
-            var actE = qcData.evj + qcData.envj;
-            var reqRep = qcData.replaceQty || 0;
-            var actRep = qcData.repVj + qcData.repNvj;
-
-            // Clone the raw row to preserve EVERYTHING
-            var salesRow = { ...rawRow };
-            delete salesRow.id; // Remove the delivery ID so the Sales table can generate its own
-            
-            // FIX: Remove columns that exist in deliveries but NOT in sales
-            delete salesRow.reserve2;
-            delete salesRow.reserve112;
-            
-            // Overwrite with QC & Final values
-            salesRow.status = "DELIVERED";
-            salesRow.chkbox_reserved5 = false;
-            salesRow.door_qc = "TRUE";
-            salesRow.block_qc = "VERIFIED";
-            
-            // FIX: Ensure del_date is always stamped for the Daily Sales Report
-            salesRow.del_date = rawRow.del_date || todayDateStr; 
-            
-            salesRow.act_d = actD;
-            salesRow.act_e = actE;
-            salesRow.amount = actD * (rawRow.rate || 0);
-            
-            salesRow.variance_full = qcData.runtimeVars.fullVar;
-            salesRow.variance_empty = qcData.runtimeVars.empVar;
-            salesRow.variance_reason = qcData.runtimeVars.reason;
-            salesRow.van_to_block_full_can_count = qcData.runtimeVars.v2bF;
-            salesRow.block_to_van_full_count = qcData.runtimeVars.b2vF;
-            salesRow.block_to_van_empty_count = qcData.runtimeVars.b2vE;
-            
-            salesRow.act_d_vj = qcData.dvj;
-            salesRow.act_d_nvj = qcData.dnvj;
-            salesRow.act_e_vj = qcData.evj;
-            salesRow.act_e_nvj = qcData.envj;
-            
-            salesRow.created_at = timeNow;
-            salesRow.created_by = window.activeAdminSession ? window.activeAdminSession.username : 'ADMIN';
-
-            salesBatch.push(salesRow);
-
-            // Handle Rollover Orders
-            if (qcData.rollover) {
-                var diffD = Math.max(0, (rawRow.ord_d || 0) - actD);
-                var diffE = Math.max(0, (rawRow.ord_e || 0) - actE);
-                var diffRep = Math.max(0, reqRep - actRep);
-
-                if (diffD > 0 || diffE > 0 || diffRep > 0) {
-                    var pushReason = "[ADMIN ROLLED: SHORTAGE]";
-                    if (rawRow.delivery_comment && rawRow.delivery_comment.includes("[DEFERRED")) {
-                        pushReason = rawRow.delivery_comment.replace("[DEFERRED", "[AUTO-DEFERRED");
-                    }
-                    
-                    ordersBatch.push({
-                        unique_no: rawRow.unique_no + ((actD > 0 || actE > 0) ? "-P1" : "-R1"),
-                        cpn_no: rawRow.cpn_no, apartment: rawRow.apartment, block: rawRow.block, door: rawRow.door,
-                        order_date: todayDateStr, ord_d: diffD, ord_e: diffE, rate: rawRow.rate, amount: diffD * rawRow.rate,
-                        order_comment: pushReason, status: "PENDING", pending_qty: diffD,
-                        replace_qty: diffRep, replace_reason: rawRow.replace_reason,
-                        created_at: timeNow, created_by: window.activeAdminSession ? window.activeAdminSession.username : 'ADMIN'
-                    });
-                }
-            }
+        // 4. FIRE THE RPC TRANSFER
+        const { data: rpcResult, error: rpcErr } = await window.supabase1.rpc('process_deliveryqc_to_sales', {
+            p_delivery_ids: deliveryIdsToProcess,
+            p_admin_name: adminName
         });
 
-        // 5. EXECUTE BATCH TRANSACTIONS
-        const { error: salesErr } = await window.supabase1.from('sales').insert(salesBatch);
-        if (salesErr) throw salesErr;
+        if (rpcErr) throw rpcErr;
 
-        if (ordersBatch.length > 0) {
-            const { error: ordInsErr } = await window.supabase1.from('orders').insert(ordersBatch);
+        // 5. INSERT LEFTOVER ROLLOVER ORDERS (If Any)
+        if (rolloverOrdersBatch.length > 0) {
+            const { error: ordInsErr } = await window.supabase1.from('orders').insert(rolloverOrdersBatch);
             if (ordInsErr) throw ordInsErr;
         }
-
-        const { error: delErr } = await window.supabase1.from('deliveries').delete().in('id', deliveryIdsToProcess);
-        if (delErr) throw delErr;
 
         // 6. POST-TRANSFER RECONCILIATION
         const { count, error: countErr } = await window.supabase1.from('deliveries')
@@ -546,24 +480,24 @@ window.executeTransferToSales = async function () {
         }
 
         window.stopQCTimer('Synced', false);
-        if(window.showToast) window.showToast("Batch Sync Successful!", "success");
+        if (window.showToast) window.showToast("Batch Sync Successful!", "success");
         
-        // SPA FIX: Reset Button & Scroll to Top
         btn.innerText = "Process Selected";
         btn.disabled = false;
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         window.loadDeliveryQCData();
 
-    } catch(err) {
+    } catch (err) {
         window.stopQCTimer('Blocked', true);
         
         btn.innerText = "Process Selected";
         btn.disabled = false;
         
         if (err.message.includes("LIVE COLLISION")) window.openExceptionReview();
-        if(window.showToast) window.showToast(err.message, "error");
+        if (window.showToast) window.showToast(err.message, "error");
         else alert(err.message);
+        
         window.checkTransferReady();
     }
 };

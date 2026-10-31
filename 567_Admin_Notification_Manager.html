@@ -52,7 +52,6 @@
               </tr>
             </thead>
             <tbody id="notif-target-grid" class="text-xs">
-              <!-- JS Populated Rows Go Here -->
               <tr><td colspan="5" class="p-10 text-center text-slate-500 font-bold"><i class="fas fa-spinner fa-spin text-xl mb-2 text-emerald-500"></i><br>Loading Data...</td></tr>
             </tbody>
           </table>
@@ -84,28 +83,43 @@
            </div>
         </div>
 
-        <!-- Content -->
-        <div class="space-y-4">
+        <div class="p-3 bg-emerald-900/10 border border-emerald-900/30 rounded-xl">
+          <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Meta Template Assignment (Optional)</label>
+          <select id="notif-wa-template" onchange="window.handleTemplateSelection()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-xs outline-none focus:border-emerald-500 transition-colors shadow-inner appearance-none cursor-pointer">
+            <option value="">-- No Template (Manual Compose) --</option>
+            <!-- Loaded from SysConfig WA_TEMPLATES -->
+          </select>
+        </div>
+
+        <!-- 3. Dynamic Section: Compose OR Preview -->
+        <div id="notif-compose-section" class="space-y-4">
           <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest border-b border-slate-700 pb-2"><i class="fas fa-pen-nib mr-1"></i> 3. Compose Message</label>
           
           <div>
-            <input type="text" id="notif-title" placeholder="Subject / Title (e.g. Action Required: Pending Balance)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold text-sm outline-none focus:border-emerald-500 transition-colors shadow-inner">
+            <input type="text" id="notif-title" placeholder="Subject / Title (e.g. Action Required)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold text-sm outline-none focus:border-emerald-500 transition-colors shadow-inner">
           </div>
 
           <div class="relative">
-            <textarea id="notif-body" rows="4" placeholder="Write your full message here..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-medium text-sm outline-none focus:border-emerald-500 resize-none transition-colors shadow-inner"></textarea>
-            <div class="absolute bottom-3 right-3 text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-              Merge Tags: <span class="bg-slate-800 border border-slate-600 px-1 py-0.5 rounded text-emerald-400">{{name}}</span> <span class="bg-slate-800 border border-slate-600 px-1 py-0.5 rounded text-emerald-400">{{balance}}</span> <span class="bg-slate-800 border border-slate-600 px-1 py-0.5 rounded text-emerald-400">{{qty}}</span>
+            <textarea id="notif-body" rows="4" placeholder="Write your full message here..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 pb-8 text-white font-medium text-sm outline-none focus:border-emerald-500 resize-none transition-colors shadow-inner"></textarea>
+            <div class="absolute bottom-2 right-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider flex gap-1 items-center">
+              Insert: 
+              <button onclick="window.insertMergeTag('{{Ord D}}')" class="bg-slate-800 border border-slate-600 px-1.5 py-0.5 rounded text-emerald-400 hover:bg-slate-700 transition cursor-pointer">{{Ord D}}</button> 
+              <button onclick="window.insertMergeTag('{{Ord E}}')" class="bg-slate-800 border border-slate-600 px-1.5 py-0.5 rounded text-emerald-400 hover:bg-slate-700 transition cursor-pointer">{{Ord E}}</button> 
+              <button onclick="window.insertMergeTag('{{Act D}}')" class="bg-slate-800 border border-slate-600 px-1.5 py-0.5 rounded text-emerald-400 hover:bg-slate-700 transition cursor-pointer">{{Act D}}</button>
+              <button onclick="window.insertMergeTag('{{Act E}}')" class="bg-slate-800 border border-slate-600 px-1.5 py-0.5 rounded text-emerald-400 hover:bg-slate-700 transition cursor-pointer">{{Act E}}</button>
             </div>
           </div>
+        </div>
 
-          <div class="p-3 bg-emerald-900/10 border border-emerald-900/30 rounded-xl">
-            <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Meta Template Assignment (If WhatsApp is selected)</label>
-            <select id="notif-wa-template" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-xs outline-none focus:border-emerald-500 transition-colors shadow-inner appearance-none cursor-pointer">
-              <option value="">-- No Template (Text Only / Non-WhatsApp) --</option>
-              <!-- Loaded from SysConfig WA_TEMPLATES -->
-            </select>
+        <div id="notif-preview-section" class="hidden space-y-4">
+          <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest border-b border-slate-700 pb-2"><i class="fab fa-whatsapp mr-1"></i> 3. Meta Template Preview</label>
+          <div class="bg-[url('https://i.ibb.co/3sZq1N8/wa-bg.png')] bg-cover p-4 rounded-xl border border-slate-700 flex justify-start h-[160px] overflow-y-auto custom-scrollbar">
+            <div class="bg-white max-w-[85%] rounded-xl rounded-tl-none p-3 shadow-sm relative">
+              <p id="wa-preview-text" class="text-[#111b21] text-[13px] leading-[19px] whitespace-pre-wrap font-sans"></p>
+              <span class="text-[10px] text-slate-400 float-right mt-1 ml-2">12:00 PM</span>
+            </div>
           </div>
+          <p class="text-[9px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1"><i class="fas fa-info-circle"></i> Variables will auto-fill based on grid selection</p>
         </div>
 
         <!-- Action Buttons -->
@@ -130,7 +144,6 @@
 
       </div>
     </div>
-
 
     <!-- ========================================== -->
     <!-- RIGHT PANEL: COMMAND CENTER (LEDGER)       -->
@@ -190,7 +203,6 @@
         
         <!-- Ledger List -->
         <div id="notif-logs-container" class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-slate-900/30">
-          <!-- Populated dynamically via JS -->
           <div class="flex flex-col items-center justify-center py-10">
             <i class="fas fa-spinner fa-spin text-2xl text-emerald-500 mb-3"></i>
             <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syncing Live Ledger...</p>

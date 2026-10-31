@@ -555,7 +555,7 @@ window.executeBatchTransferToDel2 = async function() {
   var checkboxes = document.querySelectorAll('.ord-batch-chk:checked');
   var selectedIds = [];
 
-  checkboxes.forEach(chk => selectedIds.push(chk.value)); 
+  checkboxes.forEach(chk => selectedIds.push(Number(chk.value))); 
 
   if (selectedIds.length === 0) {
       return window.showToast ? window.showToast("Select at least one order to transfer.", "warning") : alert("Select orders.");
@@ -566,57 +566,30 @@ window.executeBatchTransferToDel2 = async function() {
     window.startOrd2Timer('Transferring');
 
     try {
-      const supa = window.supabase1;
       const adminName = (window.activeAdminSession && window.activeAdminSession.username) ? window.activeAdminSession.username : 'Admin';
 
-      const { data: activeDeliveries, error: delCheckErr } = await supa.from('deliveries').select('id').limit(1);
-      if (delCheckErr) throw delCheckErr;
+      // 1. Single RPC Call handles everything (Transfer, Delete, and Notification Logs)
+      const { data: result, error } = await window.supabase1.rpc('process_daily_order_transfers', {
+        p_order_ids: selectedIds,
+        p_admin_name: adminName
+      });
 
-      if (activeDeliveries && activeDeliveries.length > 0) {
+      if (error) throw error;
+
+      // 2. Handle the Safety Check Failure
+      if (!result.success && result.error === 'DELIVERIES_NOT_EMPTY') {
         btn.disabled = false;
         window.stopOrd2Timer('Declined', true);
-        return window.showToast ? window.showToast("Deliveries queue is not empty. Clear Delivery QC first.", "error") : alert("Deliveries queue not empty.");
+        return window.showToast ? window.showToast(result.message, "error") : alert(result.message);
       }
 
-      const { data: ordersToTransfer, error: fetchErr } = await supa.from('orders').select('*').in('id', selectedIds);
-      if (fetchErr) throw fetchErr;
-      if (!ordersToTransfer || ordersToTransfer.length === 0) throw new Error("Selected orders not found.");
-
-      const deliveryPayloads = ordersToTransfer.map(ord => ({
-        unique_no: ord.unique_no,
-        cpn_no: ord.cpn_no,
-        apartment: ord.apartment,
-        block: ord.block,
-        door: ord.door,
-        name: ord.name,
-        contact: ord.contact,
-        default_rate: ord.default_rate,
-        can_deposit: ord.can_deposit,
-        order_date: ord.order_date,
-        ord_d: ord.ord_d,
-        ord_e: ord.ord_e,
-        rate: ord.rate,
-        order_comment: ord.order_comment,
-        delivery_comment: ord.delivery_comment,
-        status: ord.status,
-        pending_qty: ord.pending_qty,
-        replace_qty: ord.replace_qty,
-        replace_reason: ord.replace_reason,
-        order_entered_at: ord.created_at || new Date().toISOString(),
-        order_entered_by: ord.created_by || adminName,
-        created_by: adminName
-      }));
-
-      const { error: insertErr } = await supa.from('deliveries').insert(deliveryPayloads);
-      if (insertErr) throw insertErr;
-
-      const { error: deleteErr } = await supa.from('orders').delete().in('id', selectedIds);
-      if (deleteErr) throw deleteErr;
-
+      // 3. Success!
       window.stopOrd2Timer('Transferred', false);
       btn.disabled = false;
-      if(window.showToast) window.showToast(selectedIds.length + " records moved to deliveries.", "success");
+      if(window.showToast) window.showToast(result.transferred_count + " records moved to deliveries & alerts queued.", "success");
+      
       window.loadTranOrdersData(); 
+
     } catch (err) {
       btn.disabled = false;
       window.stopOrd2Timer('Failed', true);

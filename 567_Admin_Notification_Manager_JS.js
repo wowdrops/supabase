@@ -1,7 +1,6 @@
 // State Management
 let currentGridData = [];
 let selectedCpns = new Set();
-window.waTemplateMaps = {};
 window.pushUrlMap = {};
 
 // ------------------------------------------------------------------
@@ -27,28 +26,22 @@ async function loadNotificationConfigs() {
     const templateSelect = document.getElementById('notif-wa-template');
     if (!templateSelect) return;
     try {
+        // Fetch only the relevant keys (WA_MAP_* keys were removed per your instructions)
         const { data, error } = await window.supabase1.from('setup').select('key, value').in('key', [
             'WA_TEMPLATES', 
-            'WA_MAP_delivery_confirmation', 
-            'WA_MAP_order_confirmation', 
-            'WA_MAP_payment_confirmation',
-            'PUSH_URL_ROUTING' // 2. Add the new key to the fetch list
+            'PUSH_URL_ROUTING'
         ]);
 
         if (error) throw error;
         
-        let optionsHTML = '<option value="">-- No Template (Text Only / Non-WhatsApp) --</option>';
+        let optionsHTML = '<option value="">-- No Template (Manual Compose) --</option>';
         
         if (data) {
             data.forEach(row => {
                 if (row.key === 'WA_TEMPLATES') {
                     const templates = row.value.split(',').map(t => t.trim()).filter(t => t);
                     templates.forEach(t => optionsHTML += `<option value="${t}">${t}</option>`);
-                } else if (row.key.startsWith('WA_MAP_')) {
-                    const tName = row.key.replace('WA_MAP_', '');
-                    window.waTemplateMaps[tName] = row.value.split(',').map(c => c.trim());
                 } else if (row.key === 'PUSH_URL_ROUTING') {
-                    // 3. Parse the JSON map from the database directly into the global object
                     window.pushUrlMap = JSON.parse(row.value);
                 }
             });
@@ -71,8 +64,7 @@ async function loadGridData() {
     try {
         let data = [], error = null;
 
-        // FIXED LOGIC: We now select('*') without aliasing to preserve all columns for WA templates. 
-        // We map the UI 'name' and 'contact' manually below.
+        // Fetching with select('*') preserves all columns for template mapping
         if (context === 'GENERAL') {
             metricHeader.textContent = "A/c Status";
             ({ data, error } = await window.supabase1.from('ac_customers').select('*').in('final_status', ['ACTIVE', 'Active']));
@@ -102,93 +94,85 @@ async function loadGridData() {
     }
 }
 
-async function processDispatch(mode) {
-    const feedbackEl = document.getElementById('notif-feedback');
-    const { channels, title, body, template, context } = getPayloadData();
+// ------------------------------------------------------------------
+// 2. UI INTERACTIONS (Selection, Merge Tags, Previews)
+// ------------------------------------------------------------------
+window.insertMergeTag = function(tag) {
+    const textarea = document.getElementById('notif-body');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    
+    // Insert tag at cursor position
+    textarea.value = text.substring(0, start) + tag + text.substring(end);
+    
+    // Move cursor to immediately after the inserted tag
+    textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+    textarea.focus();
+};
 
-    if (selectedCpns.size === 0) {
-        showFeedback(feedbackEl, "Select at least one valid customer from the grid.", "error");
-        return;
-    }
-    if (channels.length === 0) {
-        showFeedback(feedbackEl, "Select at least one delivery channel.", "error");
-        return;
-    }
-
-    const btnId = mode === 'POOL' ? 'btn-pool' : 'btn-immediate';
-    const btnEl = document.getElementById(btnId);
-    const originalHtml = btnEl.innerHTML;
-    setButtonLoading(btnEl, true, mode);
-
-    try {
-        const adminUser = localStorage.getItem('user_email') || 'Unknown Admin';
-        const targetUrl = window.pushUrlMap[context] || "https://wowdrops.github.io/351_portal.html";
-
-        const insertData = Array.from(selectedCpns).map(cpn => {
-            const rowData = currentGridData.find(r => r.cpn_no === cpn) || {};
-            const customerName = rowData.name || 'Customer';
-
-            const personalizedTitle = title.replace(/\{\{name\}\}/gi, customerName);
-            const personalizedBody = body.replace(/\{\{name\}\}/gi, customerName);
-
-            let wa_variables = [];
-            if (template && window.waTemplateMaps && window.waTemplateMaps[template]) {
-                const requiredColumns = window.waTemplateMaps[template];
-                wa_variables = requiredColumns.map(col => {
-                    return rowData[col] !== undefined && rowData[col] !== null ? String(rowData[col]) : 'N/A';
-                });
-            }
-
-            return {
-                cpn_no: cpn,
-                channel: channels.join(', '), 
-                message_type: context,
-                status: 'PENDING', // MUST be PENDING for the Edge Function
-                trigger_type: 'MANUAL',
-                target_channels: channels,
-                raw_payload: { 
-                    title: personalizedTitle, 
-                    body: personalizedBody, 
-                    wa_template: template || null,
-                    wa_variables: wa_variables,
-                    push_url: targetUrl
-                },
-                created_by: adminUser
-            };
-        });
-
-        const { data: insertedLogs, error: insertErr } = await window.supabase1
-            .from('notification_logs')
-            .insert(insertData)
-            .select('id, cpn_no');
-
-        if (insertErr) throw insertErr;
-
-        if (mode === 'IMMEDIATE' && insertedLogs) {
-            const promises = insertedLogs.map(log => 
-                window.supabase1.functions.invoke('send-alert', { 
-                    body: { action: 'send_immediate', log_id: log.id } 
-                })
-            );
-            await Promise.allSettled(promises); // Wait for Backend to 100% finish
-            showFeedback(feedbackEl, `Successfully dispatched ${selectedCpns.size} alerts!`, "success");
-        } else {
-            showFeedback(feedbackEl, `Transferred ${selectedCpns.size} alerts to the Pool.`, "success");
-        }
-
-        document.getElementById('notif-title').value = '';
-        document.getElementById('notif-body').value = '';
-        selectedCpns.clear();
-        document.getElementById('notif-select-all').checked = false;
-        renderGrid(); 
+window.handleTemplateSelection = function() {
+    const template = document.getElementById('notif-wa-template').value;
+    const composeSec = document.getElementById('notif-compose-section');
+    const previewSec = document.getElementById('notif-preview-section');
+    const previewText = document.getElementById('wa-preview-text');
+    
+    if (template) {
+        composeSec.classList.add('hidden');
+        previewSec.classList.remove('hidden');
         
-        // FIXED LOGIC: We fetch logs AFTER the promises are settled, so it instantly reads SUCCESS
-        fetchNotificationLogs(); 
+        // Exact Meta Template Previews
+        let text = "";
+        if (template === 'order_confirmation') {
+            text = "Hi {{1}}, your WowDrops order {{2}} has been confirmed for {{3}} can(s).\n\n{{4}} is the scheduled delivery date.";
+        } else if (template === 'delivery_confirmation') {
+            text = "Hi {{1}}, your WowDrops delivery is complete.\n\nDelivered: {{2}} full can(s)\nCollected: {{3}} empty can(s)\nCurrent outstanding balance: ₹{{4}} only.";
+        } else if (template === 'payment_confirmation') {
+            text = "Hi {{1}}, we have received your payment of ₹{{2}} via {{3}}.\n\nYour updated outstanding balance is ₹{{4}}.\n\nThank you for choosing WowDrops.";
+        } else if (template === 'payment_reminder') {
+            text = "Payment reminder:\n\nName: {{1}}\nCPN: {{2}}\nAmount due: ₹{{3}}\n\nPay now to avoid {{4}}.\n\nPlease ignore this if you have already paid.";
+        } else {
+            text = "Template preview not available.";
+        }
+        
+        previewText.innerText = text;
+    } else {
+        composeSec.classList.remove('hidden');
+        previewSec.classList.add('hidden');
+    }
+};
 
-    } catch (err) {
-        showFeedback(feedbackEl, "System Error: " + err.message, "error");
-    } finally {
-        setButtonLoading(btnEl, false, mode, originalHtml);
+function toggleRowSelection(checkbox) {
+    if (checkbox.checked) selectedCpns.add(checkbox.value);
+    else selectedCpns.delete(checkbox.value);
+    updateSelectionUI();
+}
+
+function toggleAllSelection(e) {
+    const isChecked = e.target.checked;
+    const checkboxes = document.querySelectorAll('#notif-target-grid input[type="checkbox"]:not(:disabled)');
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+        if (isChecked) selectedCpns.add(cb.value);
+        else selectedCpns.delete(cb.value);
+    });
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const countEl = document.getElementById('notif-selected-count');
+    const btnImmediate = document.getElementById('btn-immediate');
+    
+    countEl.textContent = selectedCpns.size;
+    
+    if (selectedCpns.size > 10) {
+        btnImmediate.disabled = true;
+        btnImmediate.classList.add('opacity-50', 'cursor-not-allowed');
+        btnImmediate.classList.remove('hover:bg-emerald-500', 'active:scale-95');
+    } else {
+        btnImmediate.disabled = false;
+        btnImmediate.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnImmediate.classList.add('hover:bg-emerald-500', 'active:scale-95');
     }
 }
 
@@ -235,45 +219,7 @@ function renderGrid() {
 }
 
 // ------------------------------------------------------------------
-// 2. SELECTION LOGIC
-// ------------------------------------------------------------------
-function toggleRowSelection(checkbox) {
-    if (checkbox.checked) selectedCpns.add(checkbox.value);
-    else selectedCpns.delete(checkbox.value);
-    updateSelectionUI();
-}
-
-function toggleAllSelection(e) {
-    const isChecked = e.target.checked;
-    const checkboxes = document.querySelectorAll('#notif-target-grid input[type="checkbox"]:not(:disabled)');
-    checkboxes.forEach(cb => {
-        cb.checked = isChecked;
-        if (isChecked) selectedCpns.add(cb.value);
-        else selectedCpns.delete(cb.value);
-    });
-    updateSelectionUI();
-}
-
-function updateSelectionUI() {
-    const countEl = document.getElementById('notif-selected-count');
-    const btnImmediate = document.getElementById('btn-immediate');
-    
-    countEl.textContent = selectedCpns.size;
-    
-    // Safety lock for immediate dispatch
-    if (selectedCpns.size > 10) {
-        btnImmediate.disabled = true;
-        btnImmediate.classList.add('opacity-50', 'cursor-not-allowed');
-        btnImmediate.classList.remove('hover:bg-emerald-500', 'active:scale-95');
-    } else {
-        btnImmediate.disabled = false;
-        btnImmediate.classList.remove('opacity-50', 'cursor-not-allowed');
-        btnImmediate.classList.add('hover:bg-emerald-500', 'active:scale-95');
-    }
-}
-
-// ------------------------------------------------------------------
-// 3. DISPATCH LOGIC (Pool vs Immediate)
+// 3. DISPATCH LOGIC
 // ------------------------------------------------------------------
 function getPayloadData() {
     const channels = [];
@@ -289,13 +235,134 @@ function getPayloadData() {
     return { channels, title, body, template, context };
 }
 
-async function dispatchToPool() {
-    await processDispatch('POOL');
+async function dispatchToPool() { await processDispatch('POOL'); }
+async function dispatchImmediately() {
+    if (selectedCpns.size > 10) return; 
+    await processDispatch('IMMEDIATE');
 }
 
-async function dispatchImmediately() {
-    if (selectedCpns.size > 10) return; // Hard stop
-    await processDispatch('IMMEDIATE');
+async function processDispatch(mode) {
+    const feedbackEl = document.getElementById('notif-feedback');
+    const { channels, title, body, template, context } = getPayloadData();
+
+    if (selectedCpns.size === 0) {
+        showFeedback(feedbackEl, "Select at least one valid customer from the grid.", "error");
+        return;
+    }
+    if (channels.length === 0) {
+        showFeedback(feedbackEl, "Select at least one delivery channel.", "error");
+        return;
+    }
+
+    const btnId = mode === 'POOL' ? 'btn-pool' : 'btn-immediate';
+    const btnEl = document.getElementById(btnId);
+    const originalHtml = btnEl.innerHTML;
+    setButtonLoading(btnEl, true, mode);
+
+    try {
+        const adminUser = window.activeAdminSession ? window.activeAdminSession.username : 'Unknown Admin';
+        const targetUrl = window.pushUrlMap[context] || "https://wowdrops.github.io/351_portal.html";
+
+        const insertData = Array.from(selectedCpns).map(cpn => {
+            const rowData = currentGridData.find(r => r.cpn_no === cpn) || {};
+            const customerName = rowData.name || 'Customer';
+
+            // Custom Merge Tags for Compose Screen
+            let personalizedTitle = title.replace(/\{\{name\}\}/gi, customerName);
+            let personalizedBody = body.replace(/\{\{name\}\}/gi, customerName)
+                                       .replace(/\{\{Ord D\}\}/gi, rowData.ord_d || 0)
+                                       .replace(/\{\{Ord E\}\}/gi, rowData.ord_e || 0)
+                                       .replace(/\{\{Act D\}\}/gi, rowData.act_d || 0)
+                                       .replace(/\{\{Act E\}\}/gi, rowData.act_e || 0);
+
+            // Hardcoded Meta Template Variables Mapping
+            let wa_variables = [];
+            if (template) {
+                if (template === 'order_confirmation') {
+                    wa_variables = [
+                        customerName,
+                        rowData.unique_no || 'N/A',
+                        String(rowData.ord_d || 0),
+                        rowData.order_date || 'N/A'
+                    ];
+                } else if (template === 'delivery_confirmation') {
+                    wa_variables = [
+                        customerName,
+                        String(rowData.act_d || 0),
+                        String(rowData.act_e || 0),
+                        String(rowData.current_balance || 0) 
+                    ];
+                } else if (template === 'payment_confirmation') {
+                    wa_variables = [
+                        customerName,
+                        String(rowData.advance_amount || 0),
+                        "ONLINE",
+                        String(rowData.current_balance || 0)
+                    ];
+                } else if (template === 'payment_reminder') {
+                    wa_variables = [
+                        customerName,
+                        cpn,
+                        String(rowData.current_balance || 0),
+                        "delivery interruption"
+                    ];
+                }
+            }
+
+            return {
+                cpn_no: cpn,
+                channel: channels.join(', '), 
+                message_type: context,
+                status: 'PENDING', 
+                trigger_type: 'MANUAL',
+                target_channels: channels,
+                raw_payload: { 
+                    title: template ? 'Automated Template' : personalizedTitle, 
+                    body: template ? 'Meta Template Trigger' : personalizedBody, 
+                    wa_template: template || null,
+                    wa_variables: wa_variables,
+                    push_url: targetUrl
+                },
+                created_by: adminUser
+            };
+        });
+
+        const { data: insertedLogs, error: insertErr } = await window.supabase1
+            .from('notification_logs')
+            .insert(insertData)
+            .select('id, cpn_no');
+
+        if (insertErr) throw insertErr;
+
+        if (mode === 'IMMEDIATE' && insertedLogs) {
+            const promises = insertedLogs.map(log => 
+                window.supabase1.functions.invoke('send-alert', { 
+                    body: { action: 'send_immediate', log_id: log.id } 
+                })
+            );
+            await Promise.allSettled(promises); 
+            showFeedback(feedbackEl, `Successfully dispatched ${selectedCpns.size} alerts!`, "success");
+        } else {
+            showFeedback(feedbackEl, `Transferred ${selectedCpns.size} alerts to the Pool.`, "success");
+        }
+
+        // Reset UI
+        document.getElementById('notif-title').value = '';
+        document.getElementById('notif-body').value = '';
+        document.getElementById('notif-wa-template').value = '';
+        window.handleTemplateSelection();
+        
+        selectedCpns.clear();
+        document.getElementById('notif-select-all').checked = false;
+        renderGrid(); 
+        
+        fetchNotificationLogs(); 
+
+    } catch (err) {
+        showFeedback(feedbackEl, "System Error: " + err.message, "error");
+    } finally {
+        setButtonLoading(btnEl, false, mode, originalHtml);
+    }
 }
 
 // ------------------------------------------------------------------
@@ -312,14 +379,14 @@ async function fetchNotificationLogs() {
     try {
         let query = window.supabase1.from('notification_logs').select('*').order('created_at', { ascending: false }).limit(50);
         
-        if(filterChannel !== 'ALL') query = query.contains('target_channels', `["${filterChannel}"]`); // Note: JSONB contains check might vary slightly based on exact structure, but keeping it simple for array
+        if(filterChannel !== 'ALL') query = query.contains('target_channels', `["${filterChannel}"]`); 
         if(filterStatus !== 'ALL') query = query.eq('status', filterStatus);
         if(filterTrigger !== 'ALL') query = query.eq('trigger_type', filterTrigger);
 
         const { data, error } = await query;
         if (error) throw error;
 
-        calculateKPIs(data); // Call KPI function before rendering
+        calculateKPIs(); 
 
         if (!data || data.length === 0) {
             if(container) container.innerHTML = '<p class="text-[10px] font-bold text-slate-500 text-center bg-slate-900 rounded-xl p-6 border border-slate-700 uppercase tracking-widest mt-4">No dispatches match criteria.</p>';
@@ -336,15 +403,13 @@ async function fetchNotificationLogs() {
                 let statusDot = isSuccess ? 'bg-emerald-400' : (isPending ? 'bg-amber-400 animate-pulse' : 'bg-rose-400');
                 
                 const timestamp = new Date(log.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-                
-                // Tooltip for errors
                 const errorAttr = log.error_log ? `title="Error: ${log.error_log.replace(/"/g, "'")}"` : '';
 
                 return `
                 <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between shadow-sm transition-all hover:border-slate-600 gap-2" ${errorAttr}>
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center shrink-0 shadow-inner">
-                            <i class="fas ${log.trigger_type === 'AUTOMATIC' ? 'fa-robot text-blue-400' : 'fa-user text-slate-400'}"></i>
+                            <i class="fas ${log.trigger_type === 'AUTO' || log.trigger_type === 'CRON' ? 'fa-robot text-blue-400' : 'fa-user text-slate-400'}"></i>
                         </div>
                         <div>
                             <p class="text-sm font-black text-white tracking-wide">${log.cpn_no} <span class="text-[9px] font-bold text-slate-400 ml-1 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 uppercase tracking-wider">${log.message_type}</span></p>
@@ -368,8 +433,7 @@ async function fetchNotificationLogs() {
     }
 }
 
-async function calculateKPIs(currentViewData) {
-    // Note: For a true "Today's" KPI, we should query DB separately to ignore current dropdown filters.
+async function calculateKPIs() {
     try {
         const todayStart = new Date();
         todayStart.setHours(0,0,0,0);
